@@ -1,0 +1,123 @@
+.cart {
+    margin-top: 100px;
+    width: 100%;
+    padding: 0 30px;
+    box-sizing: border-box;
+}
+
+.cart-items-title {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr 0.5fr;
+    align-items: center;
+    color: grey;
+    font-size: max(1vw, 12px);
+    box-sizing: border-box;
+}
+
+.cart-items-item {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr 0.5fr;
+    align-items: center;
+    margin: 10px 0px;
+    color: black;
+    box-sizing: border-box;
+}
+
+.cart-items-item img {
+    width: 50px;
+}
+
+.cart hr {
+    height: 1px;
+    background-color: #e2e2e2;
+    border: none;
+}
+
+.cart-items-item .cross {
+    cursor: pointer;
+}
+
+.cart-bottom {
+    margin-top: 80px;
+    display: flex;
+    justify-content: space-between;
+    gap: max(12vw, 20px);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.cart-total {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.cart-total-details {
+    display: flex;
+    justify-content: space-between;
+    color: #555;
+}
+
+.cart-total hr {
+    margin: 10px 0px;
+}
+
+.cart-total button {
+    border: none;
+    color: white;
+    background-color: #676767;
+    width: max(15vw, 200px);
+    padding: 12px 0px;
+    border-radius: 4px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .cart {
+        margin-top: 60px;
+        padding: 0 20px 80px 20px;
+    }
+    .cart-items-title {
+        display: none;
+    }
+    .cart-items-item {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 15px;
+        padding: 15px 0;
+        position: relative;
+    }
+    .cart-items-item .cross {
+        position: absolute;
+        top: 15px;
+        right: 0;
+    }
+}
+
+@media (max-width: 750px) {
+    .cart-bottom {
+        flex-direction: column-reverse;
+        margin-top: 40px;
+        gap: 30px;
+    }
+    .cart-total button {
+        width: 100%;
+        padding: 14px 0px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cart {
+        margin-top: 40px;
+        padding: 0 15px 70px 15px;
+    }
+    .cart-items-item {
+        gap: 10px;
+        font-size: 14px;
+    }
+}

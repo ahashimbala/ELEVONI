@@ -1,0 +1,113 @@
+.place-order {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 50px;
+    margin-top: 100px;
+    width: 100%;
+    padding: 0 30px;
+    box-sizing: border-box;
+}
+
+.place-order-left {
+    width: 100%;
+    max-width: max(30%, 500px);
+    box-sizing: border-box;
+}
+
+.place-order-left .title {
+    font-size: 30px;
+    font-weight: 600;
+    margin-bottom: 50px;
+}
+
+.place-order-left input {
+    margin-bottom: 15px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #c5c5c5;
+    border-radius: 4px;
+    outline-color: #a36c48;
+    box-sizing: border-box;
+}
+
+.place-order-left .multi-fields {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.place-order-right {
+    width: 100%;
+    max-width: max(40%, 500px);
+    box-sizing: border-box;
+}
+
+.place-order .order-btn {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30px;
+    background: #ffffff;
+    color: #25D366;
+    border: 2px solid #25D366;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 230px;
+    padding: 12px 0px;
+    box-sizing: border-box;
+}
+
+.place-order .order-btn svg {
+    font-size: 22px;
+}
+
+.order-btn:hover {
+    background: #25D366;
+    color: white;
+}
+
+@media (max-width: 900px) {
+    .place-order {
+        flex-direction: column;
+        gap: 40px;
+        margin-top: 60px;
+    }
+    .place-order-left,
+    .place-order-right {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .place-order {
+        padding: 0 20px 80px 20px;
+    }
+    .place-order-left .title {
+        margin-bottom: 30px;
+        font-size: 26px;
+    }
+}
+
+@media (max-width: 480px) {
+    .place-order {
+        padding: 0 15px 70px 15px;
+        margin-top: 40px;
+    }
+    .place-order-left .title {
+        font-size: 22px;
+    }
+    .place-order-left .multi-fields {
+        flex-direction: column;
+        gap: 0;
+    }
+    .place-order .order-btn {
+        width: 100%;
+        padding: 14px 0px;
+    }
+}

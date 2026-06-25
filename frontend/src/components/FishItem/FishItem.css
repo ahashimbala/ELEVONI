@@ -1,0 +1,131 @@
+.fish-item {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: auto;
+    border-radius: 18px;
+    box-shadow: 0px 0px 10px #00000015;
+    transition: 0.3s;
+    animation: fadeIn 1s;
+    box-sizing: border-box;
+}
+
+.fish-item-image {
+    width: 100%;
+    max-width: 100%;
+    height: 500px;
+    object-fit: cover;
+    border-radius: 18px 18px 0px 0px;
+}
+
+.fish-item-info {
+    padding: 20px;
+}
+
+.fish-item-name-rating {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.fish-item-name-rating p {
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.fish-item-desc {
+    color: #676767;
+    font-size: 18px;
+}
+
+.fish-item-price {
+    color: #676767;
+    font-size: 26px;
+    font-weight: 600;
+    margin: 10px 0px;
+}
+
+#qty {
+    color: #676767;
+    font-size: 15px;
+    font-weight: 300;
+}
+
+.buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.buttons button {
+    flex: 1;
+    padding: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.details-btn {
+    background: white;
+    border: 1px solid #676767;
+    color: #676767;
+}
+
+.cart-btn {
+    background: #676767;
+    color: white;
+    border: none;
+}
+
+.fish-item-counter {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 50px;
+    border-radius: 50px;
+    background-color: white;
+}
+
+@media (max-width: 768px) {
+    .fish-item-image {
+        height: 350px;
+    }
+    .fish-item-name-rating p {
+        font-size: 22px;
+    }
+    .fish-item-desc {
+        font-size: 16px;
+    }
+    .fish-item-price {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 480px) {
+    .fish-item-image {
+        height: 250px;
+    }
+    .fish-item-info {
+        padding: 15px;
+    }
+    .fish-item-name-rating p {
+        font-size: 18px;
+    }
+    .fish-item-desc {
+        font-size: 14px;
+    }
+    .fish-item-price {
+        font-size: 18px;
+    }
+    .buttons button {
+        padding: 10px;
+        font-size: 14px;
+    }
+}

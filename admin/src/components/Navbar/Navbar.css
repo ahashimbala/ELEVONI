@@ -1,0 +1,25 @@
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4%;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.navbar .logo {
+    width: clamp(85px, 10vw, 150px);
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 10px 5%;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        padding: 10px 4%;
+    }
+}

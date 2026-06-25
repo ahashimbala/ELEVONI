@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@100..900&display=swap');
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: Outfit, sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    background: #fcfcfc;
+    overflow-x: hidden;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+video {
+    max-width: 100%;
+    height: auto;
+}
+
+button {
+    cursor: pointer;
+}
+
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background: #a9a9a9;
+}
+
+.app-content {
+    display: flex;
+    width: 100%;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cursor {
+    cursor: pointer;
+}
+
+@media (max-width:768px) {
+    .app-content {
+        flex-direction: column-reverse;
+    }
+}
+
+@media (max-width:480px) {
+    body {
+        font-size: 14px;
+    }
+    .flex-col {
+        gap: 8px;
+    }
+}

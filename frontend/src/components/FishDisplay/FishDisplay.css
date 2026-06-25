@@ -1,0 +1,44 @@
+.fish-display {
+    margin-top: 10px;
+    width: 100%;
+    padding: 0 30px;
+    box-sizing: border-box;
+}
+
+.fish-display h2 {
+    font-size: max(2vw, 24px);
+    font-weight: 600;
+}
+
+.fish-display-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    margin-top: 30px;
+    gap: 30px;
+    row-gap: 50px;
+}
+
+@media (max-width: 768px) {
+    .fish-display {
+        padding: 0 20px 80px 20px;
+    }
+    .fish-display-list {
+        gap: 20px;
+        row-gap: 35px;
+    }
+}
+
+@media (max-width: 480px) {
+    .fish-display {
+        padding: 0 15px 70px 15px;
+    }
+    .fish-display h2 {
+        font-size: 20px;
+    }
+    .fish-display-list {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        row-gap: 35px;
+        margin-top: 20px;
+    }
+}
