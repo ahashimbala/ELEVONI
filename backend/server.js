@@ -16,6 +16,9 @@ app.use(express.json());
 app.use(cors());
 
 
+app.use("/images", express.static("uploads"));
+
+
 app.use(async(req, res, next) => {
     try {
         await connectDB();
@@ -27,7 +30,6 @@ app.use(async(req, res, next) => {
 });
 
 app.use("/api/fish", fishRouter);
-app.use("/images", express.static("uploads"));
 app.use("/api/user", userRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/review", reviewRouter);
@@ -37,13 +39,11 @@ app.get("/", (req, res) => {
     res.send("API Working");
 });
 
-
 if (process.env.NODE_ENV !== 'production') {
     const port = 4000;
     app.listen(port, () => {
         console.log(`Server Started on http://localhost:${port}`);
     });
 }
-
 
 export default app;
