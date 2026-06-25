@@ -8,23 +8,44 @@
     transition: 0.3s;
     animation: fadeIn 1s;
     box-sizing: border-box;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
 }
 
 .fish-item-image {
     width: 100%;
-    max-width: 100%;
-    height: 500px;
-    object-fit: cover;
+    height: auto;
+    max-height: 500px;
+    object-fit: contain;
     border-radius: 18px 18px 0px 0px;
+    background: #f8f8f8;
+    display: block;
 }
 
 .fish-item-info {
     padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.fish-item-name-rating {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.fish-item-name-rating p {
+    font-size: 25px;
+    font-weight: 700;
 }
 
 .fish-item-desc {
     color: #676767;
     font-size: 18px;
+    margin-bottom: auto;
 }
 
 .fish-item-price {
@@ -83,7 +104,10 @@
 
 @media (max-width: 768px) {
     .fish-item-image {
-        height: 350px;
+        max-height: 350px;
+    }
+    .fish-item-name-rating p {
+        font-size: 22px;
     }
     .fish-item-desc {
         font-size: 16px;
@@ -95,10 +119,13 @@
 
 @media (max-width: 480px) {
     .fish-item-image {
-        height: 250px;
+        max-height: 250px;
     }
     .fish-item-info {
         padding: 15px;
+    }
+    .fish-item-name-rating p {
+        font-size: 18px;
     }
     .fish-item-desc {
         font-size: 14px;
