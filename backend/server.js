@@ -15,17 +15,9 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.use("/images", express.static("uploads"));
+connectDB();
 
-app.use(async(req, res, next) => {
-    try {
-        await connectDB();
-        next();
-    } catch (error) {
-        console.error("Database connection failed:", error);
-        res.status(500).json({ success: false, message: "Database connection error" });
-    }
-});
+app.use("/images", express.static("uploads"));
 
 app.use("/api/fish", fishRouter);
 app.use("/api/user", userRouter);
