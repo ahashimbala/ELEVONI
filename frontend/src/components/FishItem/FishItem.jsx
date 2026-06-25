@@ -14,8 +14,12 @@ const FishItem = ({ id, name, image, price, description, category }) => {
       <div className="fish-item-img-container">
         <img
           className="fish-item-image"
-          src={url + "/images/" + image}
-          alt=""
+          src={
+            item.image && item.image.startsWith("http")
+              ? item.image
+              : `${url}/images/${item.image}`
+          }
+          alt={item.name}
         />
         <div className="fish-item-info">
           <div className="fish-item-name-rating">

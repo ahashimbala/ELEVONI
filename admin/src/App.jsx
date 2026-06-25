@@ -11,7 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Reviews from "./pages/Reviews/Reviews";
 
 const App = () => {
-  const url = "http://localhost:4000";
+  const url = "https://elevoni-backend.vercel.app";
 
   return (
     <div>

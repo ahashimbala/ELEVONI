@@ -102,7 +102,7 @@ const Reviews = () => {
             <div key={review._id} className="review-card">
               <h3>{review.name}</h3>
               <p className="stars">{"★".repeat(review.rating)}</p>
-              <p>{review.comment}</p>
+              <p className="comment">{review.comment}</p>
             </div>
           ))
         )}
