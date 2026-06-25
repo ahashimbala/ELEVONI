@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { StoreContext } from "../../context/StoreContext";
 import "./ItemDetails.css";
@@ -13,6 +13,12 @@ const ItemDetails = () => {
   const item = fish_list.find((fish) => fish._id === id);
 
   const [selected, setSelected] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    setIsPlaying(false);
+  }, [selected]);
 
   if (!item) {
     return (
@@ -34,10 +40,20 @@ const ItemDetails = () => {
           : `${url}/images/${item.image}`,
     },
 
-    ...(item.media?.map((file) => ({
-      type: file.match(/\.(mp4|webm|ogg)$/i) ? "video" : "image",
-      src: file && file.startsWith("http") ? file : `${url}/images/${file}`,
-    })) || []),
+    ...(item.media?.map((file) => {
+      const isVideo = file.match(/\.(mp4|webm|ogg)$/i);
+      let srcPath =
+        file && file.startsWith("http") ? file : `${url}/images/${file}`;
+
+      if (isVideo) {
+        srcPath = `${srcPath}#t=0.001`;
+      }
+
+      return {
+        type: isVideo ? "video" : "image",
+        src: srcPath,
+      };
+    }) || []),
   ];
 
   if (!gallery.length) {
@@ -51,6 +67,12 @@ const ItemDetails = () => {
 
   const safeIndex = Math.min(selected, gallery.length - 1);
 
+  const handlePlayVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.play();
+    }
+  };
+
   return (
     <div className="item-details">
       <button className="back-btn" onClick={() => navigate(-1)}>
@@ -61,12 +83,24 @@ const ItemDetails = () => {
         <div className="item-details-left">
           <div className="main-media">
             {gallery[safeIndex].type === "video" ? (
-              <video
-                key={gallery[safeIndex].src}
-                src={gallery[safeIndex].src}
-                controls
-                preload="metadata"
-              />
+              <div className="main-video-wrapper">
+                <video
+                  ref={videoRef}
+                  key={gallery[safeIndex].src}
+                  src={gallery[safeIndex].src}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onEnded={() => setIsPlaying(false)}
+                />
+                {!isPlaying && (
+                  <div className="video-overlay-play" onClick={handlePlayVideo}>
+                    <span>Click to Play Video</span>
+                  </div>
+                )}
+              </div>
             ) : (
               <img src={gallery[safeIndex].src} alt="" />
             )}
@@ -84,11 +118,10 @@ const ItemDetails = () => {
                     <video
                       src={media.src}
                       muted
+                      playsInline
                       preload="metadata"
                       className="video-thumbnail"
                     />
-
-                    <div className="play-icon">▶</div>
                   </div>
                 ) : (
                   <img src={media.src} alt="" />

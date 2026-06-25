@@ -22,7 +22,6 @@ const FishItem = ({ id, name, image, price, description, category }) => {
         <div className="fish-item-info">
           <div className="fish-item-name-rating">
             <p>{name}</p>
-            <img src={assets} alt="" />
           </div>
           <p className="fish-item-desc">{description}</p>
           <p className="fish-item-price">
