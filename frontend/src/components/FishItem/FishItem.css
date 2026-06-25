@@ -13,26 +13,13 @@
 .fish-item-image {
     width: 100%;
     max-width: 100%;
-    height: auto;
-    max-height: 500px;
-    object-fit: contain;
+    height: 500px;
+    object-fit: cover;
     border-radius: 18px 18px 0px 0px;
 }
 
 .fish-item-info {
     padding: 20px;
-}
-
-.fish-item-name-rating {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.fish-item-name-rating p {
-    font-size: 25px;
-    font-weight: 700;
 }
 
 .fish-item-desc {
@@ -96,10 +83,7 @@
 
 @media (max-width: 768px) {
     .fish-item-image {
-        max-height: 350px;
-    }
-    .fish-item-name-rating p {
-        font-size: 22px;
+        height: 350px;
     }
     .fish-item-desc {
         font-size: 16px;
@@ -111,13 +95,10 @@
 
 @media (max-width: 480px) {
     .fish-item-image {
-        max-height: 250px;
+        height: 250px;
     }
     .fish-item-info {
         padding: 15px;
-    }
-    .fish-item-name-rating p {
-        font-size: 18px;
     }
     .fish-item-desc {
         font-size: 14px;
