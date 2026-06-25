@@ -1,16 +1,7 @@
 {
     "version": 2,
     "rewrites": [{
-            "source": "/api/(.*)",
-            "destination": "/server.js"
-        },
-        {
-            "source": "/images/(.*)",
-            "destination": "/server.js"
-        },
-        {
-            "source": "/(.*)",
-            "destination": "/dist/$1"
-        }
-    ]
+        "source": "/(.*)",
+        "destination": "/server.js"
+    }]
 }
