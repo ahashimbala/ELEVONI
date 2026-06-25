@@ -11,10 +11,20 @@ import reviewRouter from "./routes/reviewRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 
 const app = express();
-const port = 4000;
 
 app.use(express.json());
 app.use(cors());
+
+
+app.use(async(req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        console.error("Database connection failed:", error);
+        res.status(500).json({ success: false, message: "Database connection error" });
+    }
+});
 
 app.use("/api/fish", fishRouter);
 app.use("/images", express.static("uploads"));
@@ -27,17 +37,13 @@ app.get("/", (req, res) => {
     res.send("API Working");
 });
 
-const startServer = async() => {
-    try {
-        await connectDB();
 
-        app.listen(port, () => {
-            console.log(`Server Started on http://localhost:${port}`);
-        });
+if (process.env.NODE_ENV !== 'production') {
+    const port = 4000;
+    app.listen(port, () => {
+        console.log(`Server Started on http://localhost:${port}`);
+    });
+}
 
-    } catch (error) {
-        console.log("Failed to start server:", error);
-    }
-};
 
-startServer();
+export default app;
