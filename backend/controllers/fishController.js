@@ -13,7 +13,8 @@ const addFish = async(req, res) => {
 
         if (req.file) {
             const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-                folder: "fish_store"
+                folder: "fish_store",
+                resource_type: "auto"
             });
             imageUrl = uploadResult.secure_url;
         }
@@ -66,7 +67,11 @@ const removeFish = async(req, res) => {
         if (fish.media && fish.media.length > 0) {
             const deletePromises = fish.media.map(url => {
                 const mediaPublicId = url.split("/").pop().split(".")[0];
-                return cloudinary.uploader.destroy(`fish_store/${mediaPublicId}`);
+                const isVideo = url.match(/\.(mp4|webm|ogg)$/i);
+                return cloudinary.uploader.destroy(
+                    `fish_store/${mediaPublicId}`,
+                    isVideo ? { resource_type: "video" } : {}
+                );
             });
             await Promise.all(deletePromises).catch(err => console.log("Cloudinary media delete error:", err));
         }
@@ -92,7 +97,10 @@ const addFishMedia = async(req, res) => {
         }
 
         const uploadPromises = req.files.map(file =>
-            cloudinary.uploader.upload(file.path, { folder: "fish_store" })
+            cloudinary.uploader.upload(file.path, {
+                folder: "fish_store",
+                resource_type: "auto"
+            })
         );
 
         const uploadResults = await Promise.all(uploadPromises);

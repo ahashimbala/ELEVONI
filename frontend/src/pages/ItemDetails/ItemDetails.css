@@ -8,6 +8,7 @@
 
 .back-btn {
     background: #f3f3f3;
+    color: #a36c48;
     border: none;
     padding: 14px 28px;
     border-radius: 10px;
@@ -34,13 +35,14 @@
 
 .item-details-left {
     flex: 1;
-    min-width: 480px;
+    min-width: 0;
+    width: 100%;
     box-sizing: border-box;
 }
 
 .item-details-right {
     flex: 1;
-    min-width: 320px;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 22px;
@@ -50,7 +52,8 @@
 
 .main-media {
     width: 100%;
-    height: 520px;
+    height: auto;
+    max-height: 520px;
     overflow: hidden;
     border-radius: 16px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
@@ -61,8 +64,9 @@
 .main-media img,
 .main-media video {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
+    max-height: 520px;
+    object-fit: contain;
     display: block;
 }
 
@@ -256,7 +260,12 @@
         min-width: 100%;
     }
     .main-media {
-        height: 360px;
+        height: auto;
+        max-height: 380px;
+    }
+    .main-media img,
+    .main-media video {
+        max-height: 380px;
     }
     .item-details-right h1 {
         font-size: 30px;
@@ -265,12 +274,13 @@
         font-size: 26px;
     }
     .item-buttons {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        align-items: center;
     }
     .add-to-cart-btn,
     .buy-now-btn {
-        width: 100%;
+        width: auto;
+        flex: 1;
     }
 }
 
@@ -288,15 +298,20 @@
 
 @media (max-width: 480px) {
     .item-details {
-        margin: 20px auto;
-        padding: 0 15px 70px 15px;
+        margin: 15px auto;
+        padding: 0 12px 60px 12px;
     }
     .main-media {
-        height: 260px;
+        height: auto;
+        max-height: 280px;
+    }
+    .main-media img,
+    .main-media video {
+        max-height: 280px;
     }
     .thumb {
-        width: 65px;
-        height: 65px;
+        width: 60px;
+        height: 60px;
     }
     .item-details-right h1 {
         font-size: 24px;
@@ -307,5 +322,8 @@
     .item-details-desc {
         font-size: 14px;
         line-height: 1.6;
+    }
+    .item-buttons {
+        flex-direction: row;
     }
 }

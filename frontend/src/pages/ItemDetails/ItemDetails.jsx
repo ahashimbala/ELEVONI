@@ -28,12 +28,15 @@ const ItemDetails = () => {
   const gallery = [
     {
       type: "image",
-      src: `${url}/images/${item.image}`,
+      src:
+        item.image && item.image.startsWith("http")
+          ? item.image
+          : `${url}/images/${item.image}`,
     },
 
     ...(item.media?.map((file) => ({
       type: file.match(/\.(mp4|webm|ogg)$/i) ? "video" : "image",
-      src: `${url}/images/${file}`,
+      src: file && file.startsWith("http") ? file : `${url}/images/${file}`,
     })) || []),
   ];
 
