@@ -58,12 +58,12 @@ const PlaceOrder = () => {
 
     const paystack = new window.PaystackPop();
 
-    paystack.newTransaction({
+    paystack.checkout({
       key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
       email: data.email,
       amount: totalAmount * 100,
       currency: "NGN",
-      onSuccess: async function (reference) {
+      callback: async function (reference) {
         const loadingToast = toast.loading("Verifying transaction...");
         try {
           const orderData = {
@@ -109,7 +109,7 @@ const PlaceOrder = () => {
           });
         }
       },
-      onCancel: function () {
+      onClose: function () {
         toast.info("Payment window closed.");
       },
     });
