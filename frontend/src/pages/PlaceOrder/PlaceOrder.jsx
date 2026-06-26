@@ -56,12 +56,14 @@ const PlaceOrder = () => {
       return;
     }
 
-    const handler = window.PaystackPop.setup({
+    const paystack = new window.PaystackPop();
+
+    paystack.newTransaction({
       key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
       email: data.email,
       amount: totalAmount * 100,
       currency: "NGN",
-      callback: async function (reference) {
+      onSuccess: async function (reference) {
         const loadingToast = toast.loading("Verifying transaction...");
         try {
           const orderData = {
@@ -107,92 +109,11 @@ const PlaceOrder = () => {
           });
         }
       },
-      onClose: function () {
+      onCancel: function () {
         toast.info("Payment window closed.");
       },
     });
-
-    handler.openIframe();
   };
-
-  const orderOnWhatsApp = async () => {
-    if (!data.firstName || !data.phone || !data.street) {
-      toast.error(
-        "Please fill in your First Name, Phone Number and Street Address.",
-      );
-      return;
-    }
-
-    const loadingToast = toast.loading("Processing order...");
-
-    try {
-      const orderData = {
-        address: data,
-        items: getOrderItems(),
-        amount: totalAmount,
-      };
-
-      const response = await axios.post(`${url}/api/order/place`, orderData, {
-        headers: { token },
-      });
-
-      if (response.data.success) {
-        const phoneNumber = "2348135738991";
-        let message = "Hello Elevoni, I would like to place an order.\n\n";
-
-        fish_list.forEach((item) => {
-          if (cartItems[item._id] > 0) {
-            message += `• ${item.name} x ${cartItems[item._id]}\n`;
-          }
-        });
-
-        message += `\n--------------------------------`;
-        message += `\nTotal Amount: ₦${totalAmount}`;
-        message += `\n--------------------------------`;
-        message += `\n\nDelivery Information:`;
-        message += `\nName: ${data.firstName} ${data.lastName}`;
-        message += `\nPhone: ${data.phone}`;
-        message += `\nAddress: ${data.street}, ${data.city}, ${data.state}, ${data.country}`;
-
-        const encodedMessage = encodeURIComponent(message);
-        window.open(
-          `https://wa.me/${phoneNumber}?text=${encodedMessage}`,
-          "_blank",
-        );
-
-        if (setCartItems) {
-          setCartItems({});
-        }
-
-        toast.update(loadingToast, {
-          render: "Order placed successfully!",
-          type: "success",
-          isLoading: false,
-          autoClose: 3000,
-        });
-
-        navigate("/myorders");
-      } else {
-        toast.update(loadingToast, {
-          render:
-            response.data.message ||
-            "Failed to record order. Please try again.",
-          type: "error",
-          isLoading: false,
-          autoClose: 3000,
-        });
-      }
-    } catch (error) {
-      console.log(error);
-      toast.update(loadingToast, {
-        render: "An error occurred while saving your order.",
-        type: "error",
-        isLoading: false,
-        autoClose: 3000,
-      });
-    }
-  };
-
   useEffect(() => {
     if (!token) {
       toast.info("Please log in to proceed to checkout.");
