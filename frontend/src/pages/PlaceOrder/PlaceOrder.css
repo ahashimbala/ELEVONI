@@ -43,33 +43,76 @@
     box-sizing: border-box;
 }
 
-.place-order .order-btn {
+.action-buttons-wrapper {
     display: flex;
-    gap: 5px;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 25px;
+    width: 100%;
+}
+
+.place-order .order-btn,
+.place-order .paystack-btn {
+    display: flex;
+    gap: 8px;
     align-items: center;
     justify-content: center;
-    margin-top: 30px;
-    background: #ffffff;
-    color: #25D366;
-    border: 2px solid #25D366;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    text-decoration: none;
     cursor: pointer;
     transition: all 0.3s ease;
-    width: 230px;
-    padding: 12px 0px;
+    width: 100%;
+    padding: 14px 0px;
     box-sizing: border-box;
 }
 
-.place-order .order-btn svg {
-    font-size: 22px;
+.place-order .paystack-btn {
+    background: #09a5db;
+    color: white;
+    border: 2px solid #09a5db;
 }
 
-.order-btn:hover {
+.place-order .paystack-btn:hover {
+    background: #078cb8;
+    border-color: #078cb8;
+}
+
+.place-order .order-btn {
+    background: #ffffff;
+    color: #25D366;
+    border: 2px solid #25D366;
+}
+
+.place-order .order-btn:hover {
     background: #25D366;
     color: white;
+}
+
+.place-order .order-btn svg,
+.place-order .paystack-btn svg {
+    font-size: 18px;
+}
+
+.custom-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #9c9c9c;
+    font-size: 12px;
+    font-weight: 700;
+    margin: 4px 0;
+}
+
+.custom-divider::before,
+.custom-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.custom-divider span {
+    padding: 0 10px;
 }
 
 @media (max-width: 900px) {
@@ -105,9 +148,5 @@
     .place-order-left .multi-fields {
         flex-direction: column;
         gap: 0;
-    }
-    .place-order .order-btn {
-        width: 100%;
-        padding: 14px 0px;
     }
 }

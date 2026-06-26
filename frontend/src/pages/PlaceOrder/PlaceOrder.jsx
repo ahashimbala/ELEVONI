@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import "./PlaceOrder.css";
 import { StoreContext } from "../../context/StoreContext";
-import { FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp, FaCreditCard } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -26,11 +26,93 @@ const PlaceOrder = () => {
 
   const onChangeHandler = (event) => {
     const { name, value } = event.target;
-
     setData((prev) => ({
       ...prev,
       [name]: value,
     }));
+  };
+
+  const totalAmount =
+    getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 500;
+
+  const getOrderItems = () => {
+    let orderItems = [];
+    fish_list.forEach((item) => {
+      if (cartItems[item._id] > 0) {
+        orderItems.push({
+          ...item,
+          quantity: cartItems[item._id],
+        });
+      }
+    });
+    return orderItems;
+  };
+
+  const orderWithPaystack = () => {
+    if (!data.firstName || !data.phone || !data.street || !data.email) {
+      toast.error(
+        "Please fill in your First Name, Email, Phone Number, and Street Address.",
+      );
+      return;
+    }
+
+    const handler = window.PaystackPop.setup({
+      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+      email: data.email,
+      amount: totalAmount * 100,
+      currency: "NGN",
+      callback: async function (reference) {
+        const loadingToast = toast.loading("Verifying transaction...");
+        try {
+          const orderData = {
+            address: data,
+            items: getOrderItems(),
+            amount: totalAmount,
+            payment: true,
+            paymentReference: reference.reference,
+          };
+
+          const response = await axios.post(
+            `${url}/api/order/place`,
+            orderData,
+            {
+              headers: { token },
+            },
+          );
+
+          if (response.data.success) {
+            if (setCartItems) setCartItems({});
+            toast.update(loadingToast, {
+              render: "Payment successful! Order placed.",
+              type: "success",
+              isLoading: false,
+              autoClose: 3000,
+            });
+            navigate("/myorders");
+          } else {
+            toast.update(loadingToast, {
+              render: response.data.message || "Failed to log order records.",
+              type: "error",
+              isLoading: false,
+              autoClose: 3000,
+            });
+          }
+        } catch (error) {
+          console.error(error);
+          toast.update(loadingToast, {
+            render: "Error verifying transaction on the server.",
+            type: "error",
+            isLoading: false,
+            autoClose: 3000,
+          });
+        }
+      },
+      onClose: function () {
+        toast.info("Payment window closed.");
+      },
+    });
+
+    handler.openIframe();
   };
 
   const orderOnWhatsApp = async () => {
@@ -44,37 +126,18 @@ const PlaceOrder = () => {
     const loadingToast = toast.loading("Processing order...");
 
     try {
-      let orderItems = [];
-
-      fish_list.forEach((item) => {
-        if (cartItems[item._id] > 0) {
-          let itemInfo = {
-            ...item,
-            quantity: cartItems[item._id],
-          };
-
-          orderItems.push(itemInfo);
-        }
-      });
-
-      const totalAmount =
-        getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 500;
-
       const orderData = {
         address: data,
-        items: orderItems,
+        items: getOrderItems(),
         amount: totalAmount,
       };
 
       const response = await axios.post(`${url}/api/order/place`, orderData, {
-        headers: {
-          token,
-        },
+        headers: { token },
       });
 
       if (response.data.success) {
         const phoneNumber = "2348135738991";
-
         let message = "Hello Elevoni, I would like to place an order.\n\n";
 
         fish_list.forEach((item) => {
@@ -86,14 +149,12 @@ const PlaceOrder = () => {
         message += `\n--------------------------------`;
         message += `\nTotal Amount: ₦${totalAmount}`;
         message += `\n--------------------------------`;
-
         message += `\n\nDelivery Information:`;
         message += `\nName: ${data.firstName} ${data.lastName}`;
         message += `\nPhone: ${data.phone}`;
         message += `\nAddress: ${data.street}, ${data.city}, ${data.state}, ${data.country}`;
 
         const encodedMessage = encodeURIComponent(message);
-
         window.open(
           `https://wa.me/${phoneNumber}?text=${encodedMessage}`,
           "_blank",
@@ -123,7 +184,6 @@ const PlaceOrder = () => {
       }
     } catch (error) {
       console.log(error);
-
       toast.update(loadingToast, {
         render: "An error occurred while saving your order.",
         type: "error",
@@ -144,7 +204,7 @@ const PlaceOrder = () => {
   }, [token, getTotalCartAmount, navigate]);
 
   return (
-    <form className="place-order">
+    <div className="place-order">
       <div className="place-order-left">
         <p className="title">Delivery Information</p>
 
@@ -157,7 +217,6 @@ const PlaceOrder = () => {
             onChange={onChangeHandler}
             required
           />
-
           <input
             type="text"
             name="lastName"
@@ -173,6 +232,7 @@ const PlaceOrder = () => {
           placeholder="Email Address"
           value={data.email}
           onChange={onChangeHandler}
+          required
         />
 
         <input
@@ -192,7 +252,6 @@ const PlaceOrder = () => {
             value={data.city}
             onChange={onChangeHandler}
           />
-
           <input
             type="text"
             name="state"
@@ -210,7 +269,6 @@ const PlaceOrder = () => {
             value={data.zipCode}
             onChange={onChangeHandler}
           />
-
           <input
             type="text"
             name="country"
@@ -237,34 +295,46 @@ const PlaceOrder = () => {
           <div>
             <div className="cart-total-details">
               <p>Subtotal</p>
-              <p>₦{getTotalCartAmount()}</p>
+              <p>₦{getTotalCartAmount().toLocaleString()}</p>
             </div>
-
             <hr />
-
             <div className="cart-total-details">
               <p>Delivery Fee</p>
-              <p>₦{getTotalCartAmount() === 0 ? 0 : 500}</p>
+              <p>₦{(getTotalCartAmount() === 0 ? 0 : 500).toLocaleString()}</p>
             </div>
-
             <hr />
-
             <div className="cart-total-details">
               <b>Total</b>
-
-              <b>
-                ₦{getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 500}
-              </b>
+              <b>₦{totalAmount.toLocaleString()}</b>
             </div>
           </div>
 
-          <button type="button" className="order-btn" onClick={orderOnWhatsApp}>
-            <FaWhatsapp />
-            ORDER ON WHATSAPP
-          </button>
+          <div className="action-buttons-wrapper">
+            <button
+              type="button"
+              className="paystack-btn"
+              onClick={orderWithPaystack}
+            >
+              <FaCreditCard />
+              PAY ONLINE NOW
+            </button>
+
+            <div className="custom-divider">
+              <span>OR</span>
+            </div>
+
+            <button
+              type="button"
+              className="order-btn"
+              onClick={orderOnWhatsApp}
+            >
+              <FaWhatsapp />
+              ORDER ON WHATSAPP
+            </button>
+          </div>
         </div>
       </div>
-    </form>
+    </div>
   );
 };
 
