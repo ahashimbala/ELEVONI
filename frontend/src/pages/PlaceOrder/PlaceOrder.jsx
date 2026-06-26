@@ -56,16 +56,14 @@ const PlaceOrder = () => {
       return;
     }
 
-    if (!window.PaystackPop) {
+    if (!window.PaystackPop || typeof window.PaystackPop.setup !== "function") {
       toast.error(
-        "Paystack payment gateway failed to load. Please refresh the page.",
+        "Paystack payment gateway failed to initialize. Please refresh the page.",
       );
       return;
     }
 
-    const paystack = new window.PaystackPop();
-
-    paystack.checkout({
+    const paystack = window.PaystackPop.setup({
       key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
       email: data.email,
       amount: totalAmount * 100,
@@ -120,6 +118,8 @@ const PlaceOrder = () => {
         toast.info("Payment window closed.");
       },
     });
+
+    paystack.openIframe();
   };
 
   const orderOnWhatsApp = async () => {
