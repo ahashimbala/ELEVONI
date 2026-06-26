@@ -20,6 +20,9 @@ const FishItem = ({ id, name, image, price, description, category }) => {
           alt={name}
         />
         <div className="fish-item-info">
+          <div className="fish-item-name-rating">
+            <p>{name}</p>
+          </div>
           <p className="fish-item-desc">{description}</p>
           <p className="fish-item-price">
             ₦{price}
