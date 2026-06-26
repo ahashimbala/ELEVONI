@@ -56,6 +56,13 @@ const PlaceOrder = () => {
       return;
     }
 
+    if (!window.PaystackPop) {
+      toast.error(
+        "Paystack payment gateway failed to load. Please refresh the page.",
+      );
+      return;
+    }
+
     const paystack = new window.PaystackPop();
 
     paystack.checkout({
@@ -63,7 +70,7 @@ const PlaceOrder = () => {
       email: data.email,
       amount: totalAmount * 100,
       currency: "NGN",
-      callback: async function (reference) {
+      callback: async (reference) => {
         const loadingToast = toast.loading("Verifying transaction...");
         try {
           const orderData = {
@@ -109,11 +116,12 @@ const PlaceOrder = () => {
           });
         }
       },
-      onClose: function () {
+      onClose: () => {
         toast.info("Payment window closed.");
       },
     });
   };
+
   const orderOnWhatsApp = async () => {
     if (!data.firstName || !data.phone || !data.street) {
       toast.error(
@@ -182,7 +190,7 @@ const PlaceOrder = () => {
         });
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.update(loadingToast, {
         render: "An error occurred while saving your order.",
         type: "error",
