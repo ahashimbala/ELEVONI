@@ -13,6 +13,12 @@ import ScrollToTop from "./components/ScrollToTop";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ItemDetails from "./pages/ItemDetails/ItemDetails";
+import ReactGA from "./analytics";
+
+ReactGA.send({
+  hitType: "pageview",
+  page: window.location.pathname,
+});
 
 const App = () => {
   const [showLogin, setShowLogin] = useState(false);
