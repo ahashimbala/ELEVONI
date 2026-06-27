@@ -13,8 +13,8 @@ import orderRouter from "./routes/orderRoute.js";
 const app = express();
 
 const allowedOrigins = [
+    "https://elevonifarms.vercel.app",
     "https://elevonifarms-git-main-elevoni.vercel.app",
-    "https://elevoni.vercel.app",
     "http://localhost:5173",
     "http://localhost:5174"
 ];
