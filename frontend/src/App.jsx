@@ -9,6 +9,7 @@ import Reviews from "./components/Reviews/Reviews";
 import Footer from "./components/Footer/Footer";
 import LoginPopup from "./components/LoginPopup/LoginPopup";
 import ScrollToTop from "./components/ScrollToTop";
+import Success from "./components/SuccessPage/Success";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -35,6 +36,7 @@ const App = () => {
           <Route path="/order" element={<PlaceOrder />} />
           <Route path="/myorders" element={<MyOrders />} />
           <Route path="/product/:id" element={<ItemDetails />} />
+          <Route path="/success" element={<Success />} />
         </Routes>
       </div>
       <Footer />

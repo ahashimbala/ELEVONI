@@ -95,7 +95,7 @@ const PlaceOrder = () => {
               isLoading: false,
               autoClose: 3000,
             });
-            navigate("/myorders");
+            navigate("/success");
           } else {
             toast.update(loadingToast, {
               render: response.data.message || "Failed to log order records.",
@@ -178,7 +178,7 @@ const PlaceOrder = () => {
           autoClose: 3000,
         });
 
-        navigate("/myorders");
+        navigate("/success");
       } else {
         toast.update(loadingToast, {
           render:
@@ -304,7 +304,7 @@ const PlaceOrder = () => {
             </div>
             <hr />
             <div className="cart-total-details">
-              <b>Total</b>
+              <p>Total</p>
               <b>₦{totalAmount.toLocaleString()}</b>
             </div>
           </div>
