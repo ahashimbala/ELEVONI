@@ -15,6 +15,7 @@ const app = express();
 const allowedOrigins = [
     "https://elevonifarms.vercel.app",
     "https://elevonifarms-git-main-elevoni.vercel.app",
+    "https://elevoni-admin.vercel.app",
     "http://localhost:5173",
     "http://localhost:5174"
 ];
