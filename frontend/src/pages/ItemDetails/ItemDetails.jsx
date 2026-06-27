@@ -39,7 +39,6 @@ const ItemDetails = () => {
           ? item.image
           : `${url}/images/${item.image}`,
     },
-
     ...(item.media?.map((file) => {
       const isVideo = file.match(/\.(mp4|webm|ogg)$/i);
       let srcPath =
@@ -102,7 +101,7 @@ const ItemDetails = () => {
                 )}
               </div>
             ) : (
-              <img src={gallery[safeIndex].src} alt="" />
+              <img src={gallery[safeIndex].src} alt={item.name} />
             )}
           </div>
 
@@ -122,6 +121,7 @@ const ItemDetails = () => {
                       preload="metadata"
                       className="video-thumbnail"
                     />
+                    <div className="play-icon">▶</div>
                   </div>
                 ) : (
                   <img src={media.src} alt="" />
@@ -138,36 +138,38 @@ const ItemDetails = () => {
             Category: <span>{item.category}</span>
           </p>
 
-          <p className="item-details-price">₦{item.price.toLocaleString()}</p>
+          <p className="item-details-price">
+            ₦{item.price.toLocaleString()}
+            <span className="price-unit"> per kg</span>
+          </p>
 
           <p className="item-details-desc">{item.description}</p>
 
-          {!cartItems?.[item._id] ? (
-            <button
-              className="add-to-cart-btn"
-              onClick={() => addtoCart(item._id)}
-            >
-              Add to Cart
-            </button>
-          ) : (
-            <div className="item-buttons">
+          <div className="action-section">
+            {!cartItems?.[item._id] ? (
               <button
-                className="buy-now-btn"
-                onClick={() => removeFromCart(item._id)}
-              >
-                Remove
-              </button>
-
-              <p>{cartItems[item._id]}</p>
-
-              <button
-                className="add-to-cart-btn"
+                className="add-to-cart-btn primary-btn"
                 onClick={() => addtoCart(item._id)}
               >
-                Add More
+                Add to Cart
               </button>
-            </div>
-          )}
+            ) : (
+              <div className="cart-management-flow">
+                <div className="quantity-adjuster-block">
+                  <button onClick={() => removeFromCart(item._id)}>-</button>
+                  <span>{cartItems[item._id]}</span>
+                  <button onClick={() => addtoCart(item._id)}>+</button>
+                </div>
+
+                <button
+                  className="go-to-cart-checkout-btn"
+                  onClick={() => navigate("/cart")}
+                >
+                  Go to Cart →
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
