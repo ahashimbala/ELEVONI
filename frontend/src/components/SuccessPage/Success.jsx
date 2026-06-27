@@ -10,7 +10,7 @@ const Success = () => {
     <div className="success-page">
       <div className="success-container">
         <img src={assets.parcel_icon} alt="Success" className="success-icon" />
-        <h2>Payment Successful!</h2>
+        <h2>Order Placed Successfully!</h2>
         <p>
           Thank you for shopping with Elevoni Farms. Your order has been placed
           successfully.
