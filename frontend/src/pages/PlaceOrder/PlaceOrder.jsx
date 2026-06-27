@@ -271,13 +271,6 @@ const PlaceOrder = () => {
         <div className="multi-fields">
           <input
             type="text"
-            name="zipCode"
-            placeholder="Zip Code"
-            value={data.zipCode}
-            onChange={onChangeHandler}
-          />
-          <input
-            type="text"
             name="country"
             placeholder="Country"
             value={data.country}
