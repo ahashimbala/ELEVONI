@@ -22,6 +22,8 @@ const PlaceOrder = () => {
     phone: "",
   });
 
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const navigate = useNavigate();
 
   const onChangeHandler = (event) => {
@@ -88,6 +90,7 @@ const PlaceOrder = () => {
           );
 
           if (response.data.success) {
+            setIsSubmitted(true);
             if (setCartItems) setCartItems({});
             toast.update(loadingToast, {
               render: "Payment successful! Order placed.",
@@ -167,6 +170,7 @@ const PlaceOrder = () => {
           "_blank",
         );
 
+        setIsSubmitted(true);
         if (setCartItems) {
           setCartItems({});
         }
@@ -201,6 +205,8 @@ const PlaceOrder = () => {
   };
 
   useEffect(() => {
+    if (isSubmitted) return;
+
     if (!token) {
       toast.info("Please log in to proceed to checkout.");
       navigate("/cart");
@@ -208,7 +214,7 @@ const PlaceOrder = () => {
       toast.warn("Your cart is empty. Add some items first!");
       navigate("/cart");
     }
-  }, [token, getTotalCartAmount, navigate]);
+  }, [token, getTotalCartAmount, navigate, isSubmitted]);
 
   return (
     <div className="place-order">
