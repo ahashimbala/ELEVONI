@@ -17,7 +17,8 @@
 .fish-item-image {
     width: 100%;
     height: 280px;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center;
     background: #f8f8f8;
     display: block;
 }
