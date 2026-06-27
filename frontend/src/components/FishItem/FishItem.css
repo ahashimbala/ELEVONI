@@ -88,14 +88,14 @@
 }
 
 .init-add-btn {
-    background: #111827;
+    background: #676767;
     color: white;
     border: none;
     width: 100%;
 }
 
 .init-add-btn:hover {
-    background: #1f2937;
+    background: #333;
 }
 
 .details-btn {
@@ -109,9 +109,6 @@
     background: #f9fafb;
     border-color: #9ca3af;
 }
-
-
-/* Active Inline Counter Row */
 
 .active-cart-row {
     display: flex;

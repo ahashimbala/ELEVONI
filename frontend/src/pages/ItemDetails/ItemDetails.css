@@ -203,7 +203,7 @@
 }
 
 .primary-btn {
-    background: #111827;
+    background: #676767;
     color: white;
     border: none;
     padding: 16px 32px;
@@ -216,7 +216,7 @@
 }
 
 .primary-btn:hover {
-    background: #1f2937;
+    background: #555;
 }
 
 .cart-management-flow {
