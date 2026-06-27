@@ -94,11 +94,6 @@ const ItemDetails = () => {
                   onPause={() => setIsPlaying(false)}
                   onEnded={() => setIsPlaying(false)}
                 />
-                {!isPlaying && (
-                  <div className="video-overlay-play" onClick={handlePlayVideo}>
-                    <span>Click to Play Video</span>
-                  </div>
-                )}
               </div>
             ) : (
               <img src={gallery[safeIndex].src} alt={item.name} />

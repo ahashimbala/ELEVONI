@@ -112,7 +112,7 @@
 .thumb {
     width: 76px;
     height: 76px;
-    border-radius: 12px;
+    border-radius: 50%;
     overflow: hidden;
     cursor: pointer;
     border: 2px solid transparent;
@@ -219,9 +219,6 @@
     background: #1f2937;
 }
 
-
-/* Modern Checkout Flow Controls */
-
 .cart-management-flow {
     display: flex;
     gap: 12px;
@@ -281,9 +278,6 @@
     text-align: center;
     padding: 80px 20px;
 }
-
-
-/* Responsive Adaptive Layout Braking Breakpoints */
 
 @media (max-width: 992px) {
     .item-details-container {
