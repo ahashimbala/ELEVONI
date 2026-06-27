@@ -55,6 +55,7 @@ const Footer = () => {
           <ul>
             <li>+234 813 573 8991</li>
             <li>Feedoh001@gmail.com</li>
+            <li>Kano, Nigeria</li>
           </ul>
         </div>
       </div>
