@@ -60,12 +60,12 @@
 }
 
 .success-buttons button:first-child {
-    background-color: #10b981;
+    background-color: #676767;
     color: #ffffff;
 }
 
 .success-buttons button:first-child:hover {
-    background-color: #059669;
+    background-color: #333;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
