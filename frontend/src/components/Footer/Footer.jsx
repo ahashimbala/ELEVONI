@@ -33,7 +33,7 @@ const Footer = () => {
             </a>
 
             <a
-              href="https://www.instagram.com/elevoni_"
+              href="https://www.instagram.com/elevoni_farm"
               target="_blank"
               rel="noopener noreferrer"
             >
