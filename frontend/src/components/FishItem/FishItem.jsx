@@ -15,7 +15,10 @@ const FishItem = ({ id, name, image, price, description }) => {
         src={
           image && image.startsWith("http") ? image : `${url}/images/${image}`
         }
-        alt={name}
+        alt={`Fresh ${name} - Premium local aquaculture product from Elevoni Farms`}
+        loading="lazy"
+        onClick={() => navigate(`/product/${id}`)}
+        style={{ cursor: "pointer" }}
       />
 
       <div className="fish-item-info">
