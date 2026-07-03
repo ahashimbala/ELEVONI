@@ -10,7 +10,7 @@ import cartRouter from "./routes/cartRoute.js";
 import reviewRouter from "./routes/reviewRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 
-import { FishItem } from "./models/fishModel.js";
+import FishItem from "./models/fishModel.js";
 
 const app = express();
 
