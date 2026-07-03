@@ -1,7 +1,7 @@
 {
     "rewrites": [{
             "source": "/sitemap.xml",
-            "destination": "https://your-backend-api-url.com/sitemap.xml"
+            "destination": "https://elevoni-backend.vercel.app/sitemap.xml"
         },
         {
             "source": "/(.*)",
