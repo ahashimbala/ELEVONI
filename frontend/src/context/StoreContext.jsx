@@ -21,21 +21,36 @@ const StoreContextProvider = (props) => {
     }
 
     if (token) {
-      await axios.post(
-        url + "/api/cart/add",
-        { itemId },
-        { headers: { token } },
-      );
+      try {
+        await axios.post(
+          url + "/api/cart/add",
+          { itemId },
+          { headers: { token } },
+        );
+      } catch (error) {
+        console.error(
+          "Failed to sync added item to remote cart:",
+          error.message,
+        );
+      }
     }
   };
+
   const removeFromCart = async (itemId) => {
     setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] - 1 }));
     if (token) {
-      await axios.post(
-        url + "/api/cart/remove",
-        { itemId },
-        { headers: { token } },
-      );
+      try {
+        await axios.post(
+          url + "/api/cart/remove",
+          { itemId },
+          { headers: { token } },
+        );
+      } catch (error) {
+        console.error(
+          "Failed to sync removed item from remote cart:",
+          error.message,
+        );
+      }
     }
   };
 
@@ -44,24 +59,34 @@ const StoreContextProvider = (props) => {
     for (const item in cartItems) {
       if (cartItems[item] > 0) {
         let itemInfo = fish_list.find((product) => product._id === item);
-        totalAmount += itemInfo.price * cartItems[item];
+        if (itemInfo) {
+          totalAmount += itemInfo.price * cartItems[item];
+        }
       }
     }
     return totalAmount;
   };
 
   const fetchFishList = async () => {
-    const response = await axios.get(url + "/api/fish/list");
-    setFishList(response.data.data);
+    try {
+      const response = await axios.get(url + "/api/fish/list");
+      setFishList(response.data.data);
+    } catch (error) {
+      console.error("Failed to fetch product library listings:", error.message);
+    }
   };
 
   const loadCartData = async (token) => {
-    const response = await axios.post(
-      url + "/api/cart/get",
-      {},
-      { headers: { token } },
-    );
-    setCartItems(response.data.cartData);
+    try {
+      const response = await axios.post(
+        url + "/api/cart/get",
+        {},
+        { headers: { token } },
+      );
+      setCartItems(response.data.cartData || {});
+    } catch (error) {
+      console.error("Failed to retrieve user cart record:", error.message);
+    }
   };
 
   useEffect(() => {
@@ -89,6 +114,7 @@ const StoreContextProvider = (props) => {
     token,
     setToken,
   };
+
   return (
     <StoreContext.Provider value={contextValue}>
       {props.children}
