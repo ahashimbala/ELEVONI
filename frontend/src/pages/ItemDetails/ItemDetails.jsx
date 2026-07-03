@@ -1,5 +1,6 @@
 import React, { useContext, useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { StoreContext } from "../../context/StoreContext";
 import "./ItemDetails.css";
 
@@ -72,8 +73,52 @@ const ItemDetails = () => {
     }
   };
 
+  const schemaData = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: item.name,
+    image: gallery[0]?.src,
+    description: item.description,
+    category: item.category,
+    offers: {
+      "@type": "Offer",
+      url: window.location.href,
+      priceCurrency: "NGN",
+      price: item.price,
+      itemCondition: "https://schema.org/NewCondition",
+      availability: "https://schema.org/InStock",
+    },
+  };
+
   return (
     <div className="item-details">
+      <Helmet>
+        <title>{item.name} | Buy Fresh on Elevoni</title>
+        <meta
+          name="description"
+          content={`Purchase premium, fresh ${item.name} directly from verified local farms on Elevoni. ₦${item.price.toLocaleString()} per kg.`}
+        />
+        <link
+          rel="canonical"
+          href={`https://elevonifarms.vercel.app/product/${item._id}`}
+        />
+        <meta
+          property="og:title"
+          content={`${item.name} - Elevoni Marketplace`}
+        />
+        <meta
+          property="og:description"
+          content={`Get fresh ${item.name} direct from the pond to your kitchen.`}
+        />
+        <meta property="og:image" content={gallery[0]?.src} />
+        <meta
+          property="og:url"
+          content={`https://elevonifarms.vercel.app/product/${item._id}`}
+        />
+      </Helmet>
+
+      <script type="application/ld+json">{JSON.stringify(schemaData)}</script>
+
       <button className="back-btn" onClick={() => navigate(-1)}>
         ← Back
       </button>
