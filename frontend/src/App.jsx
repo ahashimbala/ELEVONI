@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import Navbar from "./components/Navbar/Navbar";
 import Home from "./pages/Home/Home";
 import Cart from "./pages/Cart/Cart";
@@ -24,7 +25,7 @@ ReactGA.send({
 const App = () => {
   const [showLogin, setShowLogin] = useState(false);
   return (
-    <>
+    <HelmetProvider>
       <ScrollToTop />
       {showLogin ? <LoginPopup setShowLogin={setShowLogin} /> : <></>}
       <div className="app">
@@ -40,7 +41,7 @@ const App = () => {
         </Routes>
       </div>
       <Footer />
-    </>
+    </HelmetProvider>
   );
 };
 
