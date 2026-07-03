@@ -5,4 +5,4 @@ Disallow: /cart
 Disallow: /order
 Disallow: /myorders
 
-Sitemap: https://elevonifarms.vercel.app/sitemap.xml
+Sitemap: https://elevoni-backend.vercel.app/sitemap.xml
