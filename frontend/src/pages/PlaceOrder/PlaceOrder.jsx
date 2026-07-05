@@ -35,7 +35,7 @@ const PlaceOrder = () => {
   };
 
   const totalAmount =
-    getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 500;
+    getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 2500;
 
   const getOrderItems = () => {
     let orderItems = [];
