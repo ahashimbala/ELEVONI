@@ -306,7 +306,7 @@ const PlaceOrder = () => {
             <hr />
             <div className="cart-total-details">
               <p>Delivery Fee</p>
-              <p>₦{(getTotalCartAmount() === 0 ? 0 : 500).toLocaleString()}</p>
+              <p>₦{(getTotalCartAmount() === 0 ? 0 : 2500).toLocaleString()}</p>
             </div>
             <hr />
             <div className="cart-total-details">
