@@ -15,8 +15,15 @@ const MyOrders = () => {
         {},
         { headers: { token } },
       );
-      setData(response.data.data);
+
+      if (response.data.success) {
+        setData(Array.isArray(response.data.data) ? response.data.data : []);
+      } else {
+        setData([]);
+        console.error("Failed to fetch orders:", response.data.message);
+      }
     } catch (error) {
+      setData([]);
       console.error("Error fetching orders:", error);
     }
   };
@@ -24,24 +31,30 @@ const MyOrders = () => {
   useEffect(() => {
     if (token) {
       fetchOrders();
+    } else {
+      setData([]);
     }
   }, [token]);
 
   const handleTrackOnWhatsApp = (order) => {
     const phoneNumber = "2348135738991";
 
-    const itemsText = order.items
-      .map((item) => `${item.name} x ${item.quantity}`)
-      .join(", ");
+    const itemsText = Array.isArray(order.items)
+      ? order.items.map((item) => `${item.name} x ${item.quantity}`).join(", ")
+      : "";
+
+    const firstName = order.address?.firstName || "";
+    const lastName = order.address?.lastName || "";
 
     const message =
       `Hello, I'd like to check the status of my order!\n\n` +
-      `Name: ${order.address.firstName} ${order.address.lastName}\n` +
+      `Name: ${firstName} ${lastName}\n` +
       `Items: ${itemsText}\n` +
-      `Total Amount:₦${order.amount}.00\n` +
-      `Current Status: ${order.status}`;
+      `Total Amount: ₦${order.amount || 0}.00\n` +
+      `Current Status: ${order.status || "Processing"}`;
 
     const encodedMessage = encodeURIComponent(message);
+
     window.open(
       `https://wa.me/${phoneNumber}?text=${encodedMessage}`,
       "_blank",
@@ -51,27 +64,33 @@ const MyOrders = () => {
   return (
     <div className="my-orders">
       <h2>My Orders</h2>
+
       <div className="container">
         {data.length === 0 ? (
           <p>You haven't placed any orders yet.</p>
         ) : (
           data.map((order, index) => {
+            const items = Array.isArray(order.items) ? order.items : [];
+
             return (
-              <div key={index} className="my-orders-order">
+              <div key={order._id || index} className="my-orders-order">
                 <img src={assets.parcel_icon} alt="" />
+
                 <p>
-                  {order.items.map((item, itemIndex) => {
-                    if (itemIndex === order.items.length - 1) {
-                      return item.name + " x " + item.quantity;
-                    } else {
-                      return item.name + " x " + item.quantity + ", ";
-                    }
-                  })}
+                  {items.map((item, itemIndex) => (
+                    <React.Fragment key={itemIndex}>
+                      {item.name} x {item.quantity}
+                      {itemIndex !== items.length - 1 ? ", " : ""}
+                    </React.Fragment>
+                  ))}
                 </p>
-                <p>₦{order.amount}.00</p>
-                <p>Items: {order.items.length}</p>
+
+                <p>₦{Number(order.amount || 0).toLocaleString()}.00</p>
+
+                <p>Items: {items.length}</p>
+
                 <p>
-                  <span>&#x25cf;</span> <b>{order.status}</b>
+                  <span>&#x25cf;</span> <b>{order.status || "Processing"}</b>
                 </p>
 
                 <button
