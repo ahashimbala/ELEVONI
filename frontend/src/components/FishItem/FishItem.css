@@ -41,6 +41,7 @@
     flex-direction: column;
     flex-grow: 1;
     gap: 8px;
+    width: 100%;
 }
 
 .fish-item-name-rating {
@@ -69,17 +70,98 @@
     flex-grow: 1;
 }
 
+.price-display-wrapper {
+    margin: 4px 0;
+}
+
 .fish-item-price {
     color: #676767;
     font-size: 24px;
     font-weight: 700;
-    margin: 8px 0;
+    margin: 0;
 }
 
 #qty {
     color: #6b7280;
     font-size: 14px;
     font-weight: 400;
+}
+
+
+/* Compact Wholesale Box - Stacked Cards Prevent Text Overflow */
+
+.wholesale-pricing {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f4f5ed;
+    font-size: 13px;
+    line-height: 1.5;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.wholesale-header {
+    margin-bottom: 8px;
+}
+
+.wholesale-title {
+    font-weight: 700;
+    font-size: 12px;
+    color: #111827;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.wholesale-tiers-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.tier-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.tier-range {
+    color: #374151;
+    font-weight: 500;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.tier-rate {
+    color: #111827;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1.2;
+    margin-top: 3px;
+}
+
+.tier-card.active-tier {
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    border-color: #d1d5db;
+}
+
+.fish-size-note {
+    margin: 8px 0 0 0 !important;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.35;
 }
 
 .buttons-container {

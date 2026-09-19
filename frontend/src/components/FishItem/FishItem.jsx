@@ -2,11 +2,16 @@ import React, { useContext } from "react";
 import "./FishItem.css";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
+import getProductPrice from "../../utils/pricing";
 
 const FishItem = ({ id, name, image, price, description }) => {
   const { cartItems, addtoCart, removeFromCart, url } =
     useContext(StoreContext);
   const navigate = useNavigate();
+
+  const quantity = cartItems?.[id] || 0;
+  const isSmokedCatfish = name?.toLowerCase().includes("smoked catfish");
+  const currentPrice = getProductPrice({ name, price }, quantity || 1);
 
   return (
     <div className="fish-item">
@@ -25,11 +30,57 @@ const FishItem = ({ id, name, image, price, description }) => {
         <div className="fish-item-name-rating">
           <p>{name}</p>
         </div>
+
         <p className="fish-item-desc">{description}</p>
-        <p className="fish-item-price">
-          ₦{price.toLocaleString()}
-          <span id="qty"> per kg</span>
-        </p>
+
+        <div className="price-display-wrapper">
+          <p className="fish-item-price">
+            ₦{currentPrice.toLocaleString()}
+            <span id="qty"> per kg</span>
+          </p>
+        </div>
+
+        {isSmokedCatfish && (
+          <div className="wholesale-pricing">
+            <div className="wholesale-header">
+              <p className="wholesale-title">Wholesale pricing</p>
+            </div>
+
+            <div className="wholesale-tiers-grid">
+              <div
+                className={`tier-card ${quantity >= 1 && quantity <= 4 ? "active-tier" : ""}`}
+              >
+                <span className="tier-range">1–4 kg</span>
+                <span className="tier-rate">₦25,000/kg</span>
+              </div>
+
+              <div
+                className={`tier-card ${quantity >= 5 && quantity <= 9 ? "active-tier" : ""}`}
+              >
+                <span className="tier-range">5–9 kg</span>
+                <span className="tier-rate">₦24,000/kg</span>
+              </div>
+
+              <div
+                className={`tier-card ${quantity >= 10 && quantity <= 19 ? "active-tier" : ""}`}
+              >
+                <span className="tier-range">10–19 kg</span>
+                <span className="tier-rate">₦22,500/kg</span>
+              </div>
+
+              <div
+                className={`tier-card ${quantity >= 20 ? "active-tier" : ""}`}
+              >
+                <span className="tier-range">20+ kg</span>
+                <span className="tier-rate">₦21,000/kg</span>
+              </div>
+            </div>
+
+            <p className="fish-size-note">
+              Standard size: 5 pieces per kg. Larger sizes available on request.
+            </p>
+          </div>
+        )}
 
         <div className="buttons-container">
           {!cartItems?.[id] ? (

@@ -1,14 +1,28 @@
 import React, { useContext } from "react";
 import "./Cart.css";
 import { StoreContext } from "../../context/StoreContext";
-import { fish_list } from "../../assets/assets";
 import { useNavigate } from "react-router-dom";
+import getProductPrice from "../../utils/pricing";
 
 const Cart = () => {
-  const { cartItems, fish_list, removeFromCart, getTotalCartAmount, url } =
+  const { cartItems, fish_list, removeFromCart, url } =
     useContext(StoreContext);
 
   const navigate = useNavigate();
+
+  let subtotal = 0;
+
+  fish_list.forEach((item) => {
+    const quantity = cartItems?.[item._id] || 0;
+
+    if (quantity > 0) {
+      const price = getProductPrice(item, quantity);
+      subtotal += price * quantity;
+    }
+  });
+
+  const deliveryFee = subtotal === 0 ? 0 : 2500;
+  const total = subtotal + deliveryFee;
 
   return (
     <div className="cart">
@@ -21,12 +35,19 @@ const Cart = () => {
           <p>Total</p>
           <p>Remove</p>
         </div>
+
         <br />
         <hr />
-        {fish_list.map((item, index) => {
-          if (cartItems?.[item._id] > 0) {
+
+        {fish_list.map((item) => {
+          const quantity = cartItems?.[item._id] || 0;
+
+          if (quantity > 0) {
+            const price = getProductPrice(item, quantity);
+            const itemTotal = price * quantity;
+
             return (
-              <div>
+              <div key={item._id}>
                 <div className="cart-items-title cart-items-item">
                   <img
                     src={
@@ -36,42 +57,54 @@ const Cart = () => {
                     }
                     alt={item.name}
                   />
+
                   <p>{item.name}</p>
-                  <p>₦{item.price}</p>
-                  <p>{cartItems?.[item._id]}</p> {/* Added ?. here too */}
-                  <p>₦{item.price * cartItems?.[item._id]}</p>{" "}
-                  {/* Added ?. here too */}
+
+                  <p>₦{price.toLocaleString()}</p>
+
+                  <p>{quantity}</p>
+
+                  <p>₦{itemTotal.toLocaleString()}</p>
+
                   <p onClick={() => removeFromCart(item._id)} className="cross">
                     x
                   </p>
                 </div>
+
                 <hr />
               </div>
             );
           }
+
+          return null;
         })}
       </div>
+
       <div className="cart-bottom">
         <div className="cart-total">
           <h2>Cart Total</h2>
+
           <div>
             <div className="cart-total-details">
               <p>Subtotal</p>
-              <p>₦{getTotalCartAmount()}</p>
+              <p>₦{subtotal.toLocaleString()}</p>
             </div>
+
             <hr />
+
             <div className="cart-total-details">
               <p>Delivery Fee</p>
-              <p>₦{getTotalCartAmount() === 0 ? 0 : 2500}</p>
+              <p>₦{deliveryFee.toLocaleString()}</p>
             </div>
+
             <hr />
+
             <div className="cart-total-details">
               <b>Total</b>
-              <b>
-                ₦{getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 2500}
-              </b>
+              <b>₦{total.toLocaleString()}</b>
             </div>
           </div>
+
           <button onClick={() => navigate("/order")}>
             PROCEED TO CHECKOUT
           </button>

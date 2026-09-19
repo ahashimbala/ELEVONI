@@ -1,24 +1,51 @@
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
-
+import { calculateOrderAmount } from "./orderPricing.js";
 
 const placeOrder = async(req, res) => {
     try {
+        const {
+            items,
+            address,
+            payment = false,
+            paymentReference = null
+        } = req.body;
+
+        const userId = req.userId;
+
+        if (!userId) {
+            return res.json({
+                success: false,
+                message: "User authentication required"
+            });
+        }
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.json({
+                success: false,
+                message: "Order items are required"
+            });
+        }
+
+        const amount = await calculateOrderAmount(items);
 
         const newOrder = new orderModel({
-            userId: req.body.userId,
-            items: req.body.items,
-            amount: req.body.amount,
-            address: req.body.address,
-            status: "Order Placed (Pending WhatsApp)"
+            userId,
+            items,
+            amount,
+            address,
+            payment,
+            paymentReference,
+            status: payment ?
+                "Order Placed" :
+                "Order Placed (Pending WhatsApp)"
         });
-
 
         await newOrder.save();
 
-
-        await userModel.findByIdAndUpdate(req.body.userId, { cartData: {} });
-
+        await userModel.findByIdAndUpdate(userId, {
+            cartData: {}
+        });
 
         res.json({
             success: true,
@@ -27,43 +54,89 @@ const placeOrder = async(req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: "Error saving order to database" });
+        console.log("Place Order Error:", error);
+
+        res.json({
+            success: false,
+            message: error.message || "Error saving order to database"
+        });
     }
-}
-
-
+};
 const userOrders = async(req, res) => {
     try {
-        const orders = await orderModel.find({ userId: req.body.userId });
-        res.json({ success: true, data: orders })
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: "Error retrieving orders" })
-    }
-}
+        const userId = req.userId;
 
-// Listing orders for admin panel
+        if (!userId) {
+            return res.json({
+                success: false,
+                message: "User authentication required"
+            });
+        }
+
+        const orders = await orderModel.find({
+            userId
+        });
+
+        res.json({
+            success: true,
+            data: orders
+        });
+
+    } catch (error) {
+        console.log("User Orders Error:", error);
+
+        res.json({
+            success: false,
+            message: "Error retrieving orders"
+        });
+    }
+};
+
 const listOrders = async(req, res) => {
     try {
         const orders = await orderModel.find({});
-        res.json({ success: true, data: orders })
+
+        res.json({
+            success: true,
+            data: orders
+        });
+
     } catch (error) {
         console.log(error);
-        res.json({ success: false, message: "Error" })
-    }
-}
 
-// api for updating order status
+        res.json({
+            success: false,
+            message: "Error"
+        });
+    }
+};
+
 const updateStatus = async(req, res) => {
     try {
-        await orderModel.findByIdAndUpdate(req.body.orderId, { status: req.body.status })
-        res.json({ success: true, message: "Status Updated" })
+        await orderModel.findByIdAndUpdate(
+            req.body.orderId, {
+                status: req.body.status
+            }
+        );
+
+        res.json({
+            success: true,
+            message: "Status Updated"
+        });
+
     } catch (error) {
         console.log(error);
-        res.json({ success: false, message: "Error" })
 
+        res.json({
+            success: false,
+            message: "Error"
+        });
     }
-}
+};
 
-export { placeOrder, userOrders, listOrders, updateStatus }
+export {
+    placeOrder,
+    userOrders,
+    listOrders,
+    updateStatus
+};

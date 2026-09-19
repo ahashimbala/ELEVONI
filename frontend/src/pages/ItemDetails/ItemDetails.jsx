@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { StoreContext } from "../../context/StoreContext";
 import "./ItemDetails.css";
+import getProductPrice from "../../utils/pricing";
 
 const ItemDetails = () => {
   const { id } = useParams();
@@ -32,6 +33,8 @@ const ItemDetails = () => {
     );
   }
 
+  const quantity = cartItems?.[item._id] || 0;
+  const currentPrice = getProductPrice(item, quantity || 1);
   const gallery = [
     {
       type: "image",
@@ -67,12 +70,6 @@ const ItemDetails = () => {
 
   const safeIndex = Math.min(selected, gallery.length - 1);
 
-  const handlePlayVideo = () => {
-    if (videoRef.current) {
-      videoRef.current.play();
-    }
-  };
-
   const schemaData = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -84,7 +81,7 @@ const ItemDetails = () => {
       "@type": "Offer",
       url: window.location.href,
       priceCurrency: "NGN",
-      price: item.price,
+      price: currentPrice,
       itemCondition: "https://schema.org/NewCondition",
       availability: "https://schema.org/InStock",
     },
@@ -96,7 +93,7 @@ const ItemDetails = () => {
         <title>{item.name} | Buy Fresh on Elevoni</title>
         <meta
           name="description"
-          content={`Purchase premium, fresh ${item.name} directly from verified local farms on Elevoni. ₦${item.price.toLocaleString()} per kg.`}
+          content={`Purchase premium, fresh ${item.name} directly from verified local farms on Elevoni. ₦${currentPrice.toLocaleString()} per kg.`}
         />
         <link
           rel="canonical"
@@ -178,10 +175,60 @@ const ItemDetails = () => {
             Category: <span>{item.category}</span>
           </p>
 
-          <p className="item-details-price">
-            ₦{item.price.toLocaleString()}
-            <span className="price-unit"> per kg</span>
-          </p>
+          <div className="price-header-block">
+            <p className="item-details-price">
+              ₦{currentPrice.toLocaleString()}
+              <span className="price-unit"> per kg</span>
+            </p>
+
+            {quantity > 0 && (
+              <p className="selected-price">
+                {quantity} kg × ₦{currentPrice.toLocaleString()} = ₦
+                {(quantity * currentPrice).toLocaleString()}
+              </p>
+            )}
+          </div>
+
+          {item.name?.toLowerCase().includes("smoked catfish") && (
+            <div className="wholesale-pricing">
+              <p className="wholesale-title">Wholesale pricing</p>
+
+              <div className="wholesale-tiers-grid">
+                <div
+                  className={`tier-card ${quantity >= 1 && quantity <= 4 ? "active-tier" : ""}`}
+                >
+                  <span className="tier-range">1–4 kg</span>
+                  <span className="tier-rate">₦25,000/kg</span>
+                </div>
+
+                <div
+                  className={`tier-card ${quantity >= 5 && quantity <= 9 ? "active-tier" : ""}`}
+                >
+                  <span className="tier-range">5–9 kg</span>
+                  <span className="tier-rate">₦24,000/kg</span>
+                </div>
+
+                <div
+                  className={`tier-card ${quantity >= 10 && quantity <= 19 ? "active-tier" : ""}`}
+                >
+                  <span className="tier-range">10–19 kg</span>
+                  <span className="tier-rate">₦22,500/kg</span>
+                </div>
+
+                <div
+                  className={`tier-card ${quantity >= 20 ? "active-tier" : ""}`}
+                >
+                  <span className="tier-range">20+ kg</span>
+                  <span className="tier-rate">₦21,000/kg</span>
+                </div>
+              </div>
+
+              <p className="fish-size-note">
+                Standard size: 5 pieces per kg. Larger sizes available on
+                request.
+              </p>
+            </div>
+          )}
 
           <p className="item-details-desc">{item.description}</p>
 
