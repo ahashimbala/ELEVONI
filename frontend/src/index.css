@@ -10,6 +10,11 @@
     scroll-behavior: smooth;
 }
 
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 170px;
+}
+
 body {
     min-height: 100vh;
     overflow-x: hidden;

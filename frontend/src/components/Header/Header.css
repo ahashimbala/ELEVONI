@@ -1,76 +1,139 @@
+/* ==========================================
+   Hero Section (.header) - Container Bounded
+   ========================================== */
+
 .header {
-    height: 35vw;
-    margin: 0;
+    position: relative;
+    width: 100%;
+    min-height: 420px;
+    height: 34vw;
+    max-height: 520px;
+    margin: 20px 0 30px 0;
+    border-radius: 20px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    /* Clean background image without gradient overlay */
     background: url('/header4.png') no-repeat;
     background-size: cover;
     background-position: center;
-    position: relative;
-    width: 100%;
 }
 
+
+/* Inner Text & Content Layout */
+
 .header-contents {
-    position: absolute;
+    width: 100%;
+    padding: 0 4vw;
     display: flex;
     flex-direction: column;
-    align-items: start;
-    gap: 1.5vw;
-    max-width: 70%;
-    bottom: 15%;
-    left: 4vw;
-    animation: fadeIn 3s;
+    align-items: flex-start;
+    gap: 1.25rem;
+    z-index: 2;
+    animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .header-contents h2 {
-    font-weight: 500;
+    font-size: clamp(2rem, 3.5vw + 0.5rem, 3.2rem);
+    font-weight: 600;
     color: #a36c48;
-    font-size: max(4.5vw, 22px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    max-width: 580px;
 }
 
 .header-contents p {
     color: #6E4930;
-    font-size: max(1.2vw, 14px);
-    max-width: 45%;
+    font-size: clamp(0.95rem, 1.1vw + 0.2rem, 1.1rem);
+    line-height: 1.6;
+    max-width: 480px;
+    font-weight: 400;
 }
 
 .header-contents button {
-    border: none;
+    border: 1px solid #D8D6CA;
     color: #6E4930;
     font-weight: 500;
-    padding: 1vw 2.2vw;
-    background-color: white;
-    font-size: max(1vw, 14px);
+    padding: 0.85rem 2.25rem;
+    background-color: #ffffff;
+    font-size: 1rem;
     border-radius: 50px;
     cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-@media (max-width: 1050px) {
+.header-contents button:hover {
+    background-color: #f1dfd2;
+    border-color: #928975;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(163, 108, 72, 0.15);
+}
+
+.header-contents button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+
+/* Tablet Adaptations (< 900px) */
+
+@media (max-width: 900px) {
+    .header {
+        min-height: 340px;
+        height: 44vw;
+        border-radius: 16px;
+    }
     .header-contents {
-        max-width: 60%;
+        padding: 0 24px;
+        gap: 1rem;
     }
     .header-contents p {
-        max-width: 70%;
+        max-width: 80%;
     }
 }
 
-@media (max-width: 750px) {
+
+/* Mobile Devices (< 600px) - Full Screen Width Breakout */
+
+@media (max-width: 600px) {
     .header {
+        /* Full-width breakout from global .app container */
+        width: 100vw;
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+        border-radius: 0;
+        /* Height & image framing */
+        min-height: 290px;
         height: 50vw;
+        max-height: 420px;
+        margin-top: 0;
+        margin-bottom: 24px;
+        background-size: cover;
+        /* Subtle nudge to the right (65% instead of 100%) */
+        background-position: 75% 30%;
     }
     .header-contents {
-        max-width: 85%;
-        left: 15px;
-        bottom: 15%;
-        gap: 15px;
+        padding: 0 20px;
+        gap: 0.75rem;
     }
     .header-contents h2 {
-        font-size: 28px;
-        line-height: 1.2;
+        font-size: clamp(1.35rem, 5vw, 1.75rem);
     }
     .header-contents p {
-        display: none;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        max-width: 100%;
     }
     .header-contents button {
-        padding: 12px 24px;
-        font-size: 16px;
+        padding: 0.65rem 1.4rem;
+        font-size: 0.88rem;
     }
 }

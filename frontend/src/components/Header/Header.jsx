@@ -10,7 +10,10 @@ const Header = () => {
           Delivered to Your <br />
           Doorstep
         </h2>
-        <p>We farm and smoke premium catfish in Nigeria.</p>
+        <p>
+          We farm and smoke premium catfish in <br />
+          Nigeria.
+        </p>
         <button>Shop Now</button>
       </div>
     </div>
