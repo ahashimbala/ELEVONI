@@ -1,0 +1,118 @@
+.info-page-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 40px;
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.07);
+    box-sizing: border-box;
+    animation: fadeIn 0.5s ease-out;
+}
+
+
+/* Typography Header Hierarchy */
+
+.info-page-container h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #111827;
+    margin-top: 0;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+}
+
+.info-page-subtitle {
+    font-size: 16px;
+    color: #676767;
+    margin-bottom: 32px;
+    line-height: 1.5;
+}
+
+.info-page-container h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+    margin-top: 32px;
+    margin-bottom: 12px;
+}
+
+.info-page-container h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin-top: 20px;
+    margin-bottom: 8px;
+}
+
+.info-page-container p {
+    color: #374151;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+}
+
+
+/* Warm Accent Callout Box - Matches .wholesale-pricing palette */
+
+.info-callout-box {
+    background: #f4f5ed;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 24px 0;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.info-callout-box h3 {
+    margin-top: 0;
+    color: #111827;
+}
+
+
+/* Bullet Lists */
+
+.info-page-container ul {
+    padding-left: 20px;
+    margin: 0 0 20px 0;
+}
+
+.info-page-container li {
+    color: #374151;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+.info-page-container strong {
+    color: #111827;
+}
+
+
+/* Responsive Scaling */
+
+@media (max-width: 768px) {
+    .info-page-container {
+        margin: 20px auto;
+        padding: 24px 20px;
+        border-radius: 14px;
+    }
+    .info-page-container h1 {
+        font-size: 26px;
+    }
+    .info-page-container h2 {
+        font-size: 19px;
+    }
+}
+
+@media (max-width: 480px) {
+    .info-page-container {
+        padding: 18px 15px;
+    }
+    .info-page-container h1 {
+        font-size: 22px;
+    }
+    .info-page-container p,
+    .info-page-container li {
+        font-size: 14px;
+    }
+}
