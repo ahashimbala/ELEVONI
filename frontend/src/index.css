@@ -1,9 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@100..900&display=swap');
+
+/* Global Reset & Base Typography */
+
 * {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
-    font-family: Outfit, sans-serif;
+    font-family: 'Outfit', sans-serif;
     scroll-behavior: smooth;
 }
 
@@ -17,11 +20,19 @@ a {
     color: inherit;
 }
 
+
+/* Modern FAANG Layout Container */
+
 .app {
-    width: 80%;
-    margin: auto;
+    width: 100%;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 24px;
     box-sizing: border-box;
 }
+
+
+/* Common Animations */
 
 @keyframes fadeIn {
     0% {
@@ -32,15 +43,11 @@ a {
     }
 }
 
-@media (max-width: 1050px) {
-    .app {
-        width: 90%;
-    }
-}
 
-@media (max-width: 768px) {
+/* Screen Size Adaptations */
+
+@media (max-width: 480px) {
     .app {
-        width: 100%;
-        padding: 0;
+        padding: 0 16px;
     }
 }

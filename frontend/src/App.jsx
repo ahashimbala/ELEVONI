@@ -10,7 +10,9 @@ import Reviews from "./components/Reviews/Reviews";
 import Footer from "./components/Footer/Footer";
 import LoginPopup from "./components/LoginPopup/LoginPopup";
 import ScrollToTop from "./components/ScrollToTop";
-import Success from "./components/SuccessPage/Success";
+import AboutUs from "./pages/InfoPages/AboutUs";
+import Delivery from "./pages/InfoPages/Delivery";
+import PrivacyPolicy from "./pages/InfoPages/PrivacyPolicy";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -28,16 +30,18 @@ const App = () => {
     <HelmetProvider>
       <ScrollToTop />
       {showLogin ? <LoginPopup setShowLogin={setShowLogin} /> : <></>}
+      <Navbar setShowLogin={setShowLogin} />
       <div className="app">
         <ToastContainer position="top-right" autoClose={3000} theme="light" />
-        <Navbar setShowLogin={setShowLogin} />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/order" element={<PlaceOrder />} />
           <Route path="/myorders" element={<MyOrders />} />
           <Route path="/product/:id" element={<ItemDetails />} />
-          <Route path="/success" element={<Success />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/delivery" element={<Delivery />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
         </Routes>
       </div>
       <Footer />
