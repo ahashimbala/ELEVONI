@@ -54,16 +54,46 @@ const StoreContextProvider = (props) => {
     }
   };
 
+  const getProductPrice = (itemInfo, quantity) => {
+    const isSmokedCatfish = itemInfo.name
+      ?.toLowerCase()
+      .includes("smoked catfish");
+
+    if (!isSmokedCatfish) {
+      return itemInfo.price;
+    }
+
+    if (quantity >= 20) {
+      return 21000;
+    }
+
+    if (quantity >= 10) {
+      return 22500;
+    }
+
+    if (quantity >= 5) {
+      return 24000;
+    }
+
+    return 25000;
+  };
+
   const getTotalCartAmount = () => {
     let totalAmount = 0;
+
     for (const item in cartItems) {
       if (cartItems[item] > 0) {
-        let itemInfo = fish_list.find((product) => product._id === item);
+        const itemInfo = fish_list.find((product) => product._id === item);
+
         if (itemInfo) {
-          totalAmount += itemInfo.price * cartItems[item];
+          const quantity = cartItems[item];
+          const price = getProductPrice(itemInfo, quantity);
+
+          totalAmount += price * quantity;
         }
       }
     }
+
     return totalAmount;
   };
 

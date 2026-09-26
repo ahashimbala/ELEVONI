@@ -1,78 +1,67 @@
 import userModel from "../models/userModel.js";
-import jwt from "jsonwebtoken"
-import bcrypt from "bcrypt"
-import validator from "validator"
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import validator from "validator";
 
+const createToken = (user) => jwt.sign(
+    { id: user._id.toString(), role: user.role || "customer" },
+    process.env.JWT_SECRET,
+    { algorithm: "HS256", expiresIn: "24h" }
+);
 
-// login user
-const loginUser = async(req, res) => {
+const safeUser = (user) => ({
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role || "customer"
+});
+
+const loginUser = async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await userModel.findOne({ email });
-
-        if (!user) {
-            return res.json({ success: false, message: "User Doesn't exist" })
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ success: false, message: "Invalid email or password" });
         }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.json({ success: false, message: "Invalid credentials" })
-        }
-
-        const token = createToken(user._id);
-        res.json({ success: true, token })
-
-
+        return res.json({ success: true, token: createToken(user), user: safeUser(user) });
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: "Error" })
-
+        console.error("Login error:", error);
+        return res.status(500).json({ success: false, message: "Unable to log in" });
     }
-}
+};
 
-const createToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET)
-}
-
-// register user
-const registerUser = async(req, res) => {
+const registerUser = async (req, res) => {
     const { name, password, email } = req.body;
     try {
-        // checking if user already exists
-        const exists = await userModel.findOne({ email })
-        if (exists) {
-            return res.json({ success: false, message: "User already exists" })
+        if (!name || typeof name !== "string" || !password || typeof password !== "string" || !email) {
+            return res.status(400).json({ success: false, message: "Name, email, and password are required" });
         }
-
-        // validating email format and strong password
-
+        if (await userModel.findOne({ email })) {
+            return res.status(409).json({ success: false, message: "User already exists" });
+        }
         if (!validator.isEmail(email)) {
-            return res.json({ success: false, message: "Please enter a valid email" })
+            return res.status(400).json({ success: false, message: "Please enter a valid email" });
         }
-
         if (password.length < 8) {
-            return res.json({ success: false, message: "Please enter a strong password" })
+            return res.status(400).json({ success: false, message: "Please enter a strong password" });
         }
-
-        // hashing user password
-        const salt = await bcrypt.genSalt(10)
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUser = new userModel({
-            name: name,
-            email: email,
-            password: hashedPassword
-        })
-
-        const user = await newUser.save()
-        const token = createToken(user._id)
-        res.json({ success: true, token })
-
+        const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
+        const user = await new userModel({ name, email, password: hashedPassword, role: "customer" }).save();
+        return res.status(201).json({ success: true, token: createToken(user), user: safeUser(user) });
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: "Error" })
-
+        console.error("Registration error:", error);
+        return res.status(500).json({ success: false, message: "Unable to register" });
     }
-}
+};
 
-export { loginUser, registerUser }
+const currentUser = async (req, res) => {
+    try {
+        const user = await userModel.findById(req.auth.userId).select("name email role");
+        if (!user) return res.status(401).json({ success: false, message: "Authentication required" });
+        return res.json({ success: true, user });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: "Unable to load account" });
+    }
+};
+
+export { loginUser, registerUser, currentUser };

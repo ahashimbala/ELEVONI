@@ -5,14 +5,14 @@ import userModel from "../models/userModel.js";
 
 const addReview = async(req, res) => {
     try {
-        const user = await userModel.findById(req.body.userId);
+        const user = await userModel.findById(req.auth.userId);
 
         if (!user) {
             return res.json({ success: false, message: "User account not found. Please log in again." });
         }
 
         const newReview = new reviewModel({
-            userId: req.body.userId,
+            userId: req.auth.userId,
             name: user.name,
             comment: req.body.comment,
             rating: req.body.rating

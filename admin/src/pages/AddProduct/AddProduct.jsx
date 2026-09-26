@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "./AddProduct.css";
@@ -32,7 +32,7 @@ const AddProduct = ({ url }) => {
       formData.append("category", data.category);
       formData.append("image", image);
 
-      const res = await axios.post(`${url}/api/fish/add`, formData);
+      const res = await api.post(`${url}/api/fish/add`, formData);
 
       if (res.data.success) {
         toast.success("Product created successfully");

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../../api";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import "./AddMedia.css";
@@ -21,7 +21,7 @@ const AddMedia = ({ url }) => {
         formData.append("media", media[i]);
       }
 
-      const res = await axios.post(`${url}/api/fish/add-media`, formData);
+      const res = await api.post(`${url}/api/fish/add-media`, formData);
 
       if (res.data.success) {
         toast.success("Media uploaded successfully");

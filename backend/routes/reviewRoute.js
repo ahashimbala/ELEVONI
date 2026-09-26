@@ -1,5 +1,5 @@
 import express from "express";
-import authMiddleware from "../middleware/auth.js";
+import authMiddleware, { requireRole } from "../middleware/auth.js";
 
 import {
     addReview,
@@ -14,6 +14,7 @@ const reviewRouter = express.Router();
 reviewRouter.post(
     "/add",
     authMiddleware,
+    requireRole("customer"),
     addReview
 );
 
@@ -24,16 +25,22 @@ reviewRouter.get(
 
 reviewRouter.get(
     "/admin-list",
+    authMiddleware,
+    requireRole("admin"),
     listAllReviews
 );
 
 reviewRouter.post(
     "/approve",
+    authMiddleware,
+    requireRole("admin"),
     approveReview
 );
 
 reviewRouter.post(
     "/delete",
+    authMiddleware,
+    requireRole("admin"),
     deleteReview
 );
 

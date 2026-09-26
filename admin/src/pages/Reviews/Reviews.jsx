@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../../api";
 import { useEffect, useState } from "react";
 import "./Reviews.css";
 
@@ -6,7 +6,7 @@ const Reviews = ({ url }) => {
   const [reviews, setReviews] = useState([]);
 
   const fetchReviews = async () => {
-    const response = await axios.get(`${url}/api/review/admin-list`);
+    const response = await api.get(`${url}/api/review/admin-list`);
 
     if (response.data.success) {
       setReviews(response.data.data);
@@ -14,13 +14,13 @@ const Reviews = ({ url }) => {
   };
 
   const approveReview = async (id) => {
-    await axios.post(`${url}/api/review/approve`, { id });
+    await api.post(`${url}/api/review/approve`, { id });
 
     fetchReviews();
   };
 
   const deleteReview = async (id) => {
-    await axios.post(`${url}/api/review/delete`, { id });
+    await api.post(`${url}/api/review/delete`, { id });
 
     fetchReviews();
   };

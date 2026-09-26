@@ -11,7 +11,7 @@ const placeOrder = async(req, res) => {
             paymentReference = null
         } = req.body;
 
-        const userId = req.userId;
+        const userId = req.auth.userId;
 
         if (!userId) {
             return res.json({
@@ -64,7 +64,7 @@ const placeOrder = async(req, res) => {
 };
 const userOrders = async(req, res) => {
     try {
-        const userId = req.userId;
+        const userId = req.auth.userId;
 
         if (!userId) {
             return res.json({

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import "./List.css";
@@ -10,7 +10,7 @@ const List = ({ url }) => {
 
   const fetchList = async () => {
     try {
-      const response = await axios.get(`${url}/api/fish/list`);
+      const response = await api.get(`${url}/api/fish/list`);
 
       if (response.data.success) {
         setList(response.data.data);
@@ -24,7 +24,7 @@ const List = ({ url }) => {
 
   const removeFish = async (fishId) => {
     try {
-      const response = await axios.post(`${url}/api/fish/remove`, {
+      const response = await api.post(`${url}/api/fish/remove`, {
         id: fishId,
       });
 

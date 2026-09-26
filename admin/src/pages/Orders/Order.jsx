@@ -3,14 +3,14 @@ import "./Order.css";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useEffect } from "react";
-import axios from "axios";
+import api from "../../api";
 import { assets } from "../../assets/assets";
 
 const Order = ({ url }) => {
   const [orders, setOrders] = useState([]);
 
   const fetchAllOrders = async () => {
-    const response = await axios.get(url + "/api/order/list");
+    const response = await api.get(url + "/api/order/list");
     if (response.data.success) {
       setOrders(response.data.data);
       console.log(response.data.data);
@@ -20,7 +20,7 @@ const Order = ({ url }) => {
   };
 
   const statusHandler = async (event, orderId) => {
-    const response = await axios.post(url + "/api/order/status", {
+    const response = await api.post(url + "/api/order/status", {
       orderId,
       status: event.target.value,
     });
