@@ -1,8 +1,187 @@
-.admin-login-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #f4f6f4; }
-.admin-login-card { width: min(100%, 400px); display: grid; gap: 16px; padding: 32px; background: #fff; border-radius: 12px; box-shadow: 0 8px 32px #19382218; }
-.admin-login-card h1, .admin-login-card p { margin: 0; }
-.admin-login-card label { display: grid; gap: 6px; }
-.admin-login-card input { padding: 12px; border: 1px solid #cbd5cc; border-radius: 6px; font: inherit; }
-.admin-login-card button { padding: 12px; border: 0; border-radius: 6px; background: #285c38; color: #fff; font: inherit; cursor: pointer; }
-.admin-login-card button:disabled { opacity: .65; cursor: wait; }
-.admin-login-error { color: #a32222; }
+/* Page Layout */
+
+.admin-login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: #f4f6f4;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.admin-login-container {
+    width: 100%;
+    max-width: 440px;
+}
+
+
+/* Card Container */
+
+.admin-login-card {
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 36px 32px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.07);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: fadeIn 0.6s ease-out;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.admin-login-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+
+/* Header Section */
+
+.admin-login-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-badge {
+    align-self: flex-start;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #f4f5ed;
+    color: #374151;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.admin-login-card h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111827;
+    margin: 4px 0 0 0;
+    line-height: 1.2;
+}
+
+.admin-login-card p {
+    font-size: 14px;
+    color: #676767;
+    margin: 0;
+    line-height: 1.5;
+}
+
+
+/* Input Fields */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #111827;
+    background: #ffffff;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.form-group input::placeholder {
+    color: #9ca3af;
+}
+
+.form-group input:focus {
+    border-color: #285c38;
+    box-shadow: 0 0 0 3px rgba(40, 92, 56, 0.12);
+}
+
+
+/* Error State */
+
+.admin-login-error {
+    padding: 10px 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    color: #b91c1c;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+
+/* Action Button */
+
+.admin-submit-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: #285c38;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    margin-top: 4px;
+}
+
+.admin-submit-btn:hover {
+    background: #1e452a;
+    box-shadow: 0 2px 8px rgba(40, 92, 56, 0.25);
+}
+
+.admin-submit-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+
+/* Entrance Animation */
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Mobile Responsiveness */
+
+@media (max-width: 480px) {
+    .admin-login-card {
+        padding: 24px 20px;
+        border-radius: 14px;
+    }
+    .admin-login-card h1 {
+        font-size: 22px;
+    }
+    .form-group input,
+    .admin-submit-btn {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
