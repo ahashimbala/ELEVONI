@@ -3,7 +3,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 0 32px;
-    height: 72px;
+    height: 76px;
     background: #ffffff;
     border-bottom: 1px solid #e5e7eb;
     position: sticky;
@@ -13,20 +13,21 @@
 }
 
 
-/* Logo Wrapper - Ensures complete visibility on all screens */
+/* Logo Wrapper */
 
 .navbar-logo-wrapper {
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    max-width: 45%;
 }
 
+
+/* Prominent Logo Sizing */
+
 .navbar .logo {
+    height: 46px;
     width: auto;
-    max-width: 140px;
-    height: auto;
-    max-height: 44px;
+    max-width: 220px;
     object-fit: contain;
     display: block;
 }
@@ -48,8 +49,8 @@
 }
 
 .user-avatar {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background: #f3f4f6;
     color: #374151;
@@ -80,7 +81,7 @@
 }
 
 
-/* Logout Button (Grey hover) */
+/* Logout Button */
 
 .logout-btn {
     padding: 8px 16px;
@@ -102,37 +103,33 @@
 }
 
 
-/* Responsive adjustments for mobile screens */
+/* Responsive Scaling for Tablets */
 
 @media (max-width: 768px) {
     .navbar {
-        padding: 0 16px;
-        height: 64px;
-    }
-    .navbar-logo-wrapper {
-        max-width: 50%;
+        padding: 0 20px;
+        height: 68px;
     }
     .navbar .logo {
-        max-width: 120px;
-        max-height: 38px;
+        height: 40px;
+        max-width: 170px;
     }
     .user-email {
         display: none;
     }
 }
 
+
+/* Responsive Scaling for Mobile Screens */
+
 @media (max-width: 480px) {
     .navbar {
-        padding: 0 12px;
-        gap: 8px;
-    }
-    .navbar-logo-wrapper {
-        max-width: 55%;
+        padding: 0 16px;
+        height: 64px;
     }
     .navbar .logo {
-        max-width: 110px;
-        max-height: 34px;
-        width: 100%;
+        height: 36px;
+        max-width: 150px;
     }
     .user-details {
         display: none;
