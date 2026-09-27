@@ -25,9 +25,18 @@
 /* Prominent Logo Sizing */
 
 .navbar .logo {
-    width: clamp(100px, 12vw, 140px);
+    width: clamp(130px, 16vw, 190px);
+    height: auto;
+    object-fit: contain;
     display: block;
     transition: transform 0.2s ease;
+}
+
+
+/* Optional subtle hover effect utilizing the transition */
+
+.navbar .logo:hover {
+    transform: scale(1.02);
 }
 
 
