@@ -25,11 +25,9 @@
 /* Prominent Logo Sizing */
 
 .navbar .logo {
-    height: 46px;
-    width: auto;
-    max-width: 220px;
-    object-fit: contain;
+    width: clamp(100px, 12vw, 140px);
     display: block;
+    transition: transform 0.2s ease;
 }
 
 
