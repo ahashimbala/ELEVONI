@@ -9,6 +9,7 @@ import userRouter from "./routes/userRoute.js";
 import cartRouter from "./routes/cartRoute.js";
 import reviewRouter from "./routes/reviewRoute.js";
 import orderRouter from "./routes/orderRoute.js";
+import paymentRouter from "./routes/paymentRoute.js";
 
 import FishItem from "./models/fishModel.js";
 
@@ -79,6 +80,7 @@ app.use("/api/user", userRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/review", reviewRouter);
 app.use("/api/order", orderRouter);
+app.use("/api/payment", paymentRouter);
 
 app.get("/", (req, res) => {
     res.send("API Working");

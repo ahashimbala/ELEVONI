@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useCallback } from "react";
 import "./MyOrders.css";
 import { StoreContext } from "../../context/StoreContext";
 import axios from "axios";
@@ -8,7 +8,7 @@ const MyOrders = () => {
   const { url, token } = useContext(StoreContext);
   const [data, setData] = useState([]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const response = await axios.post(
         url + "/api/order/userorders",
@@ -26,15 +26,12 @@ const MyOrders = () => {
       setData([]);
       console.error("Error fetching orders:", error);
     }
-  };
+  }, [url, token]);
 
   useEffect(() => {
-    if (token) {
-      fetchOrders();
-    } else {
-      setData([]);
-    }
-  }, [token]);
+    const timer = setTimeout(() => { if (token) fetchOrders(); else setData([]); }, 0);
+    return () => clearTimeout(timer);
+  }, [token, fetchOrders]);
 
   const handleTrackOnWhatsApp = (order) => {
     const phoneNumber = "2348135738991";
@@ -89,9 +86,7 @@ const MyOrders = () => {
 
                 <p>Items: {items.length}</p>
 
-                <p>
-                  <span>&#x25cf;</span> <b>{order.status || "Processing"}</b>
-                </p>
+                <p><span>&#x25cf;</span> <b>{order.orderStatus || order.status || "Processing"}</b></p><p>Payment: {order.paymentStatus || (order.payment ? "successful" : "unpaid")}</p>
 
                 <button
                   className="whatsapp-track-btn"

@@ -100,7 +100,7 @@ test("cart mutations target the authenticated customer despite a forged body use
 test("order history is queried only for the authenticated customer", async () => {
   const originalFind = orderModel.find;
   let query;
-  orderModel.find = async (filter) => { query = filter; return []; };
+  orderModel.find = (filter) => { query = filter; return { sort: async () => [] }; };
   const res = makeResponse();
   try {
     await userOrders({ auth: { userId: customerId }, body: { userId: adminId } }, res);
