@@ -12,15 +12,23 @@
     box-sizing: border-box;
 }
 
+
+/* Logo Wrapper - Ensures complete visibility on all screens */
+
 .navbar-logo-wrapper {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
+    max-width: 45%;
 }
 
 .navbar .logo {
-    width: clamp(100px, 10vw, 130px);
+    width: auto;
+    max-width: 140px;
     height: auto;
+    max-height: 44px;
     object-fit: contain;
+    display: block;
 }
 
 
@@ -29,27 +37,28 @@
 .admin-account {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
+    flex-shrink: 0;
 }
 
 .user-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .user-avatar {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: #f4f5ed;
-    color: #285c38;
+    background: #f3f4f6;
+    color: #374151;
     font-weight: 700;
-    font-size: 15px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(40, 92, 56, 0.15);
+    border: 1px solid #d1d5db;
 }
 
 .user-details {
@@ -71,11 +80,11 @@
 }
 
 
-/* Logout Button */
+/* Logout Button (Grey hover) */
 
 .logout-btn {
     padding: 8px 16px;
-    background: #f9fafb;
+    background: #ffffff;
     border: 1px solid #d1d5db;
     color: #374151;
     font-size: 13px;
@@ -83,21 +92,29 @@
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .logout-btn:hover {
-    background: #fef2f2;
-    border-color: #fca5a5;
-    color: #b91c1c;
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    color: #111827;
 }
 
 
-/* Responsive adjustments */
+/* Responsive adjustments for mobile screens */
 
 @media (max-width: 768px) {
     .navbar {
-        padding: 0 20px;
+        padding: 0 16px;
         height: 64px;
+    }
+    .navbar-logo-wrapper {
+        max-width: 50%;
+    }
+    .navbar .logo {
+        max-width: 120px;
+        max-height: 38px;
     }
     .user-email {
         display: none;
@@ -105,6 +122,18 @@
 }
 
 @media (max-width: 480px) {
+    .navbar {
+        padding: 0 12px;
+        gap: 8px;
+    }
+    .navbar-logo-wrapper {
+        max-width: 55%;
+    }
+    .navbar .logo {
+        max-width: 110px;
+        max-height: 34px;
+        width: 100%;
+    }
     .user-details {
         display: none;
     }
