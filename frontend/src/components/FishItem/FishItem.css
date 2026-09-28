@@ -1,309 +1,349 @@
 .fish-item {
-    position: relative;
-    width: 100%;
-    max-width: 500px;
-    border-radius: 18px;
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.07);
-    transition: 0.3s ease;
-    animation: fadeIn 0.6s ease-out;
-    box-sizing: border-box;
-    background: #fff;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  width: 100%;
+  max-width: 1100px;
+  min-height: 510px;
+  overflow: hidden;
+  border: 1px solid #e7e5dc;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(43, 47, 32, 0.09);
+  animation: fadeIn 0.5s ease-out;
 }
 
-.fish-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.fish-item-image-wrapper {
-    width: 100%;
-    height: 280px;
-    overflow: hidden;
-    background: #f8f8f8;
+.fish-item-media {
+  position: relative;
+  min-height: 100%;
+  overflow: hidden;
+  background: #f1efe7;
 }
 
 .fish-item-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    display: block;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 510px;
+  object-fit: cover;
+  object-position: center;
+  cursor: pointer;
+  transition: transform 0.45s ease;
+}
+
+.fish-item:hover .fish-item-image {
+  transform: scale(1.025);
+}
+
+.fish-item-image-label {
+  position: absolute;
+  left: 22px;
+  bottom: 22px;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  background: rgba(31, 37, 24, 0.78);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(8px);
 }
 
 .fish-item-info {
-    padding: 20px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    gap: 8px;
-    width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+  min-width: 0;
+  padding: clamp(24px, 4vw, 46px);
 }
 
-.fish-item-name-rating {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.fish-item-copy {
+  display: grid;
+  gap: 10px;
 }
 
-.fish-item-name-rating p {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0;
-    color: #111827;
+.fish-item-kicker {
+  margin: 0;
+  color: #78815a;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.fish-item-name {
+  margin: 0;
+  color: #25291e;
+  font-size: clamp(25px, 2.5vw, 34px);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
 }
 
 .fish-item-desc {
-    color: #676767;
-    font-size: 16px;
-    line-height: 1.5;
-    margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    flex-grow: 1;
+  margin: 0;
+  color: #676b60;
+  font-size: 15px;
+  line-height: 1.65;
 }
 
-.price-display-wrapper {
-    margin: 4px 0;
+.fish-item-price-block {
+  padding: 16px 18px;
+  border: 1px solid #e7e8dc;
+  border-radius: 14px;
+  background: #f8f8f2;
+}
+
+.fish-item-price-label {
+  color: #666c5c;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .fish-item-price {
-    color: #676767;
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0;
+  margin: 4px 0 0;
+  color: #343d25;
+  font-size: 30px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
 }
 
-#qty {
-    color: #6b7280;
-    font-size: 14px;
-    font-weight: 400;
+.fish-item-price span {
+  color: #707564;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
-
-/* Compact Wholesale Box - Stacked Cards Prevent Text Overflow */
+.fish-item-estimate {
+  margin: 5px 0 0;
+  color: #696e61;
+  font-size: 12px;
+}
 
 .wholesale-pricing {
-    margin-top: 10px;
-    padding: 12px;
-    border-radius: 10px;
-    background: #f4f5ed;
-    font-size: 13px;
-    line-height: 1.5;
-    box-sizing: border-box;
-    width: 100%;
-}
-
-.wholesale-header {
-    margin-bottom: 8px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .wholesale-title {
-    font-weight: 700;
-    font-size: 12px;
-    color: #111827;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+  margin: 0 0 9px;
+  color: #525746;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .wholesale-tiers-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-    width: 100%;
-    box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
 }
 
 .tier-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 8px 10px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
-    min-width: 0;
-    box-sizing: border-box;
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 8px;
+  border: 1px solid #e6e7df;
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .tier-range {
-    color: #374151;
-    font-weight: 500;
-    font-size: 11px;
-    line-height: 1.2;
+  color: #72766b;
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .tier-rate {
-    color: #111827;
-    font-weight: 700;
-    font-size: 13px;
-    line-height: 1.2;
-    margin-top: 3px;
+  color: #34392d;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
 }
 
 .tier-card.active-tier {
-    background: #ffffff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    border-color: #d1d5db;
+  border-color: #87916a;
+  background: #f2f4e9;
+  box-shadow: inset 0 0 0 1px #87916a;
 }
 
 .fish-size-note {
-    margin: 8px 0 0 0 !important;
-    font-size: 12px;
-    color: #666;
-    line-height: 1.35;
+  margin: 8px 0 0;
+  color: #777b70;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
-.buttons-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: auto;
-    padding-top: 15px;
-    width: 100%;
+.fish-item-cart-form {
+  display: grid;
+  gap: 9px;
 }
 
-.buttons-container button {
-    padding: 14px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
-    box-sizing: border-box;
-    transition: all 0.2s ease;
+.fish-item-cart-form label {
+  color: #3b4033;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.init-add-btn {
-    background: #676767;
-    color: white;
-    border: none;
-    width: 100%;
+.fish-item-cart-form label span {
+  color: #7a7e72;
+  font-weight: 400;
 }
 
-.init-add-btn:hover {
-    background: #444444;
+.fish-item-cart-controls {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.75fr) minmax(140px, 1.25fr);
+  gap: 10px;
+}
+
+.fish-item-quantity-input {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 50px;
+  padding: 0 13px;
+  border: 1px solid #dfe1d6;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.fish-item-quantity-input:focus-within {
+  border-color: #78815a;
+  box-shadow: 0 0 0 3px rgba(120, 129, 90, 0.13);
+}
+
+.fish-item-quantity-input input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #262b20;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.fish-item-quantity-input span {
+  color: #767b6d;
+  font-size: 13px;
+}
+
+.fish-item-add-button,
+.details-btn {
+  min-height: 50px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.fish-item-add-button {
+  border: 1px solid #3d492b;
+  background: #3d492b;
+  color: #fff;
+}
+
+.fish-item-add-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #303a22;
+}
+
+.fish-item-add-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.fish-item-cart-note {
+  margin: 0;
+  color: #68715a;
+  font-size: 12px;
 }
 
 .details-btn {
-    background: white;
-    border: 1px solid #d1d5db;
-    color: #374151;
-    width: 100%;
+  min-height: 40px;
+  align-self: flex-start;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: #545c42;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .details-btn:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
-}
-
-.active-cart-row {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-}
-
-.fish-item-counter {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #f3f4f6;
-    border-radius: 10px;
-    padding: 4px;
-    min-width: 120px;
-}
-
-.fish-item-counter button {
-    background: #ffffff !important;
-    border: none !important;
-    color: #111827 !important;
-    width: 32px !important;
-    height: 32px !important;
-    padding: 0 !important;
-    font-size: 18px !important;
-    border-radius: 6px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.fish-item-counter span {
-    font-size: 16px;
-    font-weight: 700;
-    color: #111827;
-    min-width: 24px;
-    text-align: center;
-}
-
-.checkout-badge-btn {
-    flex-grow: 1;
-    background: #676767;
-    color: white;
-    border: none;
-}
-
-.checkout-badge-btn:hover {
-    background: #444444;
+  color: #25291e;
 }
 
 @keyframes fadeIn {
-    0% {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@media (max-width: 768px) {
-    .fish-item-image-wrapper {
-        height: 220px;
-    }
-    .fish-item-name-rating p,
-    .fish-item-price {
-        font-size: 20px;
-    }
+@media (max-width: 900px) {
+  .fish-item {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+
+  .fish-item-image {
+    min-height: 100%;
+  }
+
+  .fish-item-info {
+    padding: 25px;
+    gap: 16px;
+  }
+
+  .wholesale-tiers-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-@media (max-width: 480px) {
-    .fish-item-image-wrapper {
-        height: 180px;
-    }
-    .fish-item-info {
-        padding: 15px;
-    }
-    .fish-item-name-rating p,
-    .fish-item-price {
-        font-size: 18px;
-    }
-    .fish-item-desc {
-        font-size: 14px;
-    }
-    .active-cart-row {
-        flex-direction: column;
-        gap: 8px;
-    }
-    .fish-item-counter {
-        width: 100%;
-    }
-    .fish-item-counter button {
-        width: 38px !important;
-        height: 38px !important;
-    }
-    .buttons-container button {
-        padding: 12px;
-        font-size: 14px;
-    }
+@media (max-width: 680px) {
+  .fish-item {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    border-radius: 20px;
+  }
+
+  .fish-item-media {
+    height: clamp(240px, 68vw, 380px);
+    min-height: 0;
+  }
+
+  .fish-item-image {
+    min-height: 0;
+  }
+
+  .fish-item-image-label {
+    left: 16px;
+    bottom: 16px;
+  }
+
+  .fish-item-info {
+    gap: 17px;
+    padding: 22px 18px 20px;
+  }
+
+  .fish-item-cart-controls {
+    grid-template-columns: minmax(95px, 0.7fr) minmax(0, 1.3fr);
+  }
+}
+
+@media (max-width: 380px) {
+  .fish-item-cart-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .fish-item-add-button {
+    width: 100%;
+  }
 }

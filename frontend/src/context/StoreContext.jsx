@@ -54,6 +54,29 @@ const StoreContextProvider = (props) => {
     }
   };
 
+  const setCartQuantity = async (itemId, quantity) => {
+    if (typeof itemId !== "string" || !Number.isSafeInteger(quantity) || quantity < 0) return false;
+
+    setCartItems((previous) => {
+      const next = { ...previous };
+      if (quantity === 0) delete next[itemId];
+      else next[itemId] = quantity;
+      return next;
+    });
+
+    if (!token) return true;
+    try {
+      const response = await axios.post(
+        url + "/api/cart/set",
+        { itemId, quantity },
+        { headers: { token } },
+      );
+      return response.data.success === true;
+    } catch (error) {
+      console.error("Failed to sync cart quantity:", error.message);
+      return false;
+    }
+  };
   const getProductPrice = (itemInfo, quantity) => {
     const isSmokedCatfish = itemInfo.name
       ?.toLowerCase()
@@ -140,6 +163,7 @@ const StoreContextProvider = (props) => {
     setCartItems,
     addtoCart,
     removeFromCart,
+    setCartQuantity,
     getTotalCartAmount,
     url,
     token,

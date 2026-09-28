@@ -1,121 +1,116 @@
-import React, { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import "./FishItem.css";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import getProductPrice from "../../utils/pricing";
 
 const FishItem = ({ id, name, image, price, description }) => {
-  const { cartItems, addtoCart, removeFromCart, url } =
-    useContext(StoreContext);
+  const { cartItems, setCartQuantity, url } = useContext(StoreContext);
   const navigate = useNavigate();
-
-  const quantity = cartItems?.[id] || 0;
+  const quantity = Number(cartItems?.[id] || 0);
+  const [draftQuantity, setDraftQuantity] = useState(String(quantity || 1));
+  const parsedQuantity = Number(draftQuantity);
+  const isValidQuantity = Number.isSafeInteger(parsedQuantity) && parsedQuantity > 0;
+  const previewQuantity = isValidQuantity ? parsedQuantity : 1;
+  const currentPrice = getProductPrice({ name, price }, previewQuantity);
   const isSmokedCatfish = name?.toLowerCase().includes("smoked catfish");
-  const currentPrice = getProductPrice({ name, price }, quantity || 1);
+
+  useEffect(() => {
+    setDraftQuantity(String(quantity || 1));
+  }, [quantity]);
+
+  const saveQuantity = async (event) => {
+    event.preventDefault();
+    if (!isValidQuantity) return;
+    const saved = await setCartQuantity(id, parsedQuantity);
+    if (!saved) toast.error("Your quantity changed locally but could not be synced to your account.");
+  };
+
+  const imageUrl = image && image.startsWith("http") ? image : `${url}/images/${image}`;
 
   return (
-    <div className="fish-item">
-      <img
-        className="fish-item-image"
-        src={
-          image && image.startsWith("http") ? image : `${url}/images/${image}`
-        }
-        alt={`${name} - Premium smoked catfish from Elevoni Farms`}
-        loading="lazy"
-        onClick={() => navigate(`/product/${id}`)}
-        style={{ cursor: "pointer" }}
-      />
+    <article className="fish-item">
+      <div className="fish-item-media">
+        <img
+          className="fish-item-image"
+          src={imageUrl}
+          alt={`${name} - Premium smoked catfish from Elevoni Farms`}
+          loading="lazy"
+          onClick={() => navigate(`/product/${id}`)}
+        />
+        <span className="fish-item-image-label">Carefully smoked in Nigeria</span>
+      </div>
 
       <div className="fish-item-info">
-        <div className="fish-item-name-rating">
-          <p>{name}</p>
+        <div className="fish-item-copy">
+          <p className="fish-item-kicker">Elevoni Farms · Smoked Catfish</p>
+          <h3 className="fish-item-name">{name}</h3>
+          <p className="fish-item-desc">{description}</p>
         </div>
 
-        <p className="fish-item-desc">{description}</p>
-
-        <div className="price-display-wrapper">
+        <div className="fish-item-price-block">
+          <span className="fish-item-price-label">Your price at {previewQuantity} kg</span>
           <p className="fish-item-price">
-            ₦{currentPrice.toLocaleString()}
-            <span id="qty"> per kg</span>
+            ₦{currentPrice.toLocaleString()}<span> / kg</span>
           </p>
+          {isValidQuantity && (
+            <p className="fish-item-estimate">
+              Estimated product total: ₦{(currentPrice * previewQuantity).toLocaleString()}
+            </p>
+          )}
         </div>
 
         {isSmokedCatfish && (
           <div className="wholesale-pricing">
-            <div className="wholesale-header">
-              <p className="wholesale-title">Wholesale pricing</p>
-            </div>
-
+            <p className="wholesale-title">Wholesale price per kg</p>
             <div className="wholesale-tiers-grid">
-              <div
-                className={`tier-card ${quantity >= 1 && quantity <= 4 ? "active-tier" : ""}`}
-              >
-                <span className="tier-range">1–4 kg</span>
-                <span className="tier-rate">₦25,000/kg</span>
+              <div className={`tier-card ${previewQuantity <= 4 ? "active-tier" : ""}`}>
+                <span className="tier-range">1–4 kg</span><span className="tier-rate">₦25,000/kg</span>
               </div>
-
-              <div
-                className={`tier-card ${quantity >= 5 && quantity <= 9 ? "active-tier" : ""}`}
-              >
-                <span className="tier-range">5–9 kg</span>
-                <span className="tier-rate">₦24,000/kg</span>
+              <div className={`tier-card ${previewQuantity >= 5 && previewQuantity <= 9 ? "active-tier" : ""}`}>
+                <span className="tier-range">5–9 kg</span><span className="tier-rate">₦24,000/kg</span>
               </div>
-
-              <div
-                className={`tier-card ${quantity >= 10 && quantity <= 19 ? "active-tier" : ""}`}
-              >
-                <span className="tier-range">10–19 kg</span>
-                <span className="tier-rate">₦22,500/kg</span>
+              <div className={`tier-card ${previewQuantity >= 10 && previewQuantity <= 19 ? "active-tier" : ""}`}>
+                <span className="tier-range">10–19 kg</span><span className="tier-rate">₦22,500/kg</span>
               </div>
-
-              <div
-                className={`tier-card ${quantity >= 20 ? "active-tier" : ""}`}
-              >
-                <span className="tier-range">20+ kg</span>
-                <span className="tier-rate">₦21,000/kg</span>
+              <div className={`tier-card ${previewQuantity >= 20 ? "active-tier" : ""}`}>
+                <span className="tier-range">20+ kg</span><span className="tier-rate">₦21,000/kg</span>
               </div>
             </div>
-
-            <p className="fish-size-note">
-              Standard size: 5 pieces per kg. Larger sizes available on request.
-            </p>
+            <p className="fish-size-note">Standard size: 5 pieces per kg. Larger sizes are available on request.</p>
           </div>
         )}
 
-        <div className="buttons-container">
-          {!cartItems?.[id] ? (
-            <button
-              className="cart-btn init-add-btn"
-              onClick={() => addtoCart(id)}
-            >
-              Add to Cart
-            </button>
-          ) : (
-            <div className="active-cart-row">
-              <div className="fish-item-counter">
-                <button onClick={() => removeFromCart(id)}>-</button>
-                <span>{cartItems[id]}</span>
-                <button onClick={() => addtoCart(id)}>+</button>
-              </div>
-
-              <button
-                className="checkout-badge-btn"
-                onClick={() => navigate("/cart")}
-              >
-                Go to Cart →
-              </button>
+        <form className="fish-item-cart-form" onSubmit={saveQuantity}>
+          <label htmlFor={`quantity-${id}`}>Choose quantity <span>(kilograms)</span></label>
+          <div className="fish-item-cart-controls">
+            <div className="fish-item-quantity-input">
+              <input
+                id={`quantity-${id}`}
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                value={draftQuantity}
+                onChange={(event) => setDraftQuantity(event.target.value)}
+                aria-label={`Quantity of ${name} in kilograms`}
+                required
+              />
+              <span>kg</span>
             </div>
-          )}
+            <button className="fish-item-add-button" type="submit" disabled={!isValidQuantity}>
+              {quantity > 0 ? "Update cart" : "Add to cart"}
+            </button>
+          </div>
+          {quantity > 0 && <p className="fish-item-cart-note">Currently in your cart: {quantity} kg</p>}
+        </form>
 
-          <button
-            className="details-btn"
-            onClick={() => navigate(`/product/${id}`)}
-          >
-            View Details
-          </button>
-        </div>
+        <button className="details-btn" type="button" onClick={() => navigate(`/product/${id}`)}>
+          View product details
+        </button>
       </div>
-    </div>
+    </article>
   );
 };
 

@@ -57,4 +57,26 @@ const getCart = async(req, res) => {
     }
 }
 
-export { addToCart, removeFromCart, getCart }
+
+const setCartQuantity = async(req, res) => {
+    try {
+        const { itemId, quantity } = req.body || {};
+        if (typeof itemId !== "string" || !itemId.trim() || !Number.isSafeInteger(quantity) || quantity < 0) {
+            return res.status(400).json({ success: false, message: "A product and a non-negative whole-number quantity are required" });
+        }
+
+        const userData = await userModel.findById(req.auth.userId);
+        if (!userData) return res.status(404).json({ success: false, message: "User not found" });
+
+        const cartData = { ...(userData.cartData || {}) };
+        if (quantity === 0) delete cartData[itemId];
+        else cartData[itemId] = quantity;
+
+        await userModel.findByIdAndUpdate(req.auth.userId, { cartData });
+        return res.json({ success: true, message: "Cart quantity updated", cartData });
+    } catch (error) {
+        console.log("setCartQuantity error:", error);
+        return res.status(500).json({ success: false, message: "Unable to update cart quantity" });
+    }
+};
+export { addToCart, removeFromCart, getCart, setCartQuantity }

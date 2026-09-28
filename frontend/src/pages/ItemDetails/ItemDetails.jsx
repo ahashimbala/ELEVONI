@@ -1,4 +1,5 @@
 import React, { useContext, useState, useRef, useEffect } from "react";
+import { toast } from "react-toastify";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { StoreContext } from "../../context/StoreContext";
@@ -9,18 +10,27 @@ const ItemDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { fish_list, cartItems, addtoCart, removeFromCart, url } =
+  const { fish_list, cartItems, setCartQuantity, url } =
     useContext(StoreContext);
 
   const item = fish_list.find((fish) => fish._id === id);
 
   const [selected, setSelected] = useState(0);
+  const [draftQuantity, setDraftQuantity] = useState("1");
+  const quantity = Number(item ? cartItems?.[item._id] || 0 : 0);
+  const parsedQuantity = Number(draftQuantity);
+  const isValidQuantity = Number.isSafeInteger(parsedQuantity) && parsedQuantity > 0;
+  const previewQuantity = isValidQuantity ? parsedQuantity : 1;
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef(null);
 
   useEffect(() => {
     setIsPlaying(false);
   }, [selected]);
+
+  useEffect(() => {
+    setDraftQuantity(String(quantity || 1));
+  }, [quantity]);
 
   if (!item) {
     return (
@@ -33,8 +43,7 @@ const ItemDetails = () => {
     );
   }
 
-  const quantity = cartItems?.[item._id] || 0;
-  const currentPrice = getProductPrice(item, quantity || 1);
+  const currentPrice = getProductPrice(item, previewQuantity);
   const gallery = [
     {
       type: "image",
@@ -69,6 +78,13 @@ const ItemDetails = () => {
   }
 
   const safeIndex = Math.min(selected, gallery.length - 1);
+
+  const saveQuantity = async (event) => {
+    event.preventDefault();
+    if (!isValidQuantity) return;
+    const saved = await setCartQuantity(item._id, parsedQuantity);
+    if (!saved) toast.error("Your quantity changed locally but could not be synced to your account.");
+  };
 
   const schemaData = {
     "@context": "https://schema.org/",
@@ -181,10 +197,10 @@ const ItemDetails = () => {
               <span className="price-unit"> per kg</span>
             </p>
 
-            {quantity > 0 && (
+            {isValidQuantity && (
               <p className="selected-price">
-                {quantity} kg × ₦{currentPrice.toLocaleString()} = ₦
-                {(quantity * currentPrice).toLocaleString()}
+                {previewQuantity} kg × ₦{currentPrice.toLocaleString()} = ₦
+                {(previewQuantity * currentPrice).toLocaleString()}
               </p>
             )}
           </div>
@@ -195,28 +211,28 @@ const ItemDetails = () => {
 
               <div className="wholesale-tiers-grid">
                 <div
-                  className={`tier-card ${quantity >= 1 && quantity <= 4 ? "active-tier" : ""}`}
+                  className={`tier-card ${previewQuantity <= 4 ? "active-tier" : ""}`}
                 >
                   <span className="tier-range">1–4 kg</span>
                   <span className="tier-rate">₦25,000/kg</span>
                 </div>
 
                 <div
-                  className={`tier-card ${quantity >= 5 && quantity <= 9 ? "active-tier" : ""}`}
+                  className={`tier-card ${previewQuantity >= 5 && previewQuantity <= 9 ? "active-tier" : ""}`}
                 >
                   <span className="tier-range">5–9 kg</span>
                   <span className="tier-rate">₦24,000/kg</span>
                 </div>
 
                 <div
-                  className={`tier-card ${quantity >= 10 && quantity <= 19 ? "active-tier" : ""}`}
+                  className={`tier-card ${previewQuantity >= 10 && previewQuantity <= 19 ? "active-tier" : ""}`}
                 >
                   <span className="tier-range">10–19 kg</span>
                   <span className="tier-rate">₦22,500/kg</span>
                 </div>
 
                 <div
-                  className={`tier-card ${quantity >= 20 ? "active-tier" : ""}`}
+                  className={`tier-card ${previewQuantity >= 20 ? "active-tier" : ""}`}
                 >
                   <span className="tier-range">20+ kg</span>
                   <span className="tier-rate">₦21,000/kg</span>
@@ -232,31 +248,29 @@ const ItemDetails = () => {
 
           <p className="item-details-desc">{item.description}</p>
 
-          <div className="action-section">
-            {!cartItems?.[item._id] ? (
-              <button
-                className="add-to-cart-btn primary-btn"
-                onClick={() => addtoCart(item._id)}
-              >
-                Add to Cart
-              </button>
-            ) : (
-              <div className="cart-management-flow">
-                <div className="quantity-adjuster-block">
-                  <button onClick={() => removeFromCart(item._id)}>-</button>
-                  <span>{cartItems[item._id]}</span>
-                  <button onClick={() => addtoCart(item._id)}>+</button>
-                </div>
-
-                <button
-                  className="go-to-cart-checkout-btn"
-                  onClick={() => navigate("/cart")}
-                >
-                  Go to Cart →
-                </button>
+          <form className="item-quantity-form" onSubmit={saveQuantity}>
+            <label htmlFor={`detail-quantity-${item._id}`}>Choose quantity <span>(kilograms)</span></label>
+            <div className="item-quantity-controls">
+              <div className="item-quantity-field">
+                <input
+                  id={`detail-quantity-${item._id}`}
+                  type="number"
+                  min="1"
+                  step="1"
+                  inputMode="numeric"
+                  value={draftQuantity}
+                  onChange={(event) => setDraftQuantity(event.target.value)}
+                  aria-label={`Quantity of ${item.name} in kilograms`}
+                  required
+                />
+                <span>kg</span>
               </div>
-            )}
-          </div>
+              <button className="add-to-cart-btn primary-btn" type="submit" disabled={!isValidQuantity}>
+                {quantity > 0 ? "Update cart" : "Add to cart"}
+              </button>
+            </div>
+            {quantity > 0 && <p className="item-quantity-note">Currently in your cart: {quantity} kg</p>}
+          </form>
         </div>
       </div>
     </div>

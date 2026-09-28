@@ -13,7 +13,7 @@ const Header = () => {
           We smoke premium catfish in <br />
           Nigeria.
         </p>
-        <button>Shop Now</button>
+        <button onClick={() => document.getElementById("fish-display")?.scrollIntoView({ behavior: "smooth" })}>Shop Now</button>
       </div>
     </div>
   );
