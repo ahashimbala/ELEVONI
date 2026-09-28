@@ -37,14 +37,14 @@
 .header-contents h2 {
     font-size: clamp(2rem, 3.5vw + 0.5rem, 3.2rem);
     font-weight: 600;
-    color: #a36c48;
+    color: white;
     line-height: 1.15;
     letter-spacing: -0.02em;
     max-width: 580px;
 }
 
 .header-contents p {
-    color: #6E4930;
+    color: white;
     font-size: clamp(0.95rem, 1.1vw + 0.2rem, 1.1rem);
     line-height: 1.6;
     max-width: 480px;
