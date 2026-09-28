@@ -1,45 +1,63 @@
 .fish-display {
-    margin-top: 10px;
     width: 100%;
-    padding: 0 30px;
+    max-width: 1200px;
+    margin: 20px auto 60px auto;
+    padding: 0 24px;
     box-sizing: border-box;
-    align-items: stretch;
 }
 
-.fish-display h2 {
-    font-size: max(2vw, 24px);
-    font-weight: 600;
+.fish-display-header {
+    text-align: center;
+    margin-bottom: 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.fish-display-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    margin-top: 30px;
-    gap: 30px;
-    row-gap: 50px;
+.featured-badge {
+    background: #f4f5ed;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 12px;
+}
+
+.fish-display-header h2 {
+    font-size: clamp(28px, 3.5vw, 40px);
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 10px 0;
+    line-height: 1.2;
+}
+
+.fish-display-subtitle {
+    font-size: 16px;
+    color: #676767;
+    max-width: 580px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.single-product-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 @media (max-width: 768px) {
     .fish-display {
-        padding: 0 20px 80px 20px;
+        padding: 0 16px 60px 16px;
+        margin-top: 10px;
     }
-    .fish-display-list {
-        gap: 20px;
-        row-gap: 35px;
+    .fish-display-header {
+        margin-bottom: 24px;
     }
-}
-
-@media (max-width: 480px) {
-    .fish-display {
-        padding: 0 15px 70px 15px;
-    }
-    .fish-display h2 {
-        font-size: 20px;
-    }
-    .fish-display-list {
-        grid-template-columns: 1fr;
-        gap: 15px;
-        row-gap: 35px;
-        margin-top: 20px;
+    .fish-display-subtitle {
+        font-size: 14px;
     }
 }
