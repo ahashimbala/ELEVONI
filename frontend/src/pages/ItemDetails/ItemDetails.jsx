@@ -83,7 +83,11 @@ const ItemDetails = () => {
     event.preventDefault();
     if (!isValidQuantity) return;
     const saved = await setCartQuantity(item._id, parsedQuantity);
-    if (!saved) toast.error("Your quantity changed locally but could not be synced to your account.");
+    if (!saved) {
+      toast.error("Your quantity changed locally but could not be synced to your account.");
+      return;
+    }
+    navigate("/cart");
   };
 
   const schemaData = {

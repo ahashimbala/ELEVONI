@@ -65,13 +65,37 @@ const StoreContextProvider = (props) => {
     });
 
     if (!token) return true;
+    const config = { headers: { token } };
     try {
       const response = await axios.post(
         url + "/api/cart/set",
         { itemId, quantity },
-        { headers: { token } },
+        config,
       );
-      return response.data.success === true;
+      if (response.data.success === true) return true;
+    } catch (error) {
+      console.warn("Cart quantity endpoint unavailable; syncing with existing cart operations:", error.message);
+    }
+
+    // Older deployed API instances may not yet expose /cart/set. Reconcile
+    // against the server cart using the established read/add/remove endpoints.
+    try {
+      const currentResponse = await axios.post(url + "/api/cart/get", {}, config);
+      if (currentResponse.data.success !== true) return false;
+      const currentQuantity = Number(currentResponse.data.cartData?.[itemId] || 0);
+      if (!Number.isSafeInteger(currentQuantity) || currentQuantity < 0) return false;
+
+      const operation = quantity > currentQuantity ? "add" : "remove";
+      const difference = Math.abs(quantity - currentQuantity);
+      for (let index = 0; index < difference; index += 1) {
+        const response = await axios.post(
+          url + `/api/cart/${operation}`,
+          { itemId },
+          config,
+        );
+        if (response.data.success !== true) return false;
+      }
+      return true;
     } catch (error) {
       console.error("Failed to sync cart quantity:", error.message);
       return false;
