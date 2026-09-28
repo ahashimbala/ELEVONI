@@ -74,6 +74,7 @@ const StoreContextProvider = (props) => {
       );
       if (response.data.success === true) return true;
     } catch (error) {
+      if (error.response?.status === 403) return "forbidden";
       console.warn("Cart quantity endpoint unavailable; syncing with existing cart operations:", error.message);
     }
 
@@ -97,6 +98,7 @@ const StoreContextProvider = (props) => {
       }
       return true;
     } catch (error) {
+      if (error.response?.status === 403) return "forbidden";
       console.error("Failed to sync cart quantity:", error.message);
       return false;
     }

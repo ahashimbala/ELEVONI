@@ -84,7 +84,9 @@ const ItemDetails = () => {
     if (!isValidQuantity) return;
     const saved = await setCartQuantity(item._id, parsedQuantity);
     if (!saved) {
-      toast.error("Your quantity changed locally but could not be synced to your account.");
+      toast.error(saved === "forbidden"
+        ? "This account is not authorized to use the cart. Please sign in again or contact support."
+        : "Your quantity changed locally but could not be synced to your account.");
       return;
     }
     navigate("/cart");

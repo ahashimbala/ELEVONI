@@ -247,14 +247,14 @@
 }
 
 .fish-item-add-button {
-  border: 1px solid #3d492b;
-  background: #3d492b;
+  border: 1px solid #676767;
+  background: #676767;
   color: #fff;
 }
 
 .fish-item-add-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: #303a22;
+  background: #444444;
 }
 
 .fish-item-add-button:disabled {

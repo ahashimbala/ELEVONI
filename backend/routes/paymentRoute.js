@@ -4,7 +4,7 @@ import authMiddleware, { requireRole } from "../middleware/auth.js";
 
 const paymentRouter = express.Router();
 
-paymentRouter.post("/initialize", authMiddleware, requireRole("customer"), initializePayment);
-paymentRouter.post("/verify", authMiddleware, requireRole("customer"), verifyPayment);
+paymentRouter.post("/initialize", authMiddleware, requireRole("customer", "admin"), initializePayment);
+paymentRouter.post("/verify", authMiddleware, requireRole("customer", "admin"), verifyPayment);
 
 export default paymentRouter;

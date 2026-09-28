@@ -4,9 +4,9 @@ import { listOrders, placeOrder, quoteOrder, updateStatus, userOrders } from "..
 
 const orderRouter = express.Router();
 
-orderRouter.post("/quote", authMiddleware, requireRole("customer"), quoteOrder)
-orderRouter.post("/place", authMiddleware, requireRole("customer"), placeOrder);
-orderRouter.post("/userorders", authMiddleware, requireRole("customer"), userOrders)
+orderRouter.post("/quote", authMiddleware, requireRole("customer", "admin"), quoteOrder)
+orderRouter.post("/place", authMiddleware, requireRole("customer", "admin"), placeOrder);
+orderRouter.post("/userorders", authMiddleware, requireRole("customer", "admin"), userOrders)
 orderRouter.get("/list", authMiddleware, requireRole("admin"), listOrders)
 orderRouter.post("/status", authMiddleware, requireRole("admin"), updateStatus)
 

@@ -447,12 +447,12 @@
     min-width: 0;
     padding: 12px 16px;
     border-radius: 12px;
-    background: #3d492b;
+    background: #676767;
     font-size: 14px;
 }
 
 .item-quantity-controls .primary-btn:hover:not(:disabled) {
-    background: #303a22;
+    background: #444444;
 }
 
 .item-quantity-controls .primary-btn:disabled {
