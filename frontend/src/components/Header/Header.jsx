@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import "./Header.css";
 
 const Header = () => {
@@ -6,12 +5,12 @@ const Header = () => {
     <div className="header">
       <div className="header-contents">
         <h2>
-          Fresh & Smoked Catfish <br />
+          Smoked Catfish <br />
           Delivered to Your <br />
           Doorstep
         </h2>
         <p>
-          We farm and smoke premium catfish in <br />
+          We smoke premium catfish in <br />
           Nigeria.
         </p>
         <button>Shop Now</button>

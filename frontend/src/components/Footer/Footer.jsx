@@ -10,11 +10,7 @@ const Footer = () => {
         <div className="footer-content-left">
           <img id="logo" src={assets.logo} alt="" />
           <p>
-            Elevoni is committed to providing fresh, healthy and premium-quality
-            catfish to homes, restaurants and businesses. Through sustainable
-            fish farming practices and excellent customer service, we ensure
-            every customer receives the best products at affordable prices.
-            Thank you for choosing Elevoni - where quality meets freshness.
+            Elevoni brings premium smoked catfish to homes, restaurants and businesses. We carefully prepare and smoke our catfish, then deliver it with the quality and service our customers expect. Thank you for choosing Elevoni Farms.
           </p>
           <div className="footer-social-icons">
             <a

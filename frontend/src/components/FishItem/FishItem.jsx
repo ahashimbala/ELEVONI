@@ -20,7 +20,7 @@ const FishItem = ({ id, name, image, price, description }) => {
         src={
           image && image.startsWith("http") ? image : `${url}/images/${image}`
         }
-        alt={`Fresh ${name} - Premium local aquaculture product from Elevoni Farms`}
+        alt={`${name} - Premium smoked catfish from Elevoni Farms`}
         loading="lazy"
         onClick={() => navigate(`/product/${id}`)}
         style={{ cursor: "pointer" }}

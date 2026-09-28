@@ -90,10 +90,10 @@ const ItemDetails = () => {
   return (
     <div className="item-details">
       <Helmet>
-        <title>{item.name} | Buy Fresh on Elevoni</title>
+        <title>{item.name} | Smoked Catfish from Elevoni</title>
         <meta
           name="description"
-          content={`Purchase premium, fresh ${item.name} directly from verified local farms on Elevoni. ₦${currentPrice.toLocaleString()} per kg.`}
+          content={`Purchase ${item.name}, carefully prepared and smoked by Elevoni Farms. ₦${currentPrice.toLocaleString()} per kg.`}
         />
         <link
           rel="canonical"
@@ -101,11 +101,11 @@ const ItemDetails = () => {
         />
         <meta
           property="og:title"
-          content={`${item.name} - Elevoni Marketplace`}
+          content={`${item.name} - Elevoni Farms`}
         />
         <meta
           property="og:description"
-          content={`Get fresh ${item.name} direct from the pond to your kitchen.`}
+          content={`Shop ${item.name} from Elevoni Farms. Carefully prepared and richly smoked for your table.`}
         />
         <meta property="og:image" content={gallery[0]?.src} />
         <meta

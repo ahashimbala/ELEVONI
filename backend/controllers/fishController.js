@@ -43,7 +43,7 @@ const addFish = async(req, res) => {
 
 const listFish = async(req, res) => {
     try {
-        const fish = await fishModel.find({});
+        const fish = await fishModel.find({ name: { $regex: "^Smoked\\s+Catfish(?:\\b|$)", $options: "i" } });
         res.json({ success: true, data: fish });
     } catch (error) {
         console.log("listFish error:", error);
@@ -51,6 +51,16 @@ const listFish = async(req, res) => {
     }
 };
 
+
+const listAllFish = async(req, res) => {
+    try {
+        const fish = await fishModel.find({});
+        return res.json({ success: true, data: fish });
+    } catch (error) {
+        console.log("listAllFish error:", error);
+        return res.status(500).json({ success: false, message: "Error fetching products" });
+    }
+};
 const removeFish = async(req, res) => {
     try {
         const fish = await fishModel.findById(req.body.id);
@@ -124,6 +134,7 @@ const addFishMedia = async(req, res) => {
 export {
     addFish,
     listFish,
+    listAllFish,
     removeFish,
     addFishMedia
 };

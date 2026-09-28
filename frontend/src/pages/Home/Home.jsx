@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Helmet } from "react-helmet-async";
 import "./Home.css";
 import Header from "../../components/Header/Header";
@@ -9,36 +9,45 @@ import Features from "../../components/Features/Features";
 import Reviews from "../../components/Reviews/Reviews";
 
 const Home = () => {
-  const [category, setCategory] = useState("All");
-
   return (
     <div>
       <Helmet>
         <title>
-          Elevoni Farms | Fresh Fish Marketplace Direct From Local Ponds
+          Elevoni Farms | Premium Smoked Catfish Direct From Our Farm
         </title>
+
         <meta
           name="description"
-          content="Buy premium fresh catfish, tilapia, and aquaculture products directly from verified local farms. Fast delivery and secure payments on Elevoni."
+          content="Buy premium smoked catfish from Elevoni Farms. Carefully prepared, richly smoked, and conveniently delivered to your doorstep."
         />
+
         <link rel="canonical" href="https://elevonifarms.vercel.app/" />
+
         <meta
           property="og:title"
-          content="Elevoni Farms - Farm-Fresh Aquaculture Marketplace"
+          content="Elevoni Farms - Premium Smoked Catfish"
         />
+
         <meta
           property="og:description"
-          content="Connect directly with local fish farmers. Shop fresh, high-quality aquaculture products online."
+          content="Shop premium smoked catfish from Elevoni Farms. Quality smoked fish, conveniently delivered."
         />
+
         <meta property="og:type" content="website" />
+
         <meta property="og:url" content="https://elevonifarms.vercel.app/" />
       </Helmet>
 
       <Header />
-      <ExploreMenu category={category} setCategory={setCategory} />
-      <FishDisplay category={category} />
+
+      <ExploreMenu />
+
+      <FishDisplay />
+
       <Features />
+
       <Reviews />
+
       <AppDownload />
     </div>
   );

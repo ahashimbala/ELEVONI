@@ -43,7 +43,7 @@ connectDB();
 
 app.get("/sitemap.xml", async(req, res) => {
     try {
-        const items = await FishItem.find({}, "_id updatedAt");
+        const items = await FishItem.find({ name: { $regex: "^Smoked\\s+Catfish(?:\\b|$)", $options: "i" } }, "_id updatedAt");
 
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
         xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;

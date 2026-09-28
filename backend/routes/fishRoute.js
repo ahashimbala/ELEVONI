@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { addFish, listFish, removeFish, addFishMedia } from "../controllers/fishController.js";
+import { addFish, listFish, listAllFish, removeFish, addFishMedia } from "../controllers/fishController.js";
 import authMiddleware, { requireRole } from "../middleware/auth.js";
 
 const fishRouter = express.Router();
@@ -13,6 +13,7 @@ const upload = multer({
 
 fishRouter.post("/add", authMiddleware, requireRole("admin"), upload.single("image"), addFish);
 fishRouter.get("/list", listFish);
+fishRouter.get("/admin-list", authMiddleware, requireRole("admin"), listAllFish);
 fishRouter.post("/remove", authMiddleware, requireRole("admin"), removeFish);
 fishRouter.post("/add-media", authMiddleware, requireRole("admin"), upload.array("media", 10), addFishMedia);
 
