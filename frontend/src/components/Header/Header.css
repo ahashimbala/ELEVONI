@@ -1,7 +1,7 @@
 .header {
     position: relative;
     display: grid;
-    grid-template-columns: 46% 54%;
+    grid-template-columns: 54% 46%;
     align-items: stretch;
     width: 100%;
     min-height: clamp(480px, 44vw, 650px);
@@ -17,7 +17,7 @@
     align-items: flex-start;
     justify-content: flex-start;
     width: 100%;
-    max-width: 620px;
+    max-width: none;
     box-sizing: border-box;
     padding: clamp(44px, 5vw, 72px) clamp(24px, 5vw, 72px) 30px;
     background: #fff;
@@ -27,10 +27,13 @@
     max-width: 590px;
     margin: -20px 0 0;
     color: var(--elevoni-ink);
-    font-size: clamp(32px, 2.65vw, 38px);
+    font-size: clamp(38px, 3.3vw, 48px);
     font-weight: 500;
     line-height: 0.98;
     letter-spacing: -0.065em;
+}
+.header-title-lead {
+    white-space: nowrap;
 }
 
 .header-desktop-break {
@@ -114,7 +117,7 @@
         padding-right: 20px;
     }
     .header-contents h2 {
-        font-size: clamp(23px, 3vw, 28px);
+        font-size: clamp(23px, 3.5vw, 31px);
     }
 }
 
@@ -124,28 +127,30 @@
 @media (max-width: 680px) {
     .header {
         display: block;
-        width: 100%;
+        width: calc(100% + clamp(18px, 4vw, 56px));
+        margin-right: calc(-1 * clamp(18px, 4vw, 56px));
         min-height: 0;
     }
     .header-contents {
         display: block;
         max-width: none;
-        padding: 30px 22px 0;
+        padding: 30px 0 0 22px;
     }
     .header-contents h2 {
         display: flow-root;
         max-width: 520px;
-        font-size: clamp(22px, 7vw, 28px);
+        font-size: clamp(24px, 8vw, 32px);
         line-height: 1.05;
         letter-spacing: -0.055em;
     }
+    .header-contents h2 .header-title-lead { white-space: nowrap; }
     .header-desktop-break {
         display: none;
     }
     .header-inline-image {
         display: block;
         float: right;
-        width: min(42%, 155px);
+        width: min(68%, 270px);
         height: auto;
         margin: 4px 0 10px 14px;
         shape-outside: ellipse(48% 48% at 50% 50%);
@@ -156,6 +161,7 @@
     }
     .header-contents button {
         margin-top: 20px;
+        clear: both;
     }
     .header-visual {
         display: none;
@@ -164,10 +170,11 @@
 
 @media (max-width: 360px) {
     .header-contents {
-        padding-inline: 18px;
+        padding-left: 18px;
+        padding-right: 0;
     }
     .header-inline-image {
-        width: 40%;
+        width: min(72%, 270px);
         margin-left: 10px;
     }
 }
