@@ -122,8 +122,8 @@
     .header {
         display: flex;
         flex-direction: column;
-        width: calc(100% + clamp(18px, 4vw, 56px));
-        margin-right: calc(-1 * clamp(18px, 4vw, 56px));
+        width: 100%;
+        margin-right: 0;
         min-height: 0;
     }
 
