@@ -8,10 +8,44 @@ import { toast } from "react-toastify";
 const LoginPopup = ({ setShowLogin }) => {
   const { url, setToken } = useContext(StoreContext);
   const googleButtonRef = useRef(null);
+  const pendingGoogleCredential = useRef(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const [googleError, setGoogleError] = useState("");
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   const [currState, setCurrState] = useState("Login");
+  const submitGoogleCredential = async (credential, accepted) => {
+    setGoogleBusy(true);
+    setGoogleError("");
+    try {
+      const intent = currState === "Sign Up" ? "sign_up" : "sign_in";
+      const response = await axios.post(`${url}/api/user/google`, {
+        credential,
+        intent,
+        consentAccepted: accepted
+      });
+      if (!response.data?.success || !response.data?.token) {
+        throw new Error(response.data?.message || "Google sign-in failed.");
+      }
+      pendingGoogleCredential.current = null;
+      setToken(response.data.token);
+      localStorage.setItem("token", response.data.token);
+      setShowLogin(false);
+      toast.success(intent === "sign_up" && response.status === 201 ? "Your Elevoni account is ready!" : "Welcome back to Elevoni!");
+    } catch (error) {
+      if (error.response?.data?.code === "CONSENT_REQUIRED") {
+        pendingGoogleCredential.current = credential;
+        setGoogleError("Check the Terms/Privacy box below to finish creating your account.");
+      } else {
+        pendingGoogleCredential.current = null;
+        setGoogleError(error.response?.data?.message || error.message || "Unable to sign in with Google. Please try again.");
+      }
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
+
   useEffect(() => {
     if (!googleClientId) return undefined;
     let cancelled = false;
@@ -19,23 +53,13 @@ const LoginPopup = ({ setShowLogin }) => {
       if (cancelled || !googleButtonRef.current || !window.google?.accounts?.id) return;
       window.google.accounts.id.initialize({
         client_id: googleClientId,
+        use_fedcm_for_button: true,
         callback: async ({ credential }) => {
           if (!credential) {
-            toast.error("Google sign-in did not return a credential. Please try again.");
+            setGoogleError("Google sign-in did not return a credential. Please try again.");
             return;
           }
-          try {
-            const response = await axios.post(`${url}/api/user/google`, { credential });
-            if (!response.data?.success || !response.data?.token) {
-              throw new Error(response.data?.message || "Google sign-in failed.");
-            }
-            setToken(response.data.token);
-            localStorage.setItem("token", response.data.token);
-            setShowLogin(false);
-            toast.success(currState === "Sign Up" ? "Your Elevoni account is ready!" : "Welcome back to Elevoni!");
-          } catch (error) {
-            toast.error(error.response?.data?.message || error.message || "Unable to sign in with Google. Please try again.");
-          }
+          await submitGoogleCredential(credential, consentAccepted);
         }
       });
       googleButtonRef.current.replaceChildren();
@@ -45,6 +69,7 @@ const LoginPopup = ({ setShowLogin }) => {
         size: "large",
         text: currState === "Sign Up" ? "signup_with" : "signin_with",
         shape: "rect",
+        ux_mode: "popup",
         width: String(Math.min(360, Math.floor(googleButtonRef.current.getBoundingClientRect().width || 360)))
       });
     };
@@ -71,7 +96,7 @@ const LoginPopup = ({ setShowLogin }) => {
       script?.removeEventListener("load", renderGoogleButton);
       script?.removeEventListener("error", handleScriptError);
     };
-  }, [currState, googleClientId, setShowLogin, setToken, url]);
+  }, [consentAccepted, currState, googleClientId, setShowLogin, setToken, url]);
   const [data, setData] = useState({
     name: "",
     email: "",
@@ -168,21 +193,29 @@ const LoginPopup = ({ setShowLogin }) => {
             ) : (
               <p className="google-signin-message">Google {currState === "Sign Up" ? "sign-up" : "sign-in"} is not configured yet.</p>
             )}
+            {googleBusy && <p className="google-signin-message" role="status">Completing Google {currState === "Sign Up" ? "sign-up" : "sign-in"}...</p>}
             {googleError && <p className="google-signin-message" role="status">{googleError}</p>}
         </>
         <div className="login-popup-condition">
-          <input type="checkbox" required />
-          <p>By continuing, I agree to the terms of use & privacy policy.</p>
+          <input type="checkbox" required checked={consentAccepted} onChange={(event) => {
+            const accepted = event.target.checked;
+            setConsentAccepted(accepted);
+            if (accepted && pendingGoogleCredential.current && currState === "Sign Up") {
+              void submitGoogleCredential(pendingGoogleCredential.current, true);
+            }
+            if (!accepted) pendingGoogleCredential.current = null;
+          }} />
+          <p>{currState === "Sign Up" ? "By creating an account, including with Google, I agree to the Terms of Use & Privacy Policy." : "By continuing, I agree to the Terms of Use & Privacy Policy."}</p>
         </div>
         {currState === "Login" ? (
           <p>
             Create a new account?{" "}
-            <span onClick={() => setCurrState("Sign Up")}>Click here</span>
+            <span onClick={() => { pendingGoogleCredential.current = null; setGoogleError(""); setCurrState("Sign Up"); }}>Click here</span>
           </p>
         ) : (
           <p>
             Already have an account?{" "}
-            <span onClick={() => setCurrState("Login")}>Login here</span>
+            <span onClick={() => { pendingGoogleCredential.current = null; setGoogleError(""); setCurrState("Login"); }}>Login here</span>
           </p>
         )}
       </form>

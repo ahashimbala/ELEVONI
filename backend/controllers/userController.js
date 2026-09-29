@@ -69,9 +69,12 @@ const registerUser = async (req, res) => {
 };
 
 const googleLogin = async (req, res) => {
-    const { credential } = req.body || {};
+    const { credential, intent, consentAccepted } = req.body || {};
     if (typeof credential !== "string" || credential.length < 20 || credential.length > 10000) {
         return res.status(400).json({ success: false, message: "A valid Google credential is required" });
+    }
+    if (intent !== "sign_in" && intent !== "sign_up") {
+        return res.status(400).json({ success: false, message: "Choose whether to sign in or create an account" });
     }
     if (!process.env.GOOGLE_CLIENT_ID) {
         return res.status(503).json({ success: false, message: "Google sign-in is not configured" });
@@ -97,6 +100,21 @@ const googleLogin = async (req, res) => {
             user.googleId = identity.sub;
             await user.save();
             return res.json({ success: true, token: createToken(user), user: safeUser(user) });
+        }
+
+        if (intent === "sign_in") {
+            return res.status(404).json({
+                success: false,
+                code: "ACCOUNT_NOT_FOUND",
+                message: "No Elevoni account was found for this Google account. Choose Sign Up to create one."
+            });
+        }
+        if (consentAccepted !== true) {
+            return res.status(428).json({
+                success: false,
+                code: "CONSENT_REQUIRED",
+                message: "Please accept the Terms of Use and Privacy Policy to create your Elevoni account."
+            });
         }
 
         const createdUser = await new userModel({
