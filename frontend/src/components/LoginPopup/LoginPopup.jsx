@@ -13,7 +13,7 @@ const LoginPopup = ({ setShowLogin }) => {
 
   const [currState, setCurrState] = useState("Login");
   useEffect(() => {
-    if (currState !== "Login" || !googleClientId) return undefined;
+    if (!googleClientId) return undefined;
     let cancelled = false;
     const renderGoogleButton = () => {
       if (cancelled || !googleButtonRef.current || !window.google?.accounts?.id) return;
@@ -32,7 +32,7 @@ const LoginPopup = ({ setShowLogin }) => {
             setToken(response.data.token);
             localStorage.setItem("token", response.data.token);
             setShowLogin(false);
-            toast.success("Welcome to Elevoni!");
+            toast.success(currState === "Sign Up" ? "Your Elevoni account is ready!" : "Welcome back to Elevoni!");
           } catch (error) {
             toast.error(error.response?.data?.message || error.message || "Unable to sign in with Google. Please try again.");
           }
@@ -43,13 +43,13 @@ const LoginPopup = ({ setShowLogin }) => {
         type: "standard",
         theme: "outline",
         size: "large",
-        text: "signin_with",
+        text: currState === "Sign Up" ? "signup_with" : "signin_with",
         shape: "rect",
         width: String(Math.min(360, Math.floor(googleButtonRef.current.getBoundingClientRect().width || 360)))
       });
     };
 
-    const handleScriptError = () => setGoogleError("Google sign-in is unavailable right now.");
+    const handleScriptError = () => setGoogleError(`Google ${currState === "Sign Up" ? "sign-up" : "sign-in"} is unavailable right now.`);
     const scriptId = "google-identity-services";
     let script = document.getElementById(scriptId);
     if (window.google?.accounts?.id) {
@@ -161,17 +161,15 @@ const LoginPopup = ({ setShowLogin }) => {
         <button type="submit">
           {currState === "Sign Up" ? "Create account" : "Login"}
         </button>
-        {currState === "Login" && (
-          <>
+        <>
             <div className="login-popup-divider" aria-hidden="true"><span>or</span></div>
             {googleClientId ? (
-              <div className="google-signin-button" ref={googleButtonRef} aria-label="Sign in with Google" />
+              <div className="google-signin-button" ref={googleButtonRef} aria-label={currState === "Sign Up" ? "Sign up with Google" : "Sign in with Google"} />
             ) : (
-              <p className="google-signin-message">Google sign-in is not configured yet.</p>
+              <p className="google-signin-message">Google {currState === "Sign Up" ? "sign-up" : "sign-in"} is not configured yet.</p>
             )}
             {googleError && <p className="google-signin-message" role="status">{googleError}</p>}
-          </>
-        )}
+        </>
         <div className="login-popup-condition">
           <input type="checkbox" required />
           <p>By continuing, I agree to the terms of use & privacy policy.</p>

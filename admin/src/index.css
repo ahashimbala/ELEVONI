@@ -77,3 +77,6 @@ hr {
         gap: 8px;
     }
 }
+@media (max-width: 768px) {
+    .app-content { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+}

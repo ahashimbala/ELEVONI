@@ -15,3 +15,6 @@
 .login-popup-divider::before, .login-popup-divider::after { content: ""; flex: 1; height: 1px; background: var(--elevoni-line); }
 .google-signin-button { display: flex; justify-content: center; width: 100%; min-height: 40px; }
 .google-signin-message { margin: 0; color: var(--elevoni-muted); font-size: 12px; text-align: center; }
+
+.login-popup { overflow-y: auto; overscroll-behavior: contain; }
+.login-popup-container { max-height: calc(100dvh - 36px); overflow-y: auto; overscroll-behavior: contain; }

@@ -193,3 +193,10 @@
   .navbar .navbar-avatar { flex-basis: 34px; width: 34px; min-width: 34px; height: 34px; }
   .navbar button:not(.navbar-avatar):not(.mobile-toggle-btn) { padding: 8px 12px; }
 }
+@media (max-width: 750px) {
+  .navbar-menu { height: 100dvh; overflow-y: auto; padding-top: max(24px, env(safe-area-inset-top)); padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  .navbar-search-icon a { justify-content: center; width: 44px; min-height: 44px; }
+  .navbar .navbar-avatar { flex-basis: 44px; width: 44px; min-width: 44px; height: 44px; }
+  .navbar .mobile-toggle-btn { width: 44px; min-height: 44px; height: 44px; }
+  .navbar button:not(.navbar-avatar):not(.mobile-toggle-btn) { min-height: 44px; }
+}

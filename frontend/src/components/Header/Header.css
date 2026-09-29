@@ -159,3 +159,10 @@
         object-fit: contain;
     }
 }
+@media (max-width: 680px) {
+    .header-contents { padding-inline: 16px; }
+    .header-contents h2 { font-size: clamp(18px, 6.2vw, 30px); }
+}
+@media (max-width: 360px) {
+    .header-contents h2 { font-size: clamp(17px, 6.2vw, 22px); }
+}
