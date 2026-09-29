@@ -108,13 +108,17 @@
     .header {
         grid-template-columns: 52% 48%;
     }
-
     .header-contents {
         padding: 32px 24px;
     }
-
     .header-contents h2 {
         font-size: clamp(23px, 3.5vw, 31px);
+    }
+}
+
+@media (max-width: 360px) {
+    .header-contents h2 {
+        font-size: clamp(21px, 7.2vw, 25px);
     }
 }
 
@@ -125,37 +129,30 @@
         width: 100%;
         min-height: 0;
     }
-
     .header-contents {
         display: grid;
         place-items: center;
         padding: 30px 22px 24px;
     }
-
     .header-copy {
         width: 100%;
     }
-
     .header-contents h2 {
         margin: 0;
-        font-size: clamp(24px, 8vw, 32px);
+        font-size: clamp(22px, 7.7vw, 30px);
         line-height: 1.05;
         letter-spacing: -0.055em;
     }
-
     .header-contents p {
         margin-top: 18px;
     }
-
     .header-contents button {
         margin-top: 20px;
     }
-
     .header-visual {
         width: 100%;
         height: auto;
     }
-
     .header-visual-image {
         width: 100%;
         height: auto;
