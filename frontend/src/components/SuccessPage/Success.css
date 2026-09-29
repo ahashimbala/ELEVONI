@@ -1,101 +1,11 @@
-.success-page {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 80vh;
-    padding: 20px;
-    background-color: #fafdfb;
-}
-
-.success-container {
-    background: #ffffff;
-    padding: 40px 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.06);
-    text-align: center;
-    max-width: 480px;
-    width: 100%;
-    border: 1px solid #e6f7f0;
-}
-
-.success-icon {
-    width: 90px;
-    height: 90px;
-    margin-bottom: 24px;
-    background: #e6f7f0;
-    border-radius: 50%;
-    padding: 18px;
-    animation: scaleUp 0.5s ease-out forwards;
-}
-
-.success-container h2 {
-    color: #065f46;
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 12px;
-}
-
-.success-container p {
-    color: #4b5563;
-    font-size: 16px;
-    line-height: 1.6;
-    margin-bottom: 32px;
-}
-
-.success-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.success-buttons button {
-    width: 100%;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: 600;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-}
-
-.success-buttons button:first-child {
-    background-color: #676767;
-    color: #ffffff;
-}
-
-.success-buttons button:first-child:hover {
-    background-color: #333;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-}
-
-.success-buttons .secondary-btn {
-    background-color: #f3f4f6;
-    color: #374151;
-}
-
-.success-buttons .secondary-btn:hover {
-    background-color: #e5e7eb;
-    transform: translateY(-2px);
-}
-
-@keyframes scaleUp {
-    0% {
-        transform: scale(0.6);
-        opacity: 0;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-@media (max-width: 480px) {
-    .success-container {
-        padding: 30px 20px;
-    }
-    .success-container h2 {
-        font-size: 24px;
-    }
-}
+.success-page { display: flex; justify-content: center; align-items: center; min-height: min(78vh, 760px); padding: 44px 18px; background: white; }
+.success-container { width: 100%; max-width: 560px; padding: clamp(28px, 5vw, 52px); border: 1px solid var(--elevoni-line); border-radius: var(--elevoni-radius-lg); background: var(--elevoni-cream); text-align: left; }
+.success-icon { width: 58px; height: 58px; margin-bottom: 24px; padding: 12px; border-radius: 50%; background: var(--elevoni-sage-soft); object-fit: contain; }
+.success-container h2 { margin-bottom: 12px; color: var(--elevoni-ink); font-size: clamp(27px, 4vw, 36px); font-weight: 500; line-height: 1.15; letter-spacing: -.045em; }
+.success-container p { margin-bottom: 20px; color: var(--elevoni-text); font-size: 14px; line-height: 1.75; }
+.success-buttons { display: flex; gap: 10px; margin-top: 26px; }
+.success-buttons button { flex: 1; min-height: 46px; padding: 0 14px; border: 1px solid var(--elevoni-sage); border-radius: 4px; background: var(--elevoni-sage); color: white; font-size: 12px; font-weight: 550; cursor: pointer; transition: background 150ms ease; }
+.success-buttons button:first-child:hover { background: var(--elevoni-sage-dark); }
+.success-buttons .secondary-btn { border-color: var(--elevoni-line); background: white; color: var(--elevoni-ink); }
+.success-buttons .secondary-btn:hover { background: #f0f1ec; }
+@media (max-width: 480px) { .success-page { min-height: 64vh; } .success-buttons { flex-direction: column; } }

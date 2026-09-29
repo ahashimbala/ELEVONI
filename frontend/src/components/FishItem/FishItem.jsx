@@ -26,9 +26,11 @@ const FishItem = ({ id, name, image, price, description }) => {
     if (!isValidQuantity) return;
     const saved = await setCartQuantity(id, parsedQuantity);
     if (!saved) {
-      toast.error(saved === "forbidden"
-        ? "This account is not authorized to use the cart. Please sign in again or contact support."
-        : "Your quantity changed locally but could not be synced to your account.");
+      toast.error(
+        saved === "forbidden"
+          ? "This account does not have customer access. Please log in with a customer account to use the cart."
+          : "Your quantity changed locally but could not be synced to your account.",
+      );
       return;
     }
     navigate("/cart");
@@ -133,7 +135,7 @@ const FishItem = ({ id, name, image, price, description }) => {
               type="submit"
               disabled={!isValidQuantity}
             >
-              {quantity > 0 ? "Update cart" : "Add to cart"}
+              {quantity > 0 ? "Go to cart" : "Add to cart"}
             </button>
           </div>
           {quantity > 0 && (

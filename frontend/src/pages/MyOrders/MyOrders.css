@@ -1,99 +1,12 @@
-.my-orders {
-    margin: 50px 0px;
-    width: 100%;
-    padding: 0 30px;
-    box-sizing: border-box;
-}
-
-.my-orders .container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    margin-top: 30px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.my-orders-order {
-    display: grid;
-    grid-template-columns: 0.5fr 2fr 1fr 1fr 2fr 1fr;
-    align-items: center;
-    gap: 30px;
-    font-size: 14px;
-    padding: 10px 20px;
-    color: #454545;
-    border: 1px solid #676767;
-    border-radius: 8px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.my-orders-order img {
-    width: 50px;
-}
-
-.my-orders-order p span {
-    color: #676767;
-}
-
-.my-orders-order p b {
-    font-weight: 500;
-    color: #454545;
-}
-
-.my-orders-order button {
-    width: 150px;
-    border: none;
-    padding: 12px 0px;
-    border-radius: 4px;
-    background-color: #ddcec5;
-    cursor: pointer;
-    color: #454545;
-    font-weight: 500;
-    transition: 0.2s ease;
-    box-sizing: border-box;
-}
-
-.my-orders-order button:hover {
-    background-color: #d2c0b5;
-}
-
-@media (max-width:900px) {
-    .my-orders-order {
-        grid-template-columns: 1fr 2fr 1fr;
-        row-gap: 15px;
-        column-gap: 20px;
-        font-size: 13px;
-        padding: 15px;
-    }
-    .my-orders-order button {
-        width: 100%;
-        max-width: 150px;
-        padding: 10px 0;
-    }
-}
-
-@media (max-width: 768px) {
-    .my-orders {
-        margin: 30px 0 80px 0;
-        padding: 0 20px;
-    }
-}
-
-@media (max-width:480px) {
-    .my-orders {
-        padding: 0 15px 70px 15px;
-    }
-    .my-orders-order {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    .my-orders-order button {
-        max-width: none;
-        width: 100%;
-        font-size: 12px;
-        padding: 12px 0;
-    }
-}
+.my-orders { width: 100%; margin: 52px auto 90px; padding: 0; }
+.my-orders > h2 { color: var(--elevoni-ink); font-size: clamp(28px, 3.5vw, 40px); font-weight: 500; letter-spacing: -.05em; }
+.my-orders .container { display: flex; flex-direction: column; gap: 0; width: 100%; margin-top: 28px; border-top: 1px solid var(--elevoni-line); }
+.my-orders .container > p { padding: 25px 0; color: var(--elevoni-muted); font-size: 14px; }
+.my-orders-order { display: grid; grid-template-columns: 56px minmax(180px, 2fr) 1fr .7fr 1.2fr 1.2fr auto; align-items: center; gap: 18px; width: 100%; min-width: 0; padding: 19px 0; border: 0; border-bottom: 1px solid var(--elevoni-line); color: var(--elevoni-text); font-size: 12px; }
+.my-orders-order img { width: 42px; height: 42px; padding: 8px; border-radius: 4px; background: var(--elevoni-cream); object-fit: contain; }
+.my-orders-order p span { color: var(--elevoni-sage-dark); }
+.my-orders-order p b { color: var(--elevoni-ink); font-weight: 550; }
+.my-orders-order button { width: auto; min-height: 38px; padding: 0 12px; border: 1px solid var(--elevoni-line); border-radius: 4px; background: white; color: var(--elevoni-ink); font-size: 11px; font-weight: 500; cursor: pointer; transition: background 150ms ease, border-color 150ms ease; }
+.my-orders-order button:hover { border-color: #cbd0c2; background: var(--elevoni-cream); }
+@media (max-width: 900px) { .my-orders-order { grid-template-columns: 46px minmax(140px, 1.5fr) repeat(2, minmax(70px, .7fr)); gap: 12px; } .my-orders-order button { grid-column: 2 / -1; justify-self: start; } }
+@media (max-width: 560px) { .my-orders { margin: 34px auto 70px; } .my-orders-order { grid-template-columns: 42px 1fr; gap: 8px 12px; padding: 17px 0; } .my-orders-order img { grid-row: span 2; } .my-orders-order button { grid-column: 2; justify-self: stretch; } }
