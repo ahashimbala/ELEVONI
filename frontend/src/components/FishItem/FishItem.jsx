@@ -124,7 +124,14 @@ const FishItem = ({ id, name, image, price, description }) => {
                 step="1"
                 inputMode="numeric"
                 value={draftQuantity}
-                onChange={(event) => setDraftQuantity(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setDraftQuantity(value);
+                  const nextQuantity = Number(value);
+                  if (Number.isSafeInteger(nextQuantity) && nextQuantity > 0) {
+                    void setCartQuantity(id, nextQuantity);
+                  }
+                }}
                 aria-label={`Quantity of ${name} in kilograms`}
                 required
               />

@@ -265,7 +265,14 @@ const ItemDetails = () => {
                   step="1"
                   inputMode="numeric"
                   value={draftQuantity}
-                  onChange={(event) => setDraftQuantity(event.target.value)}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setDraftQuantity(value);
+                    const nextQuantity = Number(value);
+                    if (Number.isSafeInteger(nextQuantity) && nextQuantity > 0) {
+                      void setCartQuantity(item._id, nextQuantity);
+                    }
+                  }}
                   aria-label={`Quantity of ${item.name} in kilograms`}
                   required
                 />
