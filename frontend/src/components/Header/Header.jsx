@@ -4,15 +4,13 @@ const Header = () => {
   return (
     <section className="header">
       <div className="header-contents">
-        <h2><span className="header-title-lead">Smoked Catfish Delivered</span> to Your Doorstep</h2>
+        <h2>
+          <span className="header-title-lead">Smoked Catfish Delivered</span> to
+          Your Doorstep
+        </h2>
 
         <p>We smoke premium catfish in Nigeria.</p>
-        <img
-          className="header-inline-image"
-          src="/header4.png"
-          alt=""
-          aria-hidden="true"
-        />
+
         <button
           onClick={() =>
             document
@@ -22,6 +20,12 @@ const Header = () => {
         >
           Shop Now
         </button>
+        <img
+          className="header-inline-image"
+          src="/header4.png"
+          alt=""
+          aria-hidden="true"
+        />
       </div>
 
       <div className="header-visual">
