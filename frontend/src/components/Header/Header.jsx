@@ -20,12 +20,6 @@ const Header = () => {
         >
           Shop Now
         </button>
-        <img
-          className="header-inline-image"
-          src="/header4.png"
-          alt=""
-          aria-hidden="true"
-        />
       </div>
 
       <div className="header-visual">
