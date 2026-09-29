@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import getProductPrice from "../../utils/pricing";
 
 const FishItem = ({ id, name, image, price, description }) => {
-  const { cartItems, setCartQuantity, url } = useContext(StoreContext);
+  const { cartItems, setCartQuantity, updateCartQuantity, url } = useContext(StoreContext);
   const navigate = useNavigate();
   const quantity = Number(cartItems?.[id] || 0);
   const [draftQuantity, setDraftQuantity] = useState(String(quantity || 1));
@@ -129,7 +129,7 @@ const FishItem = ({ id, name, image, price, description }) => {
                   setDraftQuantity(value);
                   const nextQuantity = Number(value);
                   if (Number.isSafeInteger(nextQuantity) && nextQuantity > 0) {
-                    void setCartQuantity(id, nextQuantity);
+                    void updateCartQuantity(id, nextQuantity);
                   }
                 }}
                 aria-label={`Quantity of ${name} in kilograms`}

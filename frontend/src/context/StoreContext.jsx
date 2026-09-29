@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useRef, useState } from "react";
 import axios from "axios";
 
 export const StoreContext = createContext(null);
@@ -8,6 +8,7 @@ const StoreContextProvider = (props) => {
   const url = "https://elevoni-backend.vercel.app";
   const [token, setToken] = useState("");
   const [fish_list, setFishList] = useState([]);
+  const cartQuantitySyncTimers = useRef(new Map());
 
   const addtoCart = async (itemId) => {
     if (!cartItems) {
@@ -103,6 +104,22 @@ const StoreContextProvider = (props) => {
       return false;
     }
   };
+  const updateCartQuantity = (itemId, quantity) => {
+    if (typeof itemId !== "string" || !Number.isSafeInteger(quantity) || quantity < 1) return false;
+
+    setCartItems((previous) => ({ ...previous, [itemId]: quantity }));
+    if (!token) return true;
+
+    const pendingSync = cartQuantitySyncTimers.current.get(itemId);
+    if (pendingSync) clearTimeout(pendingSync);
+    const timer = setTimeout(() => {
+      cartQuantitySyncTimers.current.delete(itemId);
+      void setCartQuantity(itemId, quantity);
+    }, 400);
+    cartQuantitySyncTimers.current.set(itemId, timer);
+    return true;
+  };
+
   const getProductPrice = (itemInfo, quantity) => {
     const isSmokedCatfish = itemInfo.name
       ?.toLowerCase()
@@ -163,7 +180,7 @@ const StoreContextProvider = (props) => {
         {},
         { headers: { token } },
       );
-      setCartItems(response.data.cartData || {});
+      setCartItems((localCart) => ({ ...(response.data.cartData || {}), ...localCart }));
     } catch (error) {
       console.error("Failed to retrieve user cart record:", error.message);
     }
@@ -190,6 +207,7 @@ const StoreContextProvider = (props) => {
     addtoCart,
     removeFromCart,
     setCartQuantity,
+    updateCartQuantity,
     getTotalCartAmount,
     url,
     token,

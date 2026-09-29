@@ -10,7 +10,7 @@ const ItemDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { fish_list, cartItems, setCartQuantity, url } =
+  const { fish_list, cartItems, setCartQuantity, updateCartQuantity, url } =
     useContext(StoreContext);
 
   const item = fish_list.find((fish) => fish._id === id);
@@ -270,7 +270,7 @@ const ItemDetails = () => {
                     setDraftQuantity(value);
                     const nextQuantity = Number(value);
                     if (Number.isSafeInteger(nextQuantity) && nextQuantity > 0) {
-                      void setCartQuantity(item._id, nextQuantity);
+                      void updateCartQuantity(item._id, nextQuantity);
                     }
                   }}
                   aria-label={`Quantity of ${item.name} in kilograms`}
