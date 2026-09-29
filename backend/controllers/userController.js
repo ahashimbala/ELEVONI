@@ -68,16 +68,91 @@ const registerUser = async (req, res) => {
     }
 };
 
+const googleReturnOrigins = new Set([
+    "https://elevonifarms.vercel.app",
+    "https://elevonifarms-git-main-elevoni.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5174"
+]);
+
+const parseGoogleRedirectState = (state) => {
+    const [flow, origin] = typeof state === "string" ? state.split("|") : [];
+    const validOrigin = googleReturnOrigins.has(origin) ? origin : null;
+    if (flow === "sign_in") return { intent: "sign_in", consentAccepted: false, origin: validOrigin };
+    if (flow === "sign_up_consented") return { intent: "sign_up", consentAccepted: true, origin: validOrigin };
+    if (flow === "sign_up_unconsented") return { intent: "sign_up", consentAccepted: false, origin: validOrigin };
+    return { intent: null, consentAccepted: false, origin: validOrigin };
+};
+
+const redirectGoogleOutcome = (res, origin, { token, code, intent }) => {
+    const destination = new URL(origin);
+    if (token) {
+        destination.hash = new URLSearchParams({ elevoni_google_token: token }).toString();
+    } else {
+        destination.searchParams.set("google_auth_error", code || "GOOGLE_AUTH_FAILED");
+        destination.searchParams.set("google_auth_intent", intent || "sign_in");
+    }
+    return res.redirect(303, destination.toString());
+};
+
 const googleLogin = async (req, res) => {
-    const { credential, intent, consentAccepted } = req.body || {};
+    const isRedirectRequest = req.is("application/x-www-form-urlencoded");
+    const redirectState = isRedirectRequest ? parseGoogleRedirectState(req.body?.state) : null;
+    const returnOrigin = redirectState?.origin || "https://elevonifarms.vercel.app";
+    let statusCode = 200;
+    const response = isRedirectRequest ? {
+        status(code) {
+            statusCode = code;
+            return this;
+        },
+        json(body) {
+            if (body.success && body.token) {
+                return redirectGoogleOutcome(res, returnOrigin, { token: body.token });
+            }
+            const code = body.code || (
+                statusCode === 403 ? "ACCOUNT_NOT_ALLOWED" :
+                statusCode === 409 ? "ACCOUNT_CONFLICT" :
+                "GOOGLE_AUTH_FAILED"
+            );
+            return redirectGoogleOutcome(res, returnOrigin, { code, intent });
+        }
+    } : res;
+
+    let intent;
+    let consentAccepted;
+    if (isRedirectRequest) {
+        const cookieToken = (req.headers.cookie || "")
+            .split(";")
+            .map((part) => part.trim())
+            .find((part) => part.startsWith("g_csrf_token="))
+            ?.slice("g_csrf_token=".length);
+        const bodyToken = req.body?.g_csrf_token;
+        const csrfMatches = typeof cookieToken === "string" &&
+            typeof bodyToken === "string" &&
+            cookieToken.length > 0 &&
+            cookieToken === bodyToken;
+
+        intent = redirectState?.intent;
+        consentAccepted = redirectState?.consentAccepted;
+        if (!csrfMatches || !intent) {
+            return redirectGoogleOutcome(res, returnOrigin, {
+                code: "GOOGLE_AUTH_FAILED",
+                intent: intent || "sign_in"
+            });
+        }
+    } else {
+        ({ intent, consentAccepted } = req.body || {});
+    }
+
+    const { credential } = req.body || {};
     if (typeof credential !== "string" || credential.length < 20 || credential.length > 10000) {
-        return res.status(400).json({ success: false, message: "A valid Google credential is required" });
+        return response.status(400).json({ success: false, message: "A valid Google credential is required" });
     }
     if (intent !== "sign_in" && intent !== "sign_up") {
-        return res.status(400).json({ success: false, message: "Choose whether to sign in or create an account" });
+        return response.status(400).json({ success: false, message: "Choose whether to sign in or create an account" });
     }
     if (!process.env.GOOGLE_CLIENT_ID) {
-        return res.status(503).json({ success: false, message: "Google sign-in is not configured" });
+        return response.status(503).json({ success: false, message: "Google sign-in is not configured" });
     }
 
     let identity;
@@ -87,30 +162,30 @@ const googleLogin = async (req, res) => {
 
         if (user) {
             if (user.role === "admin") {
-                return res.status(403).json({ success: false, message: "Google sign-in is unavailable for this account" });
+                return response.status(403).json({ success: false, message: "Google sign-in is unavailable for this account" });
             }
-            return res.json({ success: true, token: createToken(user), user: safeUser(user) });
+            return response.json({ success: true, token: createToken(user), user: safeUser(user) });
         }
 
         user = await findByVerifiedEmail(identity.email);
         if (user) {
             if (user.role === "admin" || (user.googleId && user.googleId !== identity.sub)) {
-                return res.status(409).json({ success: false, message: "This account cannot be linked to this Google account" });
+                return response.status(409).json({ success: false, message: "This account cannot be linked to this Google account" });
             }
             user.googleId = identity.sub;
             await user.save();
-            return res.json({ success: true, token: createToken(user), user: safeUser(user) });
+            return response.json({ success: true, token: createToken(user), user: safeUser(user) });
         }
 
         if (intent === "sign_in") {
-            return res.status(404).json({
+            return response.status(404).json({
                 success: false,
                 code: "ACCOUNT_NOT_FOUND",
                 message: "No Elevoni account was found for this Google account. Choose Sign Up to create one."
             });
         }
         if (consentAccepted !== true) {
-            return res.status(428).json({
+            return response.status(428).json({
                 success: false,
                 code: "CONSENT_REQUIRED",
                 message: "Please accept the Terms of Use and Privacy Policy to create your Elevoni account."
@@ -123,27 +198,27 @@ const googleLogin = async (req, res) => {
             googleId: identity.sub,
             role: "customer"
         }).save();
-        return res.status(201).json({ success: true, token: createToken(createdUser), user: safeUser(createdUser) });
+        return response.status(201).json({ success: true, token: createToken(createdUser), user: safeUser(createdUser) });
     } catch (error) {
         if (error?.code === "GOOGLE_EMAIL_AMBIGUOUS") {
-            return res.status(409).json({ success: false, message: "Multiple accounts match this Google email. Please contact support to link the correct account." });
+            return response.status(409).json({ success: false, message: "Multiple accounts match this verified Google email. Please contact support to link the correct account." });
         }
         if (error?.code === "GOOGLE_TOKEN_INVALID") {
-            return res.status(401).json({ success: false, message: "Google could not verify this sign-in. Please try again." });
+            return response.status(401).json({ success: false, code: "GOOGLE_TOKEN_INVALID", message: "Google could not verify this sign-in. Please try again." });
         }
         if (error?.code === 11000) {
             try {
                 const concurrentUser = identity ? await userModel.findOne({ $or: [{ googleId: identity.sub }, { email: identity.email }] }) : null;
                 if (concurrentUser && concurrentUser.role !== "admin" && concurrentUser.googleId === identity?.sub) {
-                    return res.json({ success: true, token: createToken(concurrentUser), user: safeUser(concurrentUser) });
+                    return response.json({ success: true, token: createToken(concurrentUser), user: safeUser(concurrentUser) });
                 }
             } catch (lookupError) {
                 console.error("Google account conflict lookup failed:", lookupError);
             }
-            return res.status(409).json({ success: false, message: "This account could not be linked. Please sign in with your existing method." });
+            return response.status(409).json({ success: false, message: "This account could not be linked. Please sign in with your existing method." });
         }
         console.error("Google sign-in error:", error);
-        return res.status(500).json({ success: false, message: "Unable to complete Google sign-in" });
+        return response.status(500).json({ success: false, message: "Unable to complete Google sign-in" });
     }
 };
 

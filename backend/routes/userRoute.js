@@ -5,6 +5,6 @@ const userRouter = express.Router()
 
 userRouter.post("/register", registerUser)
 userRouter.post("/login", loginUser)
-userRouter.post("/google", googleLogin)
+userRouter.post("/google", express.urlencoded({ extended: false }), googleLogin)
 userRouter.get("/me", authMiddleware, currentUser)
 export default userRouter;

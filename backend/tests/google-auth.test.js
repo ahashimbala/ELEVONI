@@ -32,7 +32,7 @@ test("Google verification errors are normalized as invalid credentials", async (
 });
 
 
-const runGoogleLogin = async ({ body, googleUser = null, emailUser = null }) => {
+const runGoogleLogin = async ({ body, googleUser = null, emailUser = null, redirect = false, cookieToken = "csrf-value" }) => {
     const originalVerify = OAuth2Client.prototype.verifyIdToken;
     const originalFindOne = userModel.findOne;
     const originalFind = userModel.find;
@@ -59,11 +59,18 @@ const runGoogleLogin = async ({ body, googleUser = null, emailUser = null }) => 
     const response = {
         statusCode: 200,
         body: null,
+        location: null,
         status(code) { this.statusCode = code; return this; },
-        json(value) { this.body = value; return this; }
+        json(value) { this.body = value; return this; },
+        redirect(code, location) { this.statusCode = code; this.location = location; return this; }
+    };
+    const request = {
+        body: { credential: "verified-google-id-token-value", ...body },
+        headers: { cookie: cookieToken ? `g_csrf_token=${cookieToken}` : "" },
+        is: (type) => redirect && type === "application/x-www-form-urlencoded"
     };
     try {
-        await googleLogin({ body: { credential: "verified-google-id-token-value", ...body } }, response);
+        await googleLogin(request, response);
         return { ...response, saved };
     } finally {
         OAuth2Client.prototype.verifyIdToken = originalVerify;
@@ -124,4 +131,39 @@ test("Google cannot authenticate an existing admin account", async () => {
     const result = await runGoogleLogin({ body: { intent: "sign_in", consentAccepted: false }, googleUser: user });
     assert.equal(result.statusCode, 403);
     assert.equal(result.body.success, false);
+});
+
+test("GIS redirect success returns the Elevoni JWT to an allowed app origin in a fragment", async () => {
+    const user = { _id: "customer-redirect", name: "Buyer", email: "buyer@example.com", role: "customer", googleId: "google-sub" };
+    const result = await runGoogleLogin({
+        redirect: true,
+        body: { state: "sign_in|https://elevonifarms.vercel.app", g_csrf_token: "csrf-value" },
+        googleUser: user
+    });
+    assert.equal(result.statusCode, 303);
+    const target = new URL(result.location);
+    assert.equal(target.origin, "https://elevonifarms.vercel.app");
+    assert.ok(new URLSearchParams(target.hash.slice(1)).get("elevoni_google_token"));
+});
+
+test("GIS redirect signup without consent returns to Elevoni and does not create an account", async () => {
+    const result = await runGoogleLogin({
+        redirect: true,
+        body: { state: "sign_up_unconsented|https://elevonifarms.vercel.app", g_csrf_token: "csrf-value" }
+    });
+    assert.equal(result.statusCode, 303);
+    assert.equal(new URL(result.location).searchParams.get("google_auth_error"), "CONSENT_REQUIRED");
+    assert.equal(new URL(result.location).searchParams.get("google_auth_intent"), "sign_up");
+    assert.equal(result.saved.length, 0);
+});
+
+test("GIS redirect rejects a mismatched double-submit CSRF token", async () => {
+    const result = await runGoogleLogin({
+        redirect: true,
+        cookieToken: "different-cookie",
+        body: { state: "sign_up_consented|https://elevonifarms.vercel.app", g_csrf_token: "csrf-value" }
+    });
+    assert.equal(result.statusCode, 303);
+    assert.equal(new URL(result.location).searchParams.get("google_auth_error"), "GOOGLE_AUTH_FAILED");
+    assert.equal(result.saved.length, 0);
 });

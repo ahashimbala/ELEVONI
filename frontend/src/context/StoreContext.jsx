@@ -192,9 +192,21 @@ const StoreContextProvider = (props) => {
   };
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
-      setToken(localStorage.getItem("token"));
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    const redirectedToken = hashParams.get("elevoni_google_token");
+    if (redirectedToken) {
+      localStorage.setItem("token", redirectedToken);
+      hashParams.delete("elevoni_google_token");
+      const remainingHash = hashParams.toString();
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${window.location.pathname}${window.location.search}${remainingHash ? `#${remainingHash}` : ""}`,
+      );
     }
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) setToken(storedToken);
+
     async function loadData() {
       await fetchFishList();
       if (localStorage.getItem("token")) {

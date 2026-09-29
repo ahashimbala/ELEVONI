@@ -5,16 +5,25 @@ import { StoreContext } from "../../context/StoreContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const LoginPopup = ({ setShowLogin }) => {
+const googleRedirectErrorText = {
+  ACCOUNT_NOT_FOUND: "No Elevoni account was found for this Google account. Choose Sign Up to create one.",
+  CONSENT_REQUIRED: "Please accept the Terms/Privacy checkbox before creating a Google account.",
+  ACCOUNT_NOT_ALLOWED: "Google sign-in is unavailable for this account.",
+  ACCOUNT_CONFLICT: "This account could not be linked. Please use your existing sign-in method.",
+  GOOGLE_TOKEN_INVALID: "Google could not verify this sign-in. Please try again.",
+  GOOGLE_AUTH_FAILED: "Google sign-in could not be completed. Please try again."
+};
+
+const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
   const { url, setToken } = useContext(StoreContext);
   const googleButtonRef = useRef(null);
   const pendingGoogleCredential = useRef(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  const [googleError, setGoogleError] = useState("");
+  const [googleError, setGoogleError] = useState(() => googleRedirectErrorText[redirectOutcome?.code] || "");
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
 
-  const [currState, setCurrState] = useState("Login");
+  const [currState, setCurrState] = useState(redirectOutcome?.intent === "sign_up" ? "Sign Up" : "Login");
   const submitGoogleCredential = async (credential, accepted) => {
     setGoogleBusy(true);
     setGoogleError("");
@@ -51,8 +60,15 @@ const LoginPopup = ({ setShowLogin }) => {
     let cancelled = false;
     const renderGoogleButton = () => {
       if (cancelled || !googleButtonRef.current || !window.google?.accounts?.id) return;
-      window.google.accounts.id.initialize({
+      const iosBrowser = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      window.google.accounts.id.initialize(iosBrowser ? {
         client_id: googleClientId,
+        ux_mode: "redirect",
+        login_uri: `${url}/api/user/google`
+      } : {
+        client_id: googleClientId,
+        ux_mode: "popup",
         use_fedcm_for_button: true,
         callback: async ({ credential }) => {
           if (!credential) {
@@ -69,7 +85,7 @@ const LoginPopup = ({ setShowLogin }) => {
         size: "large",
         text: currState === "Sign Up" ? "signup_with" : "signin_with",
         shape: "rect",
-        ux_mode: "popup",
+        state: `${currState === "Sign Up" ? (consentAccepted ? "sign_up_consented" : "sign_up_unconsented") : "sign_in"}|${window.location.origin}`,
         width: String(Math.min(360, Math.floor(googleButtonRef.current.getBoundingClientRect().width || 360)))
       });
     };

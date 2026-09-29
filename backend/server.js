@@ -23,7 +23,7 @@ const allowedOrigins = [
     "http://localhost:5174"
 ];
 
-app.use(cors({
+const corsOptions = {
     origin: function(origin, callback) {
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) !== -1) {
@@ -35,7 +35,17 @@ app.use(cors({
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "token"]
-}));
+};
+
+app.use((req, res, next) => {
+    const isGoogleRedirectPost =
+        req.method === "POST" &&
+        req.path === "/api/user/google" &&
+        req.is("application/x-www-form-urlencoded") &&
+        req.get("origin") === "https://accounts.google.com";
+    if (isGoogleRedirectPost) return next();
+    return cors(corsOptions)(req, res, next);
+});
 
 app.use(express.json());
 

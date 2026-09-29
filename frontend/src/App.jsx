@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import Navbar from "./components/Navbar/Navbar";
@@ -26,10 +26,31 @@ ReactGA.send({
 
 const App = () => {
   const [showLogin, setShowLogin] = useState(false);
+  const [googleRedirectOutcome, setGoogleRedirectOutcome] = useState(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("google_auth_error");
+    if (!code) return;
+    const intent = params.get("google_auth_intent") === "sign_up" ? "sign_up" : "sign_in";
+    setGoogleRedirectOutcome({ code, intent });
+    setShowLogin(true);
+    params.delete("google_auth_error");
+    params.delete("google_auth_intent");
+    const remainingSearch = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${remainingSearch ? `?${remainingSearch}` : ""}${window.location.hash}`,
+    );
+  }, []);
+  const handleSetShowLogin = (isOpen) => {
+    setShowLogin(isOpen);
+    if (!isOpen) setGoogleRedirectOutcome(null);
+  };
   return (
     <HelmetProvider>
       <ScrollToTop />
-      {showLogin ? <LoginPopup setShowLogin={setShowLogin} /> : <></>}
+      {showLogin ? <LoginPopup setShowLogin={handleSetShowLogin} redirectOutcome={googleRedirectOutcome} /> : <></>}
       <Navbar setShowLogin={setShowLogin} />
       <div className="app">
         <ToastContainer position="top-right" autoClose={3000} theme="light" />
