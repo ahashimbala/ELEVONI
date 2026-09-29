@@ -105,9 +105,14 @@ const StoreContextProvider = (props) => {
     }
   };
   const updateCartQuantity = (itemId, quantity) => {
-    if (typeof itemId !== "string" || !Number.isSafeInteger(quantity) || quantity < 1) return false;
+    if (typeof itemId !== "string" || !Number.isSafeInteger(quantity) || quantity < 0) return false;
 
-    setCartItems((previous) => ({ ...previous, [itemId]: quantity }));
+    setCartItems((previous) => {
+      const next = { ...previous };
+      if (quantity === 0) delete next[itemId];
+      else next[itemId] = quantity;
+      return next;
+    });
     if (!token) return true;
 
     const pendingSync = cartQuantitySyncTimers.current.get(itemId);

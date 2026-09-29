@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import "./FishItem.css";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ const FishItem = ({ id, name, image, price, description }) => {
   const navigate = useNavigate();
   const quantity = Number(cartItems?.[id] || 0);
   const [draftQuantity, setDraftQuantity] = useState(String(quantity || 1));
+  const previousQuantity = useRef(quantity);
   const parsedQuantity = Number(draftQuantity);
   const isValidQuantity =
     Number.isSafeInteger(parsedQuantity) && parsedQuantity > 0;
@@ -18,7 +19,10 @@ const FishItem = ({ id, name, image, price, description }) => {
   const isSmokedCatfish = name?.toLowerCase().includes("smoked catfish");
 
   useEffect(() => {
-    setDraftQuantity(String(quantity || 1));
+    if (previousQuantity.current !== quantity) {
+      setDraftQuantity(quantity > 0 ? String(quantity) : "");
+      previousQuantity.current = quantity;
+    }
   }, [quantity]);
 
   const saveQuantity = async (event) => {
@@ -127,6 +131,10 @@ const FishItem = ({ id, name, image, price, description }) => {
                 onChange={(event) => {
                   const value = event.target.value;
                   setDraftQuantity(value);
+                  if (value === "") {
+                    void updateCartQuantity(id, 0);
+                    return;
+                  }
                   const nextQuantity = Number(value);
                   if (Number.isSafeInteger(nextQuantity) && nextQuantity > 0) {
                     void updateCartQuantity(id, nextQuantity);

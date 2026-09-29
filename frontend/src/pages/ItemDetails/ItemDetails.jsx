@@ -18,6 +18,7 @@ const ItemDetails = () => {
   const [selected, setSelected] = useState(0);
   const [draftQuantity, setDraftQuantity] = useState("1");
   const quantity = Number(item ? cartItems?.[item._id] || 0 : 0);
+  const previousQuantity = useRef(quantity);
   const parsedQuantity = Number(draftQuantity);
   const isValidQuantity = Number.isSafeInteger(parsedQuantity) && parsedQuantity > 0;
   const previewQuantity = isValidQuantity ? parsedQuantity : 1;
@@ -29,7 +30,10 @@ const ItemDetails = () => {
   }, [selected]);
 
   useEffect(() => {
-    setDraftQuantity(String(quantity || 1));
+    if (previousQuantity.current !== quantity) {
+      setDraftQuantity(quantity > 0 ? String(quantity) : "");
+      previousQuantity.current = quantity;
+    }
   }, [quantity]);
 
   if (!item) {
@@ -268,6 +272,10 @@ const ItemDetails = () => {
                   onChange={(event) => {
                     const value = event.target.value;
                     setDraftQuantity(value);
+                    if (value === "") {
+                      void updateCartQuantity(item._id, 0);
+                      return;
+                    }
                     const nextQuantity = Number(value);
                     if (Number.isSafeInteger(nextQuantity) && nextQuantity > 0) {
                       void updateCartQuantity(item._id, nextQuantity);
