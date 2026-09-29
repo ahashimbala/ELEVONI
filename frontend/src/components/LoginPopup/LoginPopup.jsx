@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import "./LoginPopup.css";
 import { assets } from "../../assets/assets";
 import { StoreContext } from "../../context/StoreContext";
@@ -7,8 +7,71 @@ import { toast } from "react-toastify";
 
 const LoginPopup = ({ setShowLogin }) => {
   const { url, setToken } = useContext(StoreContext);
+  const googleButtonRef = useRef(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const [googleError, setGoogleError] = useState("");
 
   const [currState, setCurrState] = useState("Login");
+  useEffect(() => {
+    if (currState !== "Login" || !googleClientId) return undefined;
+    let cancelled = false;
+    const renderGoogleButton = () => {
+      if (cancelled || !googleButtonRef.current || !window.google?.accounts?.id) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async ({ credential }) => {
+          if (!credential) {
+            toast.error("Google sign-in did not return a credential. Please try again.");
+            return;
+          }
+          try {
+            const response = await axios.post(`${url}/api/user/google`, { credential });
+            if (!response.data?.success || !response.data?.token) {
+              throw new Error(response.data?.message || "Google sign-in failed.");
+            }
+            setToken(response.data.token);
+            localStorage.setItem("token", response.data.token);
+            setShowLogin(false);
+            toast.success("Welcome to Elevoni!");
+          } catch (error) {
+            toast.error(error.response?.data?.message || error.message || "Unable to sign in with Google. Please try again.");
+          }
+        }
+      });
+      googleButtonRef.current.replaceChildren();
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        text: "signin_with",
+        shape: "rect",
+        width: String(Math.min(360, Math.floor(googleButtonRef.current.getBoundingClientRect().width || 360)))
+      });
+    };
+
+    const handleScriptError = () => setGoogleError("Google sign-in is unavailable right now.");
+    const scriptId = "google-identity-services";
+    let script = document.getElementById(scriptId);
+    if (window.google?.accounts?.id) {
+      renderGoogleButton();
+    } else {
+      if (!script) {
+        script = document.createElement("script");
+        script.id = scriptId;
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+      script.addEventListener("load", renderGoogleButton);
+      script.addEventListener("error", handleScriptError, { once: true });
+    }
+    return () => {
+      cancelled = true;
+      script?.removeEventListener("load", renderGoogleButton);
+      script?.removeEventListener("error", handleScriptError);
+    };
+  }, [currState, googleClientId, setShowLogin, setToken, url]);
   const [data, setData] = useState({
     name: "",
     email: "",
@@ -98,6 +161,17 @@ const LoginPopup = ({ setShowLogin }) => {
         <button type="submit">
           {currState === "Sign Up" ? "Create account" : "Login"}
         </button>
+        {currState === "Login" && (
+          <>
+            <div className="login-popup-divider" aria-hidden="true"><span>or</span></div>
+            {googleClientId ? (
+              <div className="google-signin-button" ref={googleButtonRef} aria-label="Sign in with Google" />
+            ) : (
+              <p className="google-signin-message">Google sign-in is not configured yet.</p>
+            )}
+            {googleError && <p className="google-signin-message" role="status">{googleError}</p>}
+          </>
+        )}
         <div className="login-popup-condition">
           <input type="checkbox" required />
           <p>By continuing, I agree to the terms of use & privacy policy.</p>

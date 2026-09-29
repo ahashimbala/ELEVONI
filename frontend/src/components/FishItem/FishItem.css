@@ -39,3 +39,4 @@
 @media (max-width: 850px) { .fish-item { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); } .fish-item-image { min-height: 520px; } .fish-item-info { gap: 18px; padding: 28px; } }
 @media (max-width: 680px) { .fish-item { grid-template-columns: 1fr; border-radius: var(--elevoni-radius); } .fish-item-media { height: clamp(250px, 72vw, 440px); min-height: 0; } .fish-item-image { min-height: 0; } .fish-item-info { gap: 18px; padding: 24px 20px; } }
 @media (max-width: 390px) { .fish-item-cart-controls { grid-template-columns: 1fr; } .fish-item-add-button { width: 100%; } }
+.fish-item-go-to-cart { justify-self: start; padding: 0; border: 0; background: transparent; color: var(--elevoni-text); font: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

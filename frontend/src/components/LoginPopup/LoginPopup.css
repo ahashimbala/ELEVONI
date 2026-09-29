@@ -11,4 +11,7 @@
 .login-popup-condition { display: flex; align-items: flex-start; gap: 9px; margin-top: -9px; color: var(--elevoni-muted); font-size: 11px; }
 .login-popup-condition input { flex: 0 0 auto; margin-top: 4px; }
 .login-popup p span { color: var(--elevoni-sage-dark); font-weight: 550; cursor: pointer; }
-@media (max-width: 480px) { .login-popup-container { gap: 18px; padding: 24px 20px; } }
+@media (max-width: 480px) { .login-popup-container { gap: 18px; padding: 24px 20px; } }.login-popup-divider { display: flex; align-items: center; gap: 12px; color: var(--elevoni-muted); font-size: 12px; }
+.login-popup-divider::before, .login-popup-divider::after { content: ""; flex: 1; height: 1px; background: var(--elevoni-line); }
+.google-signin-button { display: flex; justify-content: center; width: 100%; min-height: 40px; }
+.google-signin-message { margin: 0; color: var(--elevoni-muted); font-size: 12px; text-align: center; }

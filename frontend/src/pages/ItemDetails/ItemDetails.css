@@ -46,3 +46,4 @@
 @media (max-width: 850px) { .item-details { margin-top: 24px; } .item-details-container { grid-template-columns: minmax(0, 1fr) minmax(0, .95fr); gap: 32px; } .main-media { aspect-ratio: .9 / 1; } }
 @media (max-width: 680px) { .item-details { margin: 18px auto 68px; } .item-details-container { grid-template-columns: 1fr; gap: 26px; } .main-media { aspect-ratio: 1.12 / 1; } .item-details-right { gap: 16px; } .item-details-right h1 { font-size: 34px; } }
 @media (max-width: 390px) { .item-quantity-controls { grid-template-columns: 1fr; } .item-quantity-controls .primary-btn { width: 100%; } }
+.go-to-cart-btn { margin-top: 10px; padding: 0; border: 0; background: transparent; color: var(--elevoni-text); font: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

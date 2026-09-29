@@ -9,27 +9,28 @@ const FishItem = ({ id, name, image, price, description }) => {
   const { cartItems, setCartQuantity, updateCartQuantity, url } = useContext(StoreContext);
   const navigate = useNavigate();
   const quantity = Number(cartItems?.[id] || 0);
-  const [draftQuantity, setDraftQuantity] = useState(String(quantity || 1));
+  const [draftQuantity, setDraftQuantity] = useState(String(quantity));
   const previousQuantity = useRef(quantity);
   const parsedQuantity = Number(draftQuantity);
   const isValidQuantity =
-    Number.isSafeInteger(parsedQuantity) && parsedQuantity > 0;
-  const previewQuantity = isValidQuantity ? parsedQuantity : 1;
+    Number.isSafeInteger(parsedQuantity) && parsedQuantity >= 0;
+  const previewQuantity = isValidQuantity ? parsedQuantity : 0;
+  const hasQuantity = previewQuantity > 0;
   const currentPrice = getProductPrice({ name, price }, previewQuantity);
   const isSmokedCatfish = name?.toLowerCase().includes("smoked catfish");
 
   useEffect(() => {
     if (previousQuantity.current !== quantity) {
-      setDraftQuantity(quantity > 0 ? String(quantity) : "");
+      setDraftQuantity(String(quantity));
       previousQuantity.current = quantity;
     }
   }, [quantity]);
 
   const saveQuantity = async (event) => {
     event.preventDefault();
-    if (!isValidQuantity) return;
+    if (!isValidQuantity || previewQuantity === 0) return;
     const saved = await setCartQuantity(id, parsedQuantity);
-    if (!saved) {
+    if (saved !== true) {
       toast.error(
         saved === "forbidden"
           ? "This account does not have customer access. Please log in with a customer account to use the cart."
@@ -37,7 +38,7 @@ const FishItem = ({ id, name, image, price, description }) => {
       );
       return;
     }
-    navigate("/cart");
+    toast.success("Cart updated");
   };
 
   const imageUrl =
@@ -65,13 +66,12 @@ const FishItem = ({ id, name, image, price, description }) => {
 
         <div className="fish-item-price-block">
           <span className="fish-item-price-label">
-            Your price at {previewQuantity} kg
+            {hasQuantity ? "Your price at " + previewQuantity + " kg" : "Enter a quantity to see pricing"}
           </span>
           <p className="fish-item-price">
-            ₦{currentPrice.toLocaleString()}
-            <span> / kg</span>
+            {hasQuantity ? <>₦{currentPrice.toLocaleString()}<span> / kg</span></> : "—"}
           </p>
-          {isValidQuantity && (
+          {hasQuantity && (
             <p className="fish-item-estimate">
               Estimated product total: ₦
               {(currentPrice * previewQuantity).toLocaleString()}
@@ -84,7 +84,7 @@ const FishItem = ({ id, name, image, price, description }) => {
             <p className="wholesale-title">Wholesale price per kg</p>
             <div className="wholesale-tiers-grid">
               <div
-                className={`tier-card ${previewQuantity <= 4 ? "active-tier" : ""}`}
+                className={`tier-card ${hasQuantity && previewQuantity <= 4 ? "active-tier" : ""}`}
               >
                 <span className="tier-range">1–4 kg</span>
                 <span className="tier-rate">₦25,000/kg</span>
@@ -124,7 +124,7 @@ const FishItem = ({ id, name, image, price, description }) => {
               <input
                 id={`quantity-${id}`}
                 type="number"
-                min="1"
+                min="0"
                 step="1"
                 inputMode="numeric"
                 value={draftQuantity}
@@ -136,7 +136,7 @@ const FishItem = ({ id, name, image, price, description }) => {
                     return;
                   }
                   const nextQuantity = Number(value);
-                  if (Number.isSafeInteger(nextQuantity) && nextQuantity > 0) {
+                  if (Number.isSafeInteger(nextQuantity) && nextQuantity >= 0) {
                     void updateCartQuantity(id, nextQuantity);
                   }
                 }}
@@ -148,9 +148,9 @@ const FishItem = ({ id, name, image, price, description }) => {
             <button
               className="fish-item-add-button"
               type="submit"
-              disabled={!isValidQuantity}
+              disabled={!isValidQuantity || previewQuantity === 0}
             >
-              {quantity > 0 ? "Go to cart" : "Add to cart"}
+              {quantity > 0 ? "Update cart" : "Add to cart"}
             </button>
           </div>
           {quantity > 0 && (
@@ -160,6 +160,9 @@ const FishItem = ({ id, name, image, price, description }) => {
           )}
         </form>
 
+        {quantity > 0 && (
+          <button className="fish-item-go-to-cart" type="button" onClick={() => navigate("/cart")}>Go to cart</button>
+        )}
         <button
           className="details-btn"
           type="button"

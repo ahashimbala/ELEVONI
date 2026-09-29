@@ -16,12 +16,13 @@ const ItemDetails = () => {
   const item = fish_list.find((fish) => fish._id === id);
 
   const [selected, setSelected] = useState(0);
-  const [draftQuantity, setDraftQuantity] = useState("1");
+  const [draftQuantity, setDraftQuantity] = useState("0");
   const quantity = Number(item ? cartItems?.[item._id] || 0 : 0);
   const previousQuantity = useRef(quantity);
   const parsedQuantity = Number(draftQuantity);
-  const isValidQuantity = Number.isSafeInteger(parsedQuantity) && parsedQuantity > 0;
-  const previewQuantity = isValidQuantity ? parsedQuantity : 1;
+  const isValidQuantity = Number.isSafeInteger(parsedQuantity) && parsedQuantity >= 0;
+  const previewQuantity = isValidQuantity ? parsedQuantity : 0;
+  const hasQuantity = previewQuantity > 0;
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef(null);
 
@@ -31,7 +32,7 @@ const ItemDetails = () => {
 
   useEffect(() => {
     if (previousQuantity.current !== quantity) {
-      setDraftQuantity(quantity > 0 ? String(quantity) : "");
+      setDraftQuantity(String(quantity));
       previousQuantity.current = quantity;
     }
   }, [quantity]);
@@ -47,7 +48,7 @@ const ItemDetails = () => {
     );
   }
 
-  const currentPrice = getProductPrice(item, previewQuantity);
+  const currentPrice = getProductPrice(item, Math.max(1, previewQuantity));
   const gallery = [
     {
       type: "image",
@@ -85,15 +86,15 @@ const ItemDetails = () => {
 
   const saveQuantity = async (event) => {
     event.preventDefault();
-    if (!isValidQuantity) return;
+    if (!isValidQuantity || previewQuantity === 0) return;
     const saved = await setCartQuantity(item._id, parsedQuantity);
-    if (!saved) {
+    if (saved !== true) {
       toast.error(saved === "forbidden"
         ? "This account is not authorized to use the cart. Please sign in again or contact support."
         : "Your quantity changed locally but could not be synced to your account.");
       return;
     }
-    navigate("/cart");
+    toast.success("Cart updated");
   };
 
   const schemaData = {
@@ -203,11 +204,11 @@ const ItemDetails = () => {
 
           <div className="price-header-block">
             <p className="item-details-price">
-              ₦{currentPrice.toLocaleString()}
-              <span className="price-unit"> per kg</span>
+              {hasQuantity ? "₦" + currentPrice.toLocaleString() : "Enter a quantity to see pricing"}
+              {hasQuantity && <span className="price-unit"> per kg</span>}
             </p>
 
-            {isValidQuantity && (
+            {hasQuantity && (
               <p className="selected-price">
                 {previewQuantity} kg × ₦{currentPrice.toLocaleString()} = ₦
                 {(previewQuantity * currentPrice).toLocaleString()}
@@ -221,7 +222,7 @@ const ItemDetails = () => {
 
               <div className="wholesale-tiers-grid">
                 <div
-                  className={`tier-card ${previewQuantity <= 4 ? "active-tier" : ""}`}
+                  className={`tier-card ${hasQuantity && previewQuantity <= 4 ? "active-tier" : ""}`}
                 >
                   <span className="tier-range">1–4 kg</span>
                   <span className="tier-rate">₦25,000/kg</span>
@@ -265,7 +266,7 @@ const ItemDetails = () => {
                 <input
                   id={`detail-quantity-${item._id}`}
                   type="number"
-                  min="1"
+                  min="0"
                   step="1"
                   inputMode="numeric"
                   value={draftQuantity}
@@ -277,7 +278,7 @@ const ItemDetails = () => {
                       return;
                     }
                     const nextQuantity = Number(value);
-                    if (Number.isSafeInteger(nextQuantity) && nextQuantity > 0) {
+                    if (Number.isSafeInteger(nextQuantity) && nextQuantity >= 0) {
                       void updateCartQuantity(item._id, nextQuantity);
                     }
                   }}
@@ -286,12 +287,16 @@ const ItemDetails = () => {
                 />
                 <span>kg</span>
               </div>
-              <button className="add-to-cart-btn primary-btn" type="submit" disabled={!isValidQuantity}>
+              <button className="add-to-cart-btn primary-btn" type="submit" disabled={!isValidQuantity || previewQuantity === 0}>
                 {quantity > 0 ? "Update cart" : "Add to cart"}
               </button>
             </div>
             {quantity > 0 && <p className="item-quantity-note">Currently in your cart: {quantity} kg</p>}
           </form>
+          {quantity > 0 && (
+            <button className="go-to-cart-btn" type="button" onClick={() => navigate("/cart")}>Go to cart</button>
+          )}
+
         </div>
       </div>
     </div>
