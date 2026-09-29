@@ -5,7 +5,7 @@
     align-items: stretch;
     width: 100%;
     min-height: clamp(480px, 44vw, 650px);
-    margin: 18px 0 0;
+    margin: 18px auto 0;
     overflow: hidden;
     border: 1px solid var(--elevoni-line);
     border-radius: var(--elevoni-radius-lg);
@@ -15,18 +15,24 @@
 .header-contents {
     position: relative;
     z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
+    display: grid;
+    place-items: center;
     width: 100%;
-    max-width: none;
     box-sizing: border-box;
-    padding: clamp(44px, 5vw, 72px) clamp(24px, 5vw, 72px) 30px;
+    padding: clamp(44px, 5vw, 72px) clamp(24px, 5vw, 72px);
     background: transparent;
 }
 
+.header-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: min(100%, 590px);
+    text-align: left;
+}
+
 .header-contents h2 {
+    width: 100%;
     max-width: 590px;
     margin: -20px 0 0;
     color: var(--elevoni-ink);
@@ -41,6 +47,7 @@
 }
 
 .header-contents p {
+    width: 100%;
     max-width: 390px;
     margin: 26px 0 0;
     color: var(--elevoni-text);
@@ -97,20 +104,13 @@
     object-position: right bottom;
 }
 
-@media (min-width: 681px) {
-    .header {
-        width: calc(100% + (100vw - 100%) / 2);
-    }
-}
-
 @media (max-width: 900px) and (min-width: 681px) {
     .header {
         grid-template-columns: 52% 48%;
     }
 
     .header-contents {
-        padding-left: 28px;
-        padding-right: 20px;
+        padding: 32px 24px;
     }
 
     .header-contents h2 {
@@ -123,19 +123,20 @@
         display: flex;
         flex-direction: column;
         width: 100%;
-        margin-right: 0;
         min-height: 0;
     }
 
     .header-contents {
-        display: flex;
-        max-width: none;
-        padding: 30px 22px 20px;
+        display: grid;
+        place-items: center;
+        padding: 30px 22px 24px;
+    }
+
+    .header-copy {
+        width: 100%;
     }
 
     .header-contents h2 {
-        display: block;
-        max-width: none;
         margin: 0;
         font-size: clamp(24px, 8vw, 32px);
         line-height: 1.05;
@@ -151,7 +152,6 @@
     }
 
     .header-visual {
-        display: flex;
         width: 100%;
         height: auto;
     }
@@ -160,6 +160,5 @@
         width: 100%;
         height: auto;
         object-fit: contain;
-        object-position: right bottom;
     }
 }
