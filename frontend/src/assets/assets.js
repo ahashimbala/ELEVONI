@@ -1,5 +1,3 @@
-import smoked_catfish_img1 from './WhatsApp Image 2026-05-04 at 17.00.48 (1).jpeg';
-
 import smoked_catfish_img2 from './WhatsApp Image 2026-05-04 at 17.01.06 (1).jpeg';
 
 import smoked_catfish_img3 from './WhatsApp Image 2026-05-04 at 17.01.06 (2).jpeg';
@@ -51,7 +49,6 @@ export const assets = {
     search_icon,
     basket_icon,
 
-    smoked_catfish_img1,
     smoked_catfish_img2,
     smoked_catfish_img3,
     smoked_catfish_img4,
@@ -72,7 +69,6 @@ export const assets = {
 
 export const shop_list = [{
     product_name: "Smoked Fish",
-    product_image: smoked_catfish_img1,
     category: "Smoked"
 }];
 

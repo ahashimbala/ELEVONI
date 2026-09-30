@@ -27,7 +27,7 @@ const Header = () => {
       <div className="header-visual">
         <img
           className="header-visual-image"
-          src="/header4.png"
+          src="/header4.jpeg"
           alt="Smoked catfish arranged on a tray"
           fetchPriority="high"
         />
