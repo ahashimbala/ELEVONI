@@ -1,8 +1,28 @@
 import userModel from "../models/userModel.js";
+import googleSignupContinuationModel from "../models/GoogleSignupContinuation.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import validator from "validator";
+import { createHash, randomBytes } from "node:crypto";
 import { verifyGoogleIdToken } from "../services/googleIdentityService.js";
+
+const GOOGLE_SIGNUP_CONTINUATION_TTL_MS = 10 * 60 * 1000;
+
+const hashGoogleSignupContinuation = (reference) =>
+    createHash("sha256").update(reference).digest("hex");
+
+const createGoogleSignupContinuation = async (identity) => {
+    const reference = randomBytes(32).toString("base64url");
+    await googleSignupContinuationModel.create({
+        referenceHash: hashGoogleSignupContinuation(reference),
+        purpose: "google_signup_consent",
+        googleId: identity.sub,
+        email: identity.email,
+        name: identity.name || identity.email.split("@")[0],
+        expiresAt: new Date(Date.now() + GOOGLE_SIGNUP_CONTINUATION_TTL_MS)
+    });
+    return reference;
+};
 
 const createToken = (user) => jwt.sign(
     { id: user._id.toString(), role: user.role || "customer" },
@@ -84,10 +104,12 @@ const parseGoogleRedirectState = (state) => {
     return { intent: null, consentAccepted: false, origin: validOrigin };
 };
 
-const redirectGoogleOutcome = (res, origin, { token, code, intent }) => {
+const redirectGoogleOutcome = (res, origin, { token, code, intent, signupContinuation }) => {
     const destination = new URL(origin);
     if (token) {
         destination.hash = new URLSearchParams({ elevoni_google_token: token }).toString();
+    } else if (signupContinuation) {
+        destination.hash = new URLSearchParams({ elevoni_google_signup: signupContinuation }).toString();
     } else {
         destination.searchParams.set("google_auth_error", code || "GOOGLE_AUTH_FAILED");
         destination.searchParams.set("google_auth_intent", intent || "sign_in");
@@ -108,6 +130,9 @@ const googleLogin = async (req, res) => {
         json(body) {
             if (body.success && body.token) {
                 return redirectGoogleOutcome(res, returnOrigin, { token: body.token });
+            }
+            if (body.code === "CONSENT_REQUIRED" && body.signupContinuation) {
+                return redirectGoogleOutcome(res, returnOrigin, { signupContinuation: body.signupContinuation });
             }
             const code = body.code || (
                 statusCode === 403 ? "ACCOUNT_NOT_ALLOWED" :
@@ -185,10 +210,14 @@ const googleLogin = async (req, res) => {
             });
         }
         if (consentAccepted !== true) {
+            const signupContinuation = isRedirectRequest
+                ? await createGoogleSignupContinuation(identity)
+                : undefined;
             return response.status(428).json({
                 success: false,
                 code: "CONSENT_REQUIRED",
-                message: "Please accept the Terms of Use and Privacy Policy to create your Elevoni account."
+                message: "Please accept the Terms of Use and Privacy Policy to create your Elevoni account.",
+                ...(signupContinuation ? { signupContinuation } : {})
             });
         }
 
@@ -222,6 +251,58 @@ const googleLogin = async (req, res) => {
     }
 };
 
+const completeGoogleSignup = async (req, res) => {
+    const { continuation, consentAccepted } = req.body || {};
+    if (typeof continuation !== "string" || continuation.length !== 43) {
+        return res.status(400).json({ success: false, message: "A valid Google signup continuation is required" });
+    }
+
+    try {
+        // Consume before validation or account creation so every well-formed use is single-use.
+        const pending = await googleSignupContinuationModel.findOneAndDelete({
+            referenceHash: hashGoogleSignupContinuation(continuation),
+            purpose: "google_signup_consent"
+        });
+        if (!pending || pending.expiresAt <= new Date()) {
+            return res.status(410).json({ success: false, message: "This Google signup continuation has expired or was already used" });
+        }
+        if (consentAccepted !== true) {
+            return res.status(428).json({ success: false, code: "CONSENT_REQUIRED", message: "Please accept the Terms and Privacy Policy to continue" });
+        }
+
+        const identity = { sub: pending.googleId, email: pending.email, name: pending.name };
+        let user = await userModel.findOne({ googleId: identity.sub });
+        if (user?.role === "admin") {
+            return res.status(403).json({ success: false, message: "Google sign-in is unavailable for this account" });
+        }
+        if (!user) {
+            user = await findByVerifiedEmail(identity.email);
+            if (user) {
+                if (user.role === "admin" || (user.googleId && user.googleId !== identity.sub)) {
+                    return res.status(409).json({ success: false, message: "This account cannot be linked to this Google account" });
+                }
+                user.googleId = identity.sub;
+                await user.save();
+            } else {
+                user = await new userModel({
+                    name: identity.name,
+                    email: identity.email,
+                    googleId: identity.sub,
+                    role: "customer"
+                }).save();
+            }
+        }
+
+        return res.status(201).json({ success: true, token: createToken(user), user: safeUser(user) });
+    } catch (error) {
+        if (error?.code === "GOOGLE_EMAIL_AMBIGUOUS" || error?.code === 11000) {
+            return res.status(409).json({ success: false, message: "This account could not be linked. Please sign in with your existing method." });
+        }
+        console.error("Google signup continuation failed:", error);
+        return res.status(500).json({ success: false, message: "Unable to complete Google sign-up" });
+    }
+};
+
 const currentUser = async (req, res) => {
     try {
         const user = await userModel.findById(req.auth.userId).select("name email role");
@@ -232,4 +313,4 @@ const currentUser = async (req, res) => {
     }
 };
 
-export { loginUser, registerUser, googleLogin, currentUser };
+export { loginUser, registerUser, googleLogin, completeGoogleSignup, currentUser };

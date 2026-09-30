@@ -18,3 +18,17 @@
 
 .login-popup { overflow-y: auto; overscroll-behavior: contain; }
 .login-popup-container { max-height: calc(100dvh - 36px); overflow-y: auto; overscroll-behavior: contain; }
+.login-popup-consent-only { width: min(100%, 460px); gap: 22px; }
+.google-consent-step { display: flex; flex-direction: column; gap: 20px; }
+.google-consent-step > p:first-child { margin: 0; color: var(--elevoni-muted); font-size: 14px; line-height: 1.65; }
+.google-consent-label { display: flex; align-items: flex-start; gap: 14px; padding: 18px; border: 2px solid var(--elevoni-line); border-radius: 10px; background: #f7f7f5; color: var(--elevoni-ink); font-size: 14px; line-height: 1.6; cursor: pointer; }
+.google-consent-label:has(input:checked) { border-color: var(--elevoni-sage); background: #f0f2ef; }
+.google-consent-label input { flex: 0 0 auto; width: 21px; height: 21px; margin: 1px 0 0; accent-color: var(--elevoni-sage-dark); cursor: pointer; }
+.google-consent-label span { cursor: pointer; }
+.google-consent-label a { color: var(--elevoni-sage-dark); font-weight: 650; text-decoration: underline; text-underline-offset: 2px; }
+.google-consent-error { margin: -9px 0 0; color: #a32f2f; font-size: 13px; font-weight: 600; line-height: 1.45; }
+.google-consent-step > button:disabled { cursor: wait; opacity: .65; }
+@media (max-width: 480px) {
+  .login-popup-consent-only { gap: 20px; }
+  .google-consent-label { padding: 16px 14px; font-size: 13px; }
+}

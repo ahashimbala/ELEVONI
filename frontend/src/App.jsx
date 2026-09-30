@@ -24,23 +24,38 @@ ReactGA.send({
   page: window.location.pathname,
 });
 
+const readGoogleRedirectOutcome = () => {
+  const params = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.slice(1));
+  const continuation = hashParams.get("elevoni_google_signup");
+  if (continuation) return { code: "CONSENT_REQUIRED", intent: "sign_up", continuation };
+  const code = params.get("google_auth_error");
+  if (!code) return null;
+  return { code, intent: params.get("google_auth_intent") === "sign_up" ? "sign_up" : "sign_in" };
+};
+
 const App = () => {
-  const [showLogin, setShowLogin] = useState(false);
-  const [googleRedirectOutcome, setGoogleRedirectOutcome] = useState(null);
+  const [googleRedirectOutcome, setGoogleRedirectOutcome] = useState(readGoogleRedirectOutcome);
+  const [showLogin, setShowLogin] = useState(() => Boolean(readGoogleRedirectOutcome()));
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const code = params.get("google_auth_error");
-    if (!code) return;
-    const intent = params.get("google_auth_intent") === "sign_up" ? "sign_up" : "sign_in";
-    setGoogleRedirectOutcome({ code, intent });
-    setShowLogin(true);
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    const hadError = params.has("google_auth_error");
+    const hadContinuation = hashParams.has("elevoni_google_signup");
+    if (!hadError && !hadContinuation) return;
+
     params.delete("google_auth_error");
     params.delete("google_auth_intent");
+    hashParams.delete("elevoni_google_signup");
     const remainingSearch = params.toString();
+    const remainingHash = hashParams.toString();
     window.history.replaceState(
       window.history.state,
       "",
-      `${window.location.pathname}${remainingSearch ? `?${remainingSearch}` : ""}${window.location.hash}`,
+      window.location.pathname +
+        (remainingSearch ? "?" + remainingSearch : "") +
+        (remainingHash ? "#" + remainingHash : ""),
     );
   }, []);
   const handleSetShowLogin = (isOpen) => {
