@@ -1,6 +1,6 @@
 import express from "express";
-import cors from "cors";
 import 'dotenv/config';
+import apiCorsGate from "./middleware/apiCors.js";
 
 import connectDB from "./config/db.js";
 
@@ -15,37 +15,7 @@ import FishItem from "./models/fishModel.js";
 
 const app = express();
 
-const allowedOrigins = [
-    "https://elevonifarms.vercel.app",
-    "https://elevonifarms-git-main-elevoni.vercel.app",
-    "https://elevoni-admin.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:5174"
-];
-
-const corsOptions = {
-    origin: function(origin, callback) {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error("Not allowed by CORS"));
-        }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "token"]
-};
-
-app.use((req, res, next) => {
-    const isGoogleRedirectPost =
-        req.method === "POST" &&
-        req.path === "/api/user/google" &&
-        req.is("application/x-www-form-urlencoded") &&
-        req.get("origin") === "https://accounts.google.com";
-    if (isGoogleRedirectPost) return next();
-    return cors(corsOptions)(req, res, next);
-});
+app.use(apiCorsGate);
 
 app.use(express.json());
 
