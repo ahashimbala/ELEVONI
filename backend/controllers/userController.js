@@ -104,6 +104,28 @@ const parseGoogleRedirectState = (state) => {
     return { intent: null, consentAccepted: false, origin: validOrigin };
 };
 
+const logGoogleCallbackEvent = (event, details) => console.info(event, details);
+
+const redactGoogleDiagnostic = (value, sensitiveValues) => {
+    let safeValue = String(value ?? "");
+    for (const sensitiveValue of sensitiveValues) {
+        if (typeof sensitiveValue === "string" && sensitiveValue.length > 0) {
+            safeValue = safeValue.split(sensitiveValue).join("[REDACTED]");
+        }
+    }
+    return safeValue
+        .replace(/\beyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[REDACTED_TOKEN]")
+        .replace(/\bya29\.[A-Za-z0-9._-]+/g, "[REDACTED_TOKEN]")
+        .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[REDACTED_EMAIL]")
+        .replace(/mongodb(?:\+srv)?:\/\/[^\s\"'`]+/gi, "[REDACTED_MONGODB_URI]");
+};
+
+const logGoogleCallbackException = (error, sensitiveValues) => {
+    logGoogleCallbackEvent("google_callback_exception", {
+        message: redactGoogleDiagnostic(error?.message || error, sensitiveValues),
+        stack: redactGoogleDiagnostic(error?.stack || "", sensitiveValues)
+    });
+};
 const redirectGoogleOutcome = (res, origin, { token, code, intent, signupContinuation }) => {
     const destination = new URL(origin);
     if (token) {
@@ -114,11 +136,26 @@ const redirectGoogleOutcome = (res, origin, { token, code, intent, signupContinu
         destination.searchParams.set("google_auth_error", code || "GOOGLE_AUTH_FAILED");
         destination.searchParams.set("google_auth_intent", intent || "sign_in");
     }
+    const outcome = token ? "authenticated" : signupContinuation ? "continuation" : "error";
+    logGoogleCallbackEvent("google_callback_redirect_generated", {
+        status: 303,
+        outcome,
+        ...(outcome === "error" ? { errorCode: code || "GOOGLE_AUTH_FAILED" } : {})
+    });
     return res.redirect(303, destination.toString());
 };
 
 const googleLogin = async (req, res) => {
+    const { credential } = req.body || {};
     const isRedirectRequest = req.is("application/x-www-form-urlencoded");
+    const sensitiveDiagnosticValues = [credential];
+    logGoogleCallbackEvent("google_callback_received", {
+        method: req.method,
+        path: req.path,
+        contentType: req.get?.("content-type") || req.headers?.["content-type"] || null,
+        origin: req.get?.("origin") || req.headers?.origin || null,
+        credentialPresent: typeof credential === "string" && credential.length > 0
+    });
     const redirectState = isRedirectRequest ? parseGoogleRedirectState(req.body?.state) : null;
     const returnOrigin = redirectState?.origin || "https://elevonifarms.vercel.app";
     let statusCode = 200;
@@ -156,10 +193,17 @@ const googleLogin = async (req, res) => {
             typeof bodyToken === "string" &&
             cookieToken.length > 0 &&
             cookieToken === bodyToken;
+        sensitiveDiagnosticValues.push(cookieToken, bodyToken);
+        logGoogleCallbackEvent(csrfMatches ? "google_callback_csrf_passed" : "google_callback_csrf_failed", {
+            cookiePresent: typeof cookieToken === "string" && cookieToken.length > 0,
+            bodyValuePresent: typeof bodyToken === "string" && bodyToken.length > 0,
+            comparisonPassed: csrfMatches
+        });
 
         intent = redirectState?.intent;
         consentAccepted = redirectState?.consentAccepted;
         if (!csrfMatches || !intent) {
+            if (csrfMatches && !intent) logGoogleCallbackEvent("google_callback_state_invalid");
             return redirectGoogleOutcome(res, returnOrigin, {
                 code: "GOOGLE_AUTH_FAILED",
                 intent: intent || "sign_in"
@@ -169,23 +213,29 @@ const googleLogin = async (req, res) => {
         ({ intent, consentAccepted } = req.body || {});
     }
 
-    const { credential } = req.body || {};
     if (typeof credential !== "string" || credential.length < 20 || credential.length > 10000) {
+        logGoogleCallbackEvent(typeof credential === "string" ? "google_callback_credential_invalid" : "google_callback_credential_missing", { credentialPresent: typeof credential === "string" && credential.length > 0 });
         return response.status(400).json({ success: false, message: "A valid Google credential is required" });
     }
     if (intent !== "sign_in" && intent !== "sign_up") {
+        logGoogleCallbackEvent("google_callback_intent_invalid");
         return response.status(400).json({ success: false, message: "Choose whether to sign in or create an account" });
     }
     if (!process.env.GOOGLE_CLIENT_ID) {
+        logGoogleCallbackEvent("google_callback_client_id_missing");
         return response.status(503).json({ success: false, message: "Google sign-in is not configured" });
     }
 
     let identity;
+    let diagnosticContinuation = null;
     try {
+        logGoogleCallbackEvent("google_callback_token_verification_started");
         identity = await verifyGoogleIdToken(credential, process.env.GOOGLE_CLIENT_ID);
+        logGoogleCallbackEvent("google_callback_token_verified");
         let user = await userModel.findOne({ googleId: identity.sub });
 
         if (user) {
+            logGoogleCallbackEvent("google_callback_existing_user", { lookup: "google_id" });
             if (user.role === "admin") {
                 return response.status(403).json({ success: false, message: "Google sign-in is unavailable for this account" });
             }
@@ -193,7 +243,9 @@ const googleLogin = async (req, res) => {
         }
 
         user = await findByVerifiedEmail(identity.email);
+        logGoogleCallbackEvent("google_callback_account_lookup_completed", { found: Boolean(user) });
         if (user) {
+            logGoogleCallbackEvent("google_callback_existing_user", { lookup: "verified_email" });
             if (user.role === "admin" || (user.googleId && user.googleId !== identity.sub)) {
                 return response.status(409).json({ success: false, message: "This account cannot be linked to this Google account" });
             }
@@ -203,6 +255,7 @@ const googleLogin = async (req, res) => {
         }
 
         if (intent === "sign_in") {
+            logGoogleCallbackEvent("google_callback_account_not_found");
             return response.status(404).json({
                 success: false,
                 code: "ACCOUNT_NOT_FOUND",
@@ -210,9 +263,11 @@ const googleLogin = async (req, res) => {
             });
         }
         if (consentAccepted !== true) {
-            const signupContinuation = isRedirectRequest
+            diagnosticContinuation = isRedirectRequest
                 ? await createGoogleSignupContinuation(identity)
                 : undefined;
+            const signupContinuation = diagnosticContinuation;
+            if (signupContinuation) logGoogleCallbackEvent("google_callback_continuation_created");
             return response.status(428).json({
                 success: false,
                 code: "CONSENT_REQUIRED",
@@ -227,8 +282,10 @@ const googleLogin = async (req, res) => {
             googleId: identity.sub,
             role: "customer"
         }).save();
+        logGoogleCallbackEvent("google_callback_new_user");
         return response.status(201).json({ success: true, token: createToken(createdUser), user: safeUser(createdUser) });
     } catch (error) {
+        logGoogleCallbackException(error, [...sensitiveDiagnosticValues, diagnosticContinuation]);
         if (error?.code === "GOOGLE_EMAIL_AMBIGUOUS") {
             return response.status(409).json({ success: false, message: "Multiple accounts match this verified Google email. Please contact support to link the correct account." });
         }
@@ -242,11 +299,10 @@ const googleLogin = async (req, res) => {
                     return response.json({ success: true, token: createToken(concurrentUser), user: safeUser(concurrentUser) });
                 }
             } catch (lookupError) {
-                console.error("Google account conflict lookup failed:", lookupError);
+                logGoogleCallbackException(lookupError, [...sensitiveDiagnosticValues, diagnosticContinuation]);
             }
             return response.status(409).json({ success: false, message: "This account could not be linked. Please sign in with your existing method." });
         }
-        console.error("Google sign-in error:", error);
         return response.status(500).json({ success: false, message: "Unable to complete Google sign-in" });
     }
 };
