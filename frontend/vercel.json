@@ -4,6 +4,10 @@
             "destination": "https://elevoni-backend.vercel.app/sitemap.xml"
         },
         {
+            "source": "/api/auth/google",
+            "destination": "https://elevoni-backend.vercel.app/api/user/google"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

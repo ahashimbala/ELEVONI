@@ -109,7 +109,7 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
       window.google.accounts.id.initialize(iosBrowser ? {
         client_id: googleClientId,
         ux_mode: "redirect",
-        login_uri: `${url}/api/user/google`
+        login_uri: "https://elevonifarms.vercel.app/api/auth/google"
       } : {
         client_id: googleClientId,
         ux_mode: "popup",
