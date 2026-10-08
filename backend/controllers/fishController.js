@@ -1,5 +1,6 @@
 import fishModel from "../models/fishModel.js";
 import { v2 as cloudinary } from "cloudinary";
+import { CATALOGUE_QUERY } from "../services/catalogue.js";
 import { parsePricingTiers, validateProductPricing } from "../services/productPricing.js";
 
 cloudinary.config({
@@ -72,9 +73,9 @@ const updateFish = async(req, res) => {
     }
 };
 
-const listFish = async(req, res) => {
+const listFish = async(req, res, Model = fishModel) => {
     try {
-        const fish = await fishModel.find({ name: { $regex: "^Smoked\\s+Catfish(?:\\b|$)", $options: "i" } });
+        const fish = await Model.find(CATALOGUE_QUERY);
         res.json({ success: true, data: fish });
     } catch (error) {
         console.log("listFish error:", error);

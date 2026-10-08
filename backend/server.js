@@ -12,6 +12,7 @@ import orderRouter from "./routes/orderRoute.js";
 import paymentRouter from "./routes/paymentRoute.js";
 
 import FishItem from "./models/fishModel.js";
+import { CATALOGUE_QUERY } from "./services/catalogue.js";
 
 const app = express();
 
@@ -23,7 +24,7 @@ connectDB();
 
 app.get("/sitemap.xml", async(req, res) => {
     try {
-        const items = await FishItem.find({ name: { $regex: "^Smoked\\s+Catfish(?:\\b|$)", $options: "i" } }, "_id updatedAt");
+        const items = await FishItem.find(CATALOGUE_QUERY, "_id updatedAt");
 
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
         xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;

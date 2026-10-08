@@ -149,7 +149,7 @@ const StoreContextProvider = (props) => {
     try {
       const response = await axios.get(url + "/api/fish/list");
       const products = Array.isArray(response.data.data) ? response.data.data : [];
-      setFishList(products.filter((product) => product.name?.toLowerCase().includes("smoked catfish")));
+      setFishList(products);
     } catch (error) {
       console.error("Failed to fetch product library listings:", error.message);
     }

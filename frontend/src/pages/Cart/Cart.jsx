@@ -1,28 +1,62 @@
-import React, { useContext } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import "./Cart.css";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import getProductPrice from "../../utils/pricing";
 
 const Cart = () => {
-  const { cartItems, fish_list, removeFromCart, url } =
+  const { cartItems, fish_list, removeFromCart, url, token } =
     useContext(StoreContext);
 
   const navigate = useNavigate();
 
-  let subtotal = 0;
+  const [quote, setQuote] = useState(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
 
-  fish_list.forEach((item) => {
-    const quantity = cartItems?.[item._id] || 0;
+  const orderItems = useMemo(
+    () =>
+      fish_list
+        .filter((product) => Number(cartItems?.[product._id] || 0) > 0)
+        .map((product) => ({
+          productId: product._id,
+          quantity: Number(cartItems[product._id]),
+        })),
+    [fish_list, cartItems],
+  );
 
-    if (quantity > 0) {
-      const price = getProductPrice(item, quantity);
-      subtotal += price * quantity;
-    }
-  });
-
-  const deliveryFee = subtotal === 0 ? 0 : 2500;
-  const total = subtotal + deliveryFee;
+  useEffect(() => {
+    let active = true;
+    const timer = setTimeout(() => {
+      if (!active) return;
+      if (!token || orderItems.length === 0) {
+        setQuote(null);
+        setQuoteLoading(false);
+        return;
+      }
+      setQuoteLoading(true);
+      axios
+        .post(
+          url + "/api/order/quote",
+          { items: orderItems },
+          { headers: { token } },
+        )
+        .then((response) => {
+          if (active && response.data.success) setQuote(response.data.data);
+          else if (active) setQuote(null);
+        })
+        .catch(() => {
+          if (active) setQuote(null);
+        })
+        .finally(() => {
+          if (active) setQuoteLoading(false);
+        });
+    }, 0);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [orderItems, token, url]);
 
   return (
     <div className="cart">
@@ -84,26 +118,32 @@ const Cart = () => {
         <div className="cart-total">
           <h2>Cart Total</h2>
 
-          <div>
-            <div className="cart-total-details">
-              <p>Subtotal</p>
-              <p>₦{subtotal.toLocaleString()}</p>
+          {quoteLoading ? (
+            <p>Checking current prices...</p>
+          ) : quote ? (
+            <div>
+              <div className="cart-total-details">
+                <p>Subtotal</p>
+                <p>₦{quote.subtotal.toLocaleString()}</p>
+              </div>
+
+              <hr />
+
+              <div className="cart-total-details">
+                <p>Delivery Fee</p>
+                <p>₦{quote.deliveryFee.toLocaleString()}</p>
+              </div>
+
+              <hr />
+
+              <div className="cart-total-details">
+                <b>Total</b>
+                <b>₦{quote.totalAmount.toLocaleString()}</b>
+              </div>
             </div>
-
-            <hr />
-
-            <div className="cart-total-details">
-              <p>Delivery Fee</p>
-              <p>₦{deliveryFee.toLocaleString()}</p>
-            </div>
-
-            <hr />
-
-            <div className="cart-total-details">
-              <b>Total</b>
-              <b>₦{total.toLocaleString()}</b>
-            </div>
-          </div>
+          ) : (
+            <p>Your delivery fee and order total will be confirmed at checkout.</p>
+          )}
 
           <button onClick={() => navigate("/order")}>
             PROCEED TO CHECKOUT

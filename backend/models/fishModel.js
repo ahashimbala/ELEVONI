@@ -13,6 +13,7 @@ const fishSchema = new mongoose.Schema({
     price: { type: Number, required: true, min: 0 },
     image: { type: String, required: true },
     category: { type: String, required: true },
+    visible: { type: Boolean, default: true },
     media: { type: [String], default: [] },
     pricingMode: { type: String, enum: ["single", "tiered"], default: "single" },
     pricingTiers: {

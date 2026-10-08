@@ -5,9 +5,6 @@ import FishItem from "../FishItem/FishItem";
 
 const FishDisplay = () => {
   const { fish_list } = useContext(StoreContext);
-  const smokedCatfish = fish_list.filter((item) =>
-    item.name?.toLowerCase().includes("smoked catfish"),
-  );
 
   return (
     <section className="fish-display" id="fish-display">
@@ -19,7 +16,7 @@ const FishDisplay = () => {
         </p>
       </div>
       <div className="fish-display-list">
-        {smokedCatfish.map((item) => (
+        {fish_list.map((item) => (
           <FishItem
             key={item._id}
             id={item._id}
