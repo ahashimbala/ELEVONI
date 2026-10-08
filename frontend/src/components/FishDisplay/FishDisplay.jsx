@@ -26,6 +26,8 @@ const FishDisplay = () => {
             name={item.name}
             description={item.description}
             price={item.price}
+            pricingMode={item.pricingMode}
+            pricingTiers={item.pricingTiers}
             image={item.image}
           />
         ))}

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import getProductPrice from "../../utils/pricing";
 
-const FishItem = ({ id, name, image, price, description }) => {
+const FishItem = ({ id, name, image, price, description, pricingMode, pricingTiers = [] }) => {
   const { cartItems, setCartQuantity, updateCartQuantity, url } = useContext(StoreContext);
   const navigate = useNavigate();
   const quantity = Number(cartItems?.[id] || 0);
@@ -16,8 +16,7 @@ const FishItem = ({ id, name, image, price, description }) => {
     Number.isSafeInteger(parsedQuantity) && parsedQuantity >= 0;
   const previewQuantity = isValidQuantity ? parsedQuantity : 0;
   const hasQuantity = previewQuantity > 0;
-  const currentPrice = getProductPrice({ name, price }, previewQuantity);
-  const isSmokedCatfish = name?.toLowerCase().includes("smoked catfish");
+const currentPrice = getProductPrice({ name, price, pricingMode, pricingTiers }, Math.max(1, previewQuantity));
 
   useEffect(() => {
     if (previousQuantity.current !== quantity) {
@@ -79,38 +78,26 @@ const FishItem = ({ id, name, image, price, description }) => {
           )}
         </div>
 
-        {isSmokedCatfish && (
+        {pricingTiers.length > 0 && (
           <div className="wholesale-pricing">
             <p className="wholesale-title">Wholesale price per kg</p>
             <div className="wholesale-tiers-grid">
-              <div
-                className={`tier-card ${hasQuantity && previewQuantity <= 4 ? "active-tier" : ""}`}
-              >
-                <span className="tier-range">1–4 kg</span>
-                <span className="tier-rate">₦25,000/kg</span>
-              </div>
-              <div
-                className={`tier-card ${previewQuantity >= 5 && previewQuantity <= 9 ? "active-tier" : ""}`}
-              >
-                <span className="tier-range">5–9 kg</span>
-                <span className="tier-rate">₦24,000/kg</span>
-              </div>
-              <div
-                className={`tier-card ${previewQuantity >= 10 && previewQuantity <= 19 ? "active-tier" : ""}`}
-              >
-                <span className="tier-range">10–19 kg</span>
-                <span className="tier-rate">₦22,500/kg</span>
-              </div>
-              <div
-                className={`tier-card ${previewQuantity >= 20 ? "active-tier" : ""}`}
-              >
-                <span className="tier-range">20+ kg</span>
-                <span className="tier-rate">₦21,000/kg</span>
-              </div>
+              {pricingTiers.map((tier, index) => {
+                const active = hasQuantity && previewQuantity >= Number(tier.minQuantity) &&
+                  (tier.maxQuantity == null || previewQuantity <= Number(tier.maxQuantity));
+                const range = tier.maxQuantity == null
+                  ? Number(tier.minQuantity) + "+ kg"
+                  : Number(tier.minQuantity) + "–" + Number(tier.maxQuantity) + " kg";
+                return (
+                  <div className={"tier-card " + (active ? "active-tier" : "")} key={index}>
+                    <span className="tier-range">{range}</span>
+                    <span className="tier-rate">₦{Number(tier.unitPrice).toLocaleString()}/kg</span>
+                  </div>
+                );
+              })}
             </div>
             <p className="fish-size-note">
-              Standard size: 5 pieces per kg. Larger sizes are available on
-              request.
+              Standard size: 5 pieces per kg. Larger sizes are available on request.
             </p>
           </div>
         )}

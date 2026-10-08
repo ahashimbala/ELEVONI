@@ -1,25 +1,14 @@
 const getProductPrice = (product, quantity) => {
-    const productName = product && product.name ? product.name.toLowerCase() : "";
-
-    const isSmokedCatfish = productName.includes("smoked catfish");
-
-    if (!isSmokedCatfish) {
-        return product.price;
+    if (product?.pricingMode === "tiered") {
+        const tiers = Array.isArray(product?.pricingTiers) ? product.pricingTiers : [];
+        if (tiers.length === 0) return Number.NaN;
+        const tier = tiers.find(({ minQuantity, maxQuantity }) =>
+            quantity >= Number(minQuantity) &&
+            (maxQuantity == null || quantity <= Number(maxQuantity))
+        );
+        return tier ? Number(tier.unitPrice) : Number.NaN;
     }
-
-    if (quantity >= 20) {
-        return 21000;
-    }
-
-    if (quantity >= 10) {
-        return 22500;
-    }
-
-    if (quantity >= 5) {
-        return 24000;
-    }
-
-    return 25000;
+    return Number(product?.price);
 };
 
 export default getProductPrice;

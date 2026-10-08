@@ -216,44 +216,24 @@ const ItemDetails = () => {
             )}
           </div>
 
-          {item.name?.toLowerCase().includes("smoked catfish") && (
+          {item.pricingTiers?.length > 0 && (
             <div className="wholesale-pricing">
               <p className="wholesale-title">Wholesale pricing</p>
-
               <div className="wholesale-tiers-grid">
-                <div
-                  className={`tier-card ${hasQuantity && previewQuantity <= 4 ? "active-tier" : ""}`}
-                >
-                  <span className="tier-range">1–4 kg</span>
-                  <span className="tier-rate">₦25,000/kg</span>
-                </div>
-
-                <div
-                  className={`tier-card ${previewQuantity >= 5 && previewQuantity <= 9 ? "active-tier" : ""}`}
-                >
-                  <span className="tier-range">5–9 kg</span>
-                  <span className="tier-rate">₦24,000/kg</span>
-                </div>
-
-                <div
-                  className={`tier-card ${previewQuantity >= 10 && previewQuantity <= 19 ? "active-tier" : ""}`}
-                >
-                  <span className="tier-range">10–19 kg</span>
-                  <span className="tier-rate">₦22,500/kg</span>
-                </div>
-
-                <div
-                  className={`tier-card ${previewQuantity >= 20 ? "active-tier" : ""}`}
-                >
-                  <span className="tier-range">20+ kg</span>
-                  <span className="tier-rate">₦21,000/kg</span>
-                </div>
+                {item.pricingTiers.map((tier, index) => {
+                  const active = hasQuantity && previewQuantity >= Number(tier.minQuantity) &&
+                    (tier.maxQuantity == null || previewQuantity <= Number(tier.maxQuantity));
+                  const range = tier.maxQuantity == null
+                    ? Number(tier.minQuantity) + "+ kg"
+                    : Number(tier.minQuantity) + "–" + Number(tier.maxQuantity) + " kg";
+                  return (
+                    <div className={"tier-card " + (active ? "active-tier" : "")} key={index}>
+                      <span className="tier-range">{range}</span>
+                      <span className="tier-rate">₦{Number(tier.unitPrice).toLocaleString()}/kg</span>
+                    </div>
+                  );
+                })}
               </div>
-
-              <p className="fish-size-note">
-                Standard size: 5 pieces per kg. Larger sizes available on
-                request.
-              </p>
             </div>
           )}
 

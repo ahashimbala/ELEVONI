@@ -1,5 +1,6 @@
 import { createContext, useEffect, useRef, useState } from "react";
 import axios from "axios";
+import getProductPrice from "../utils/pricing";
 
 export const StoreContext = createContext(null);
 
@@ -123,30 +124,6 @@ const StoreContextProvider = (props) => {
     }, 400);
     cartQuantitySyncTimers.current.set(itemId, timer);
     return true;
-  };
-
-  const getProductPrice = (itemInfo, quantity) => {
-    const isSmokedCatfish = itemInfo.name
-      ?.toLowerCase()
-      .includes("smoked catfish");
-
-    if (!isSmokedCatfish) {
-      return itemInfo.price;
-    }
-
-    if (quantity >= 20) {
-      return 21000;
-    }
-
-    if (quantity >= 10) {
-      return 22500;
-    }
-
-    if (quantity >= 5) {
-      return 24000;
-    }
-
-    return 25000;
   };
 
   const getTotalCartAmount = () => {
