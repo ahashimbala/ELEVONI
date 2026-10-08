@@ -52,9 +52,11 @@ const Navbar = ({ setShowLogin }) => {
         const response = await axios.get(`${url}/api/user/me`, {
           headers: { token },
         });
-        const name = response.data?.success === true && typeof response.data.user?.name === "string"
-          ? response.data.user.name.trim()
-          : "";
+        const name =
+          response.data?.success === true &&
+          typeof response.data.user?.name === "string"
+            ? response.data.user.name.trim()
+            : "";
 
         if (isCurrentRequest) setUserName(name);
       } catch (error) {
@@ -121,7 +123,7 @@ const Navbar = ({ setShowLogin }) => {
 
         <li>
           <a
-            href="#explore-menu"
+            href="#shop"
             onClick={() => handleNavClick("shop")}
             className={menu === "shop" ? "active" : ""}
           >

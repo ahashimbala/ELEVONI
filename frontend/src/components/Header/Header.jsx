@@ -23,15 +23,6 @@ const Header = () => {
           </button>
         </div>
       </div>
-
-      <div className="header-visual">
-        <img
-          className="header-visual-image"
-          src="/header4.jpeg"
-          alt="Smoked catfish arranged on a tray"
-          fetchPriority="high"
-        />
-      </div>
     </section>
   );
 };
