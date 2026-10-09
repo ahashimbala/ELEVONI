@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import express from "express";
 import { CATALOGUE_QUERY, isCatalogueVisible } from "../services/catalogue.js";
-import { listFish } from "../controllers/fishController.js";
+import { createListFish, listFish } from "../controllers/fishController.js";
 import { buildOrderSnapshot } from "../controllers/orderPricing.js";
 import { createOrderHandlers } from "../controllers/orderController.js";
 import fishModel from "../models/fishModel.js";
@@ -52,7 +53,7 @@ test("storefront listing uses the shared catalogue query", async () => {
     let usedQuery = null;
     const FakeModel = { find: async (query) => { usedQuery = query; return fish; } };
     const res = response();
-    await listFish({}, res, FakeModel);
+    await createListFish({ Model: FakeModel })({}, res);
     assert.deepEqual(usedQuery, CATALOGUE_QUERY);
     assert.equal(res.body.success, true);
     assert.equal(res.body.data.length, 1);
@@ -73,9 +74,48 @@ test("the current product remains visible in the storefront catalogue", async ()
     let usedQuery = null;
     const FakeModel = { find: async (query) => { usedQuery = query; return [currentProduct, hiddenProduct].filter((item) => isCatalogueVisible(item)); } };
     const res = response();
-    await listFish({}, res, FakeModel);
+    await createListFish({ Model: FakeModel })({}, res);
     assert.deepEqual(usedQuery, CATALOGUE_QUERY);
     assert.deepEqual(res.body.data.map((item) => item._id), ["6a3e80dcf694a22f26c15f65"]);
+});
+
+test("production-style listFish invocation ignores Express's trailing next argument", async () => {
+    const currentProduct = { _id: "6a3e80dcf694a22f26c15f65", name: "Smoked Catfish (1kg)", price: 25000 };
+    const FakeModel = { find: async () => [currentProduct] };
+    const res = response();
+    let nextCalled = false;
+    const next = () => { nextCalled = true; };
+    await createListFish({ Model: FakeModel })({}, res, next);
+    assert.equal(nextCalled, false);
+    assert.equal(res.body.success, true);
+    assert.equal(res.body.data.length, 1);
+});
+
+test("production-style Express route invocation of listFish ignores Express's next argument", async () => {
+    const originalFind = fishModel.find;
+    const visibleProduct = { _id: "6a3e80dcf694a22f26c15f65", name: "Smoked Catfish (1kg)", price: 25000 };
+    let usedQuery = null;
+    fishModel.find = async (query) => { usedQuery = query; return [visibleProduct]; };
+    try {
+        const app = express();
+        app.get("/api/fish/list", listFish);
+        const server = app.listen(0);
+        await new Promise((resolve) => server.once("listening", resolve));
+        try {
+            const address = server.address();
+            const port = typeof address === "object" && address ? address.port : 0;
+            const res = await fetch(`http://127.0.0.1:${port}/api/fish/list`);
+            const body = await res.json();
+            assert.equal(res.status, 200);
+            assert.equal(body.success, true);
+            assert.deepEqual(body.data.map((item) => item._id), ["6a3e80dcf694a22f26c15f65"]);
+            assert.deepEqual(usedQuery, CATALOGUE_QUERY);
+        } finally {
+            await new Promise((resolve) => server.close(resolve));
+        }
+    } finally {
+        fishModel.find = originalFind;
+    }
 });
 
 test("new products default to visible in the product model", async () => {

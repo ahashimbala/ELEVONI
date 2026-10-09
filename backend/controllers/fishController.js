@@ -73,15 +73,20 @@ const updateFish = async(req, res) => {
     }
 };
 
-const listFish = async(req, res, Model = fishModel) => {
-    try {
-        const fish = await Model.find(CATALOGUE_QUERY);
-        res.json({ success: true, data: fish });
-    } catch (error) {
-        console.log("listFish error:", error);
-        res.json({ success: false, message: "Error fetching products" });
-    }
+const createListFish = ({ Model = fishModel } = {}) => {
+    const listFish = async(req, res) => {
+        try {
+            const fish = await Model.find(CATALOGUE_QUERY);
+            res.json({ success: true, data: fish });
+        } catch (error) {
+            console.log("listFish error:", error);
+            res.json({ success: false, message: "Error fetching products" });
+        }
+    };
+    return listFish;
 };
+
+const listFish = createListFish();
 
 const listAllFish = async(req, res) => {
     try {
@@ -136,4 +141,4 @@ const addFishMedia = async(req, res) => {
     }
 };
 
-export { addFish, updateFish, listFish, listAllFish, removeFish, addFishMedia };
+export { addFish, updateFish, listFish, listAllFish, removeFish, addFishMedia, createListFish };
