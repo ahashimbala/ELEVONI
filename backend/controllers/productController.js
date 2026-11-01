@@ -12,9 +12,36 @@ import {
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const validObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 const currentUserId = (req) => req.auth && (req.auth.userId || req.auth.id);
-const PRODUCT_UNITS = ["kg", "gram", "piece", "crate", "ton", "bag", "carton", "litre"];
-const ACTIVE_MARKETPLACE_CATEGORIES = ["Poultry & Eggs", "Livestock & Meat"];
-const LIVESTOCK_SUBCATEGORIES = ["Poultry", "Cattle", "Sheep", "Goats"];
+const PRODUCT_UNITS = ["kg", "gram", "piece", "crate", "ton", "bag", "carton", "litre", "service", "hour"];
+const ACTIVE_MARKETPLACE_CATEGORIES = ["Catfish & Aquaculture", "Poultry & Eggs", "Livestock & Meat", "Fishery Products & Equipment", "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"];
+const SUBCATEGORIES_BY_CATEGORY = Object.freeze({
+    "Catfish & Aquaculture": Object.freeze(["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"]),
+    "Fishery Products & Equipment": Object.freeze(["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"]),
+    "Grains & Cereals": Object.freeze(["Grains & Cereals"]),
+    "Vegetables & Fruits": Object.freeze(["Vegetables & Fruits"]),
+    "Tubers & Starch": Object.freeze(["Tubers & Starch"]),
+    "Processed Agro-Goods": Object.freeze(["Processed Agro-Goods"]),
+    "Poultry & Eggs": Object.freeze(["Poultry"]),
+    "Livestock & Meat": Object.freeze(["Cattle", "Sheep", "Goats"])
+});
+const ALL_SUBCATEGORIES = Object.freeze([...new Set(Object.values(SUBCATEGORIES_BY_CATEGORY).flat())]);
+const PRODUCT_CONDITIONS = Object.freeze(["Live", "Fresh", "Frozen", "Smoked", "Dried", "Processed"]);
+const PRODUCTION_METHODS = Object.freeze(["Farm-raised", "Wild-caught", "Free-range", "Caged", "Other"]);
+const FOCUS_FOR_SUBCATEGORY = Object.freeze({
+    "Grains & Cereals": "agriculture", "Vegetables & Fruits": "agriculture", "Tubers & Starch": "agriculture", "Processed Agro-Goods": "agriculture",
+    "Fresh Fish": "fisheries", "Smoked Fish": "fisheries", "Dried Fish": "fisheries", "Frozen Fish": "fisheries", "Fishing Nets": "fisheries", "Fishing Equipment": "fisheries", "Fish Processing": "fisheries", "Packaging & Storage": "fisheries", "Cold-chain Services": "fisheries",
+    Poultry: "poultry",
+    Cattle: "cattle",
+    Sheep: "sheep",
+    Goats: "goats",
+    Catfish: "aquaculture",
+    Tilapia: "aquaculture",
+    "Other Fish": "aquaculture",
+    "Other Aquaculture": "aquaculture", Fingerlings: "aquaculture", Juveniles: "aquaculture", Broodstock: "aquaculture", "Fish Feed": "aquaculture", "Pond & Tank Equipment": "aquaculture", "Pumps & Aeration": "aquaculture", "Water Testing": "aquaculture", Filtration: "aquaculture", "Hatchery Services": "aquaculture", "Aquaculture Consulting": "aquaculture"
+});
+const validSubcategoryForCategory = (category, subcategory) =>
+    !subcategory || (SUBCATEGORIES_BY_CATEGORY[category] || []).includes(subcategory);
+const requiredFocusForSubcategory = (subcategory) => FOCUS_FOR_SUBCATEGORY[subcategory] || null;
 const profileForUser = (userId) => vendorProfileModel.findOne({ userId });
 
 const productOwnerId = (product) => {
@@ -31,7 +58,7 @@ const productOwnerId = (product) => {
 
 export const getPublicProducts = async(req, res, next) => {
     try {
-        const { category, subcategory, search, minPrice, maxPrice, vendorId, limit = 20, page = 1 } = req.query;
+        const { category, subcategory, search, minPrice, maxPrice, vendorId, condition, species, state, sector, limit = 20, page = 1 } = req.query;
         const pageNumber = Number(page);
         const limitNumber = Number(limit);
 
@@ -72,11 +99,32 @@ export const getPublicProducts = async(req, res, next) => {
         }
 
         if (subcategory) {
-            if (!LIVESTOCK_SUBCATEGORIES.includes(String(subcategory))) {
-                return res.status(400).json({ success: false, message: "Invalid livestock subcategory" });
+            if (!ALL_SUBCATEGORIES.includes(String(subcategory))) {
+                return res.status(400).json({ success: false, message: "Invalid product subcategory" });
             }
 
             filter.subcategory = String(subcategory);
+        }
+
+        if (sector) {
+            if (!["Agriculture", "Aquaculture", "Fisheries"].includes(String(sector))) return res.status(400).json({ success: false, message: "Invalid marketplace sector" });
+            filter.sector = String(sector);
+        }
+
+        if (condition) {
+            if (!PRODUCT_CONDITIONS.includes(String(condition))) {
+                return res.status(400).json({ success: false, message: "Invalid product condition" });
+            }
+
+            filter.condition = String(condition);
+        }
+
+        if (species) {
+            filter.species = new RegExp(escapeRegex(species), "i");
+        }
+
+        if (state) {
+            filter["originLocation.state"] = new RegExp(`^${escapeRegex(state)}$`, "i");
         }
 
         if (vendorId) {
@@ -89,7 +137,12 @@ export const getPublicProducts = async(req, res, next) => {
 
         if (search) {
             const expression = new RegExp(escapeRegex(search), "i");
-            filter.$or = [{ name: expression }, { description: expression }];
+            filter.$or = [
+                { name: expression },
+                { description: expression },
+                { species: expression },
+                { subcategory: expression }
+            ];
         }
 
         if (minPrice !== undefined || maxPrice !== undefined) {
@@ -178,7 +231,13 @@ export const createVendorProduct = async(req, res, next) => {
             stockQuantity = 0,
             images = [],
             media = [],
-            originLocation = {}
+            originLocation = {},
+            species = "",
+            condition = "",
+            productionMethod = "",
+            weightRange = "",
+            sector = "",
+            availability = ""
         } = req.body || {};
 
         if (
@@ -189,7 +248,8 @@ export const createVendorProduct = async(req, res, next) => {
             !Number.isFinite(Number(price)) ||
             Number(price) <= 0 ||
             !isProductCategory(category) ||
-            !ACTIVE_MARKETPLACE_CATEGORIES.includes(category)
+            !ACTIVE_MARKETPLACE_CATEGORIES.includes(category) ||
+            !validSubcategoryForCategory(category, subcategory)
         ) {
             return res.status(400).json({
                 success: false,
@@ -197,8 +257,15 @@ export const createVendorProduct = async(req, res, next) => {
             });
         }
 
+        if ((sector && !["Agriculture", "Aquaculture", "Fisheries"].includes(sector)) || (availability && !["Available", "Pre-order", "Seasonal", "Out of stock"].includes(availability))) {
+            return res.status(400).json({ success: false, message: "Choose a valid sector and availability status" });
+        }
+
         if (
-            (subcategory && !LIVESTOCK_SUBCATEGORIES.includes(subcategory)) ||
+            (species && (typeof species !== "string" || species.trim().length > 80)) ||
+            (condition && (!PRODUCT_CONDITIONS.includes(condition))) ||
+            (productionMethod && (!PRODUCTION_METHODS.includes(productionMethod))) ||
+            (weightRange && (typeof weightRange !== "string" || weightRange.trim().length > 60)) ||
             !PRODUCT_UNITS.includes(unitOfMeasure) ||
             !Array.isArray(images) ||
             images.some((image) => typeof image !== "string" || !/^https?:\/\//i.test(image)) ||
@@ -239,10 +306,12 @@ export const createVendorProduct = async(req, res, next) => {
             });
         }
 
-        if (subcategory && !profile.productFocus.includes(subcategory.toLowerCase())) {
+        const requiredFocus = requiredFocusForSubcategory(subcategory);
+
+        if (requiredFocus && !profile.productFocus.includes(requiredFocus)) {
             return res.status(400).json({
                 success: false,
-                message: "This livestock type is outside the product focus selected in your vendor application"
+                message: "This product type is outside the product focus selected in your vendor application"
             });
         }
 
@@ -256,6 +325,12 @@ export const createVendorProduct = async(req, res, next) => {
             stockQuantity: Number(stockQuantity),
             images: images.length ? images : media.filter((item) => item.type === "image").map((item) => item.url),
             media,
+            species: typeof species === "string" ? species.trim() : "",
+            condition,
+            productionMethod,
+            weightRange: typeof weightRange === "string" ? weightRange.trim() : "",
+            sector: ["Agriculture", "Aquaculture", "Fisheries"].includes(sector) ? sector : (category === "Fishery Products & Equipment" ? "Fisheries" : category === "Catfish & Aquaculture" ? "Aquaculture" : "Agriculture"),
+            availability: ["Available", "Pre-order", "Seasonal", "Out of stock"].includes(availability) ? availability : (Number(stockQuantity) > 0 ? "Available" : "Out of stock"),
             vendorId: profile._id,
             status: "pending",
             isAvailable: true,
@@ -323,16 +398,24 @@ export const updateVendorProduct = async(req, res, next) => {
                 });
             }
 
-            let nextSubcategory = product.subcategory;
+            const nextCategory = req.body.category !== undefined ? req.body.category : product.category;
+            const nextSubcategory = req.body.subcategory !== undefined && req.body.subcategory !== null
+                ? req.body.subcategory
+                : product.subcategory;
 
-            if (req.body.subcategory !== undefined && req.body.subcategory !== null) {
-                nextSubcategory = req.body.subcategory;
-            }
-
-            if (nextSubcategory && !profile.productFocus.includes(String(nextSubcategory).toLowerCase())) {
+            if (req.body.subcategory !== undefined && !validSubcategoryForCategory(nextCategory, req.body.subcategory)) {
                 return res.status(400).json({
                     success: false,
-                    message: "This livestock type is outside the product focus selected in your vendor application"
+                    message: "Choose a valid product type for the selected category"
+                });
+            }
+
+            const requiredFocus = requiredFocusForSubcategory(nextSubcategory);
+
+            if (requiredFocus && !profile.productFocus.includes(requiredFocus)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "This product type is outside the product focus selected in your vendor application"
                 });
             }
         }
@@ -346,11 +429,27 @@ export const updateVendorProduct = async(req, res, next) => {
         }
 
         if (req.body.category !== undefined && (!isProductCategory(req.body.category) || !ACTIVE_MARKETPLACE_CATEGORIES.includes(req.body.category))) {
-            return res.status(400).json({ success: false, message: "Choose an active Livestock marketplace category" });
+            return res.status(400).json({ success: false, message: "Choose an active marketplace category" });
         }
 
-        if (req.body.subcategory !== undefined && req.body.subcategory !== "" && !LIVESTOCK_SUBCATEGORIES.includes(req.body.subcategory)) {
-            return res.status(400).json({ success: false, message: "Choose a valid livestock subcategory" });
+        if (req.body.subcategory !== undefined && req.body.subcategory !== "" && !ALL_SUBCATEGORIES.includes(req.body.subcategory)) {
+            return res.status(400).json({ success: false, message: "Choose a valid product subcategory" });
+        }
+
+        if (req.body.condition !== undefined && req.body.condition !== "" && !PRODUCT_CONDITIONS.includes(req.body.condition)) {
+            return res.status(400).json({ success: false, message: "Choose a valid product condition" });
+        }
+
+        if (req.body.productionMethod !== undefined && req.body.productionMethod !== "" && !PRODUCTION_METHODS.includes(req.body.productionMethod)) {
+            return res.status(400).json({ success: false, message: "Choose a valid production method" });
+        }
+
+        if (req.body.species !== undefined && (typeof req.body.species !== "string" || req.body.species.trim().length > 80)) {
+            return res.status(400).json({ success: false, message: "Species must be text no longer than 80 characters" });
+        }
+
+        if (req.body.weightRange !== undefined && (typeof req.body.weightRange !== "string" || req.body.weightRange.trim().length > 60)) {
+            return res.status(400).json({ success: false, message: "Weight range must be text no longer than 60 characters" });
         }
 
         if (req.body.unitOfMeasure !== undefined && !PRODUCT_UNITS.includes(req.body.unitOfMeasure)) {
@@ -361,12 +460,26 @@ export const updateVendorProduct = async(req, res, next) => {
             return res.status(400).json({ success: false, message: "Stock quantity cannot be negative" });
         }
 
+        if (req.body.sector !== undefined && !["", "Agriculture", "Aquaculture", "Fisheries"].includes(req.body.sector)) {
+            return res.status(400).json({ success: false, message: "Choose a valid product sector" });
+        }
+        if (req.body.availability !== undefined && !["", "Available", "Pre-order", "Seasonal", "Out of stock"].includes(req.body.availability)) {
+            return res.status(400).json({ success: false, message: "Choose a valid availability status" });
+        }
+
         if (req.body.images !== undefined && (!Array.isArray(req.body.images) || req.body.images.some((image) => typeof image !== "string" || !/^https?:\/\//i.test(image)))) {
             return res.status(400).json({ success: false, message: "Images must be valid HTTP or HTTPS URLs" });
         }
 
         if (req.body.media !== undefined && (!Array.isArray(req.body.media) || req.body.media.length > 10 || req.body.media.some((item) => !item || !["image", "video"].includes(item.type) || typeof item.url !== "string" || !/^https?:\/\//i.test(item.url)))) {
             return res.status(400).json({ success: false, message: "Media must contain up to 10 valid image or video URLs" });
+        }
+
+        const resolvedCategory = req.body.category !== undefined ? req.body.category : product.category;
+        const resolvedSubcategory = req.body.subcategory !== undefined ? req.body.subcategory : product.subcategory;
+
+        if (!validSubcategoryForCategory(resolvedCategory, resolvedSubcategory)) {
+            return res.status(400).json({ success: false, message: "Choose a product type that belongs to the selected category" });
         }
 
         const fields = [
@@ -380,12 +493,18 @@ export const updateVendorProduct = async(req, res, next) => {
             "images",
             "media",
             "isAvailable",
-            "originLocation"
+            "originLocation",
+            "species",
+            "condition",
+            "productionMethod",
+            "weightRange",
+            "sector",
+            "availability"
         ];
 
         for (const field of fields) {
             if (req.body[field] !== undefined) {
-                if (field === "name") {
+                if (["name", "species", "weightRange"].includes(field)) {
                     product[field] = req.body[field].trim();
                 } else {
                     product[field] = req.body[field];

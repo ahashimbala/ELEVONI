@@ -2,8 +2,10 @@ import mongoose from "mongoose";
 
 const orderItemSchema = new mongoose.Schema({
     productId: { type: mongoose.Schema.Types.ObjectId, ref: "fish" },
-    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "vendorProfile" },
-    vendorBusinessName: { type: String, trim: true, maxlength: 120 },
+    // Vendor attribution belongs to each item, not the parent order: one order may
+    // contain products from several vendors. Null means this is an Elevoni house item.
+    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "vendorProfile", default: null },
+    vendorBusinessName: { type: String, trim: true, maxlength: 120, default: "" },
     sellerType: { type: String, enum: ["house", "vendor", "unknown"], default: "unknown" },
     sellerBusinessName: { type: String, trim: true, maxlength: 120 },
     name: { type: String, required: true },
@@ -42,6 +44,9 @@ const orderSchema = new mongoose.Schema({
     paidAt: { type: Date }
 }, { timestamps: true });
 
+// Supports vendor-level reporting over items embedded in orders. Each item keeps
+// its own vendorId so mixed-vendor orders are attributed without double-counting.
+orderSchema.index({ "items.vendorId": 1, date: -1 });
 orderSchema.index({ paymentReference: 1 }, { unique: true, partialFilterExpression: { paymentReference: { $type: "string" } } });
 
 const orderModel = mongoose.models.order || mongoose.model("order", orderSchema);

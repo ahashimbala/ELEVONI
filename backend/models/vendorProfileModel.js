@@ -37,7 +37,7 @@ const vendorProfileSchema = new mongoose.Schema({
         required: true,
         validate: {
             validator: (value) => Array.isArray(value) && value.length > 0,
-            message: "At least one livestock product focus is required"
+            message: "At least one agricultural or fisheries sector is required"
         }
     },
     description: { type: String, default: "", trim: true, maxlength: 1000 },

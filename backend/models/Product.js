@@ -22,7 +22,7 @@ const productSchema = new mongoose.Schema(
       required: [true, 'Product price is required'],
       min: [0, 'Price must be greater than or equal to 0']
     },
-    subcategory: { type: String, enum: ["", "Poultry", "Cattle", "Sheep", "Goats", "Smoked Catfish", "Other Aquaculture"], default: "", trim: true },
+    subcategory: { type: String, enum: ["", "Poultry", "Cattle", "Sheep", "Goats", "Catfish", "Tilapia", "Other Fish", "Smoked Catfish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services", "Hatchery Services", "Aquaculture Consulting", "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"], default: "", trim: true },
     category: {
       type: String,
       required: [true, 'Category is required'],
@@ -33,16 +33,43 @@ const productSchema = new mongoose.Schema(
         'Vegetables & Fruits',
         'Tubers & Starch',
         'Livestock & Meat',
-        'Processed Agro-Goods'
+        'Processed Agro-Goods',
+        'Fishery Products & Equipment'
       ],
       default: 'Catfish & Aquaculture'
     },
     unitOfMeasure: {
       type: String,
       default: 'kg',
-      enum: ['kg', 'gram', 'piece', 'crate', 'ton', 'bag', 'carton', 'litre'],
+      enum: ['kg', 'gram', 'piece', 'crate', 'ton', 'bag', 'carton', 'litre', 'service', 'hour'],
       trim: true
     },
+    species: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: [80, 'Species cannot exceed 80 characters']
+    },
+    condition: {
+      type: String,
+      default: '',
+      enum: ['', 'Live', 'Fresh', 'Frozen', 'Smoked', 'Dried', 'Processed'],
+      trim: true
+    },
+    productionMethod: {
+      type: String,
+      default: '',
+      enum: ['', 'Farm-raised', 'Wild-caught', 'Free-range', 'Caged', 'Hatchery-produced', 'Other'],
+      trim: true
+    },
+    weightRange: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: [60, 'Weight range cannot exceed 60 characters']
+    },
+    sector: { type: String, enum: ['', 'Agriculture', 'Aquaculture', 'Fisheries'], default: '' },
+    availability: { type: String, enum: ['', 'Available', 'Pre-order', 'Seasonal', 'Out of stock'], default: '' },
     stockQuantity: {
       type: Number,
       default: 0,
@@ -96,6 +123,7 @@ const productSchema = new mongoose.Schema(
 
 // Indexing for high-performance public marketplace queries
 productSchema.index({ status: 1, isAvailable: 1, category: 1 });
+productSchema.index({ status: 1, isAvailable: 1, category: 1, subcategory: 1 });
 productSchema.index({ vendorId: 1, status: 1 });
 
 const Product = mongoose.models.Product || mongoose.model('Product', productSchema);

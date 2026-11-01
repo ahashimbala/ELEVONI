@@ -7,7 +7,7 @@
 
 const VENDOR_STATUSES = Object.freeze(["pending", "approved", "rejected", "suspended"]);
 
-const VENDOR_PRODUCT_FOCUS = Object.freeze(["poultry", "cattle", "sheep", "goats"]);
+const VENDOR_PRODUCT_FOCUS = Object.freeze(["poultry", "cattle", "sheep", "goats", "aquaculture", "agriculture", "fisheries"]);
 
 const VENDOR_DECISIONS = Object.freeze({
     approve: { from: "pending", to: "approved" },
@@ -76,7 +76,7 @@ const validateVendorApplicationFields = (body = {}) => {
 
     const productFocus = parseProductFocus(body.productFocus);
     if (!productFocus) {
-        return { error: "Select at least one livestock product focus" };
+        return { error: "Select at least one agricultural or fisheries sector" };
     }
 
     const description = isPlainText(body.description) ? body.description.trim() : "";

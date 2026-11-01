@@ -21,6 +21,7 @@ const PRODUCT_CATEGORIES = Object.freeze([
     "Tubers & Starch",
     "Livestock & Meat",
     "Processed Agro-Goods",
+    "Fishery Products & Equipment",
 ]);
 
 const PRODUCT_CATEGORY_SET = new Set(PRODUCT_CATEGORIES);
@@ -71,13 +72,7 @@ const resolveProductCategoryFilter = (value) => {
 
     const canonicalCategory = getCategoryById(value.trim().toLowerCase());
     if (canonicalCategory) {
-        if (canonicalCategory.launchStatus !== CATEGORY_LAUNCH_STATUSES.LIVE) {
-            return filterResult(PUBLIC_CATEGORY_FILTER_KINDS.UNSUPPORTED, null, null);
-        }
-        const category = legacyProductCategoryFor(canonicalCategory);
-        return category
-            ? filterResult(PUBLIC_CATEGORY_FILTER_KINDS.FILTER, category, null)
-            : filterResult(PUBLIC_CATEGORY_FILTER_KINDS.UNSUPPORTED, null, null);
+        return filterResult(PUBLIC_CATEGORY_FILTER_KINDS.UNSUPPORTED, null, null);
     }
 
     const interpretation = interpretationOf(value);
@@ -107,6 +102,8 @@ const resolveProductCategoryFilter = (value) => {
 };
 
 const productCategoryForVendorFocus = (focus) => {
+    if (focus === "agriculture") return "Grains & Cereals";
+    if (focus === "fisheries") return "Fishery Products & Equipment";
     const category = CATEGORIES.find((candidate) => candidate.vendorFocus.includes(focus));
     return category ? productCategoryForTaxonomyCategory(category) : null;
 };
@@ -118,6 +115,10 @@ const categoriesForVendor = (profile) => {
     const allowed = new Set();
 
     for (const value of focus) {
+        if (value === "agriculture") {
+            ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"].forEach((category) => allowed.add(category));
+            continue;
+        }
         const category = productCategoryForVendorFocus(value);
         if (category) allowed.add(category);
     }

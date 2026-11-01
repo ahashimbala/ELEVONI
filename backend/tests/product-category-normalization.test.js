@@ -159,7 +159,7 @@ test("canonical IDs are not accepted as public filters", () => {
     }
 });
 
-test("all seven legacy marketplace categories remain accepted filters", () => {
+test("all supported marketplace categories remain accepted filters", () => {
     for (const category of PRODUCT_CATEGORIES) {
         const filter = resolveProductCategoryFilter(category);
         assert.equal(filter.kind, PUBLIC_CATEGORY_FILTER_KINDS.FILTER, category);
@@ -287,6 +287,7 @@ test("the product write allow-list remains the legacy display names", () => {
         "Tubers & Starch",
         "Livestock & Meat",
         "Processed Agro-Goods",
+        "Fishery Products & Equipment",
     ]);
 
     for (const category of PRODUCT_CATEGORIES) {
@@ -465,11 +466,16 @@ test("vendor focus still maps to the existing aggregate permission buckets", () 
     );
     assert.deepEqual(categoriesForVendor({ productFocus: ["grains"] }), []);
     assert.deepEqual(categoriesForVendor({ productFocus: ["processed"] }), []);
+    assert.deepEqual(categoriesForVendor({ productFocus: ["agriculture"] }), ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"]);
+    assert.deepEqual(categoriesForVendor({ productFocus: ["fisheries"] }), ["Fishery Products & Equipment"]);
+    assert.deepEqual(categoriesForVendor({ productFocus: ["aquaculture"] }), ["Catfish & Aquaculture"]);
 
     assert.equal(productCategoryForVendorFocus("poultry"), "Poultry & Eggs");
     assert.equal(productCategoryForVendorFocus("cattle"), "Livestock & Meat");
     assert.equal(productCategoryForVendorFocus("goats"), "Livestock & Meat");
     assert.equal(productCategoryForVendorFocus("grains"), null);
+    assert.equal(productCategoryForVendorFocus("agriculture"), "Grains & Cereals");
+    assert.equal(productCategoryForVendorFocus("fisheries"), "Fishery Products & Equipment");
 });
 
 test("a vendor still cannot create a product outside its focus", async () => {
