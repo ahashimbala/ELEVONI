@@ -16,10 +16,19 @@
     align-items: center;
     overflow: hidden;
     margin: 28px clamp(18px, 5vw, 72px) 0;
-    padding: clamp(30px, 5vw, 68px);
-    border: 1px solid var(--market-line);
-    border-radius: 26px;
-    background: #f7f9f5;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    text-align: left;
+}
+
+.marketplace-hero img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 18px;
+    object-fit: cover;
 }
 
 .marketplace-hero-copy {
@@ -145,7 +154,7 @@
 
 .marketplace-filters {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(220px, 290px);
+    grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(150px, 1fr));
     gap: 14px;
     margin-bottom: 28px;
 }
@@ -403,7 +412,7 @@
     }
     .marketplace-hero {
         grid-template-columns: minmax(0, 1fr) 180px;
-        padding: 30px;
+        padding: 0;
     }
 }
 
@@ -411,8 +420,11 @@
     .marketplace-hero {
         grid-template-columns: 1fr;
         margin-top: 16px;
-        padding: 26px 22px;
-        border-radius: 18px;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        text-align: left;
     }
     .marketplace-hero-mark {
         display: none;

@@ -51,3 +51,7 @@ npx cap sync
 - The current execution environment could not resolve `registry.npmjs.org` when tested, so package installation and native project generation could not be completed here. Run the commands on a computer with working npm access.
 - Test account login, product browsing, ordering, Paystack checkout/verification, WhatsApp links, and deep links on devices. Live products, accounts, orders and payments require internet.
 - Do not commit signing keys, `.env` files, or store credentials.
+
+## Required sync after source or branding updates
+
+The generated Android web bundle is intentionally not stored in the source archive. After installing dependencies and building the frontend, run `npx cap sync android` from this `frontend` directory before opening Android Studio or running Gradle. This ensures the APK contains the current website bundle, PWA manifest, icons and splash-related web assets rather than an older generated copy.

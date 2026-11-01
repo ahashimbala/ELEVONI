@@ -6,28 +6,10 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#A2A288",
+  "background_color": "#9F9F86",
   "theme_color": "#ffffff",
   "orientation": "portrait-primary",
   "icons": [
-    {
-      "src": "/icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512x512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
     {
       "src": "/icons/elevoni-192.png",
       "sizes": "192x192",
@@ -41,7 +23,7 @@
       "purpose": "any"
     },
     {
-      "src": "/icons/elevoni-maskable-512.png",
+      "src": "/icons/elevoni-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

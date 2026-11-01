@@ -1,4 +1,4 @@
-import { ELEVONI_WHATSAPP_PHONE } from "../../config/contact.js";
+import { ELEVONI_SMOKED_CATFISH_WHATSAPP_PHONE } from "../../config/contact.js";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import "./PlaceOrder.css";
 import { StoreContext } from "../../context/StoreContext";
@@ -263,7 +263,7 @@ const PlaceOrder = () => {
           response.data.message || "Could not record order request.",
         );
       const order = response.data.data;
-      const phoneNumber = ELEVONI_WHATSAPP_PHONE;
+      const phoneNumber = ELEVONI_SMOKED_CATFISH_WHATSAPP_PHONE;
       let message =
         "Hello Elevoni, I would like to confirm this order request.\n\n";
       order.items.forEach((item) => {

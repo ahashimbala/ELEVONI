@@ -15,8 +15,8 @@ import {
 } from "../../utils/categoryViews.js";
 import {
   MARKETPLACE_PAGE_SIZE,
-  fetchLivestockParentCount,
   fetchLivestockSubcategoryCounts,
+  fetchMarketplaceGroupCount,
   fetchPublicProducts,
 } from "../../utils/marketplace.js";
 
@@ -82,7 +82,11 @@ const useLivestockCounts = ({
     const loadCounts = async () => {
       const [totalResult, childrenResult] = await Promise.allSettled([
         includeTotal
-          ? fetchLivestockParentCount({ url, signal: controller.signal })
+          ? fetchMarketplaceGroupCount({
+              url,
+              children,
+              signal: controller.signal,
+            })
           : Promise.resolve(null),
         children.length
           ? fetchLivestockSubcategoryCounts({
@@ -286,22 +290,20 @@ const CategoryPage = () => {
     [slug, childSlug],
   );
   const catalogueCount = Array.isArray(fish_list) ? fish_list.length : 0;
-  const isLivestock =
-    entry?.slug === "livestock" || entry?.parent?.slug === "livestock";
-  const isLivestockSubcategory =
-    entry?.level === "subcategory" &&
-    entry?.parent?.slug === "livestock" &&
-    Boolean(entry?.marketplace);
-  const livestockChildren = isLivestock
-    ? entry.level === "category"
-      ? entry.children
-      : entry.parent.children
-    : NO_CHILDREN;
+  const isMarketplaceSubcategory =
+    entry?.level === "subcategory" && Boolean(entry?.marketplace);
+  const marketplaceChildren = entry?.level === "category"
+    ? (entry.children || []).filter((child) => child.marketplace)
+    : entry?.parent
+      ? (entry.parent.children || []).filter((child) => child.marketplace)
+      : NO_CHILDREN;
+  const isMarketplaceGroup =
+    isMarketplaceSubcategory || marketplaceChildren.length > 0;
   const counts = useLivestockCounts({
     url,
-    enabled: isLivestock,
-    children: livestockChildren,
-    includeTotal: entry?.slug === "livestock",
+    enabled: isMarketplaceGroup,
+    children: marketplaceChildren,
+    includeTotal: entry?.level === "category",
   });
   const [listingState, setListingState] = useState({
     path: null,
@@ -313,7 +315,7 @@ const CategoryPage = () => {
       ? listingState
       : {
           total: null,
-          status: isLivestockSubcategory
+          status: isMarketplaceSubcategory
             ? COUNT_STATUS.LOADING
             : COUNT_STATUS.READY,
         };
@@ -390,7 +392,7 @@ const CategoryPage = () => {
         </p>
       </section>
 
-      {isLivestockSubcategory && (
+      {isMarketplaceSubcategory && (
         <CategoryListings
           key={entry.path}
           entry={entry}
@@ -409,7 +411,7 @@ const CategoryPage = () => {
       ) : (
         view.emptyState &&
         !isParentCategory &&
-        !isLivestockSubcategory && (
+        !isMarketplaceSubcategory && (
           <section className="category-empty" aria-labelledby="category-empty-title">
             <h2 id="category-empty-title">{view.emptyState.title}</h2>
             <p>{view.emptyState.body}</p>
@@ -436,10 +438,10 @@ const CategoryPage = () => {
         </section>
       )}
 
-      {entry.slug === "livestock" && (
+      {(entry.slug === "livestock" || entry.slug === "aquaculture-fishery") && (
         <section className="category-sell-cta" aria-labelledby="category-sell-cta-title">
           <p className="category-sell-cta-eyebrow">Sell with Elevoni</p>
-          <h2 id="category-sell-cta-title">Are you a livestock farmer?</h2>
+          <h2 id="category-sell-cta-title">Are you a farmer?</h2>
           <p>
             Approved vendors can submit livestock and other agricultural product listings to the
             Elevoni marketplace. Vendor applications and individual products are reviewed separately;

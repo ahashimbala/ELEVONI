@@ -29,6 +29,12 @@ export const fetchPublicProducts = async ({
     subcategory,
     search,
     vendorId,
+    condition,
+    species,
+    state,
+    minPrice,
+    maxPrice,
+    sector,
     page = 1,
     limit = MARKETPLACE_PAGE_SIZE,
     signal,
@@ -39,6 +45,12 @@ export const fetchPublicProducts = async ({
     if (subcategory) params.subcategory = subcategory;
     if (search) params.search = search;
     if (vendorId) params.vendorId = vendorId;
+    if (condition) params.condition = condition;
+    if (species) params.species = species;
+    if (state) params.state = state;
+    if (minPrice !== undefined && minPrice !== "") params.minPrice = minPrice;
+    if (maxPrice !== undefined && maxPrice !== "") params.maxPrice = maxPrice;
+    if (sector) params.sector = sector;
 
     const response = await axios.get(`${url}/api/products`, { params, signal });
 
@@ -65,6 +77,28 @@ export const fetchPublicProductCount = async (options = {}) => {
     });
 
     return result.total;
+};
+
+export const fetchMarketplaceGroupCount = async ({
+    url,
+    children = [],
+    signal,
+} = {}) => {
+    const categories = [
+        ...new Set(
+            children
+                .map((child) => child.marketplace?.category)
+                .filter(Boolean),
+        ),
+    ];
+
+    const counts = await Promise.all(
+        categories.map((category) =>
+            fetchPublicProductCount({ url, category, signal }),
+        ),
+    );
+
+    return counts.reduce((total, count) => total + count, 0);
 };
 
 export const fetchLivestockParentCount = async ({ url, signal } = {}) => {

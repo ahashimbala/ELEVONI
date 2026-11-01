@@ -122,6 +122,7 @@ const childNames = (category) => {
 const buildCategoryCards = ({
     categories = [],
     catalogueCount = 0,
+    marketplaceCount = 0,
     livestockCount = 0,
     livestockCountStatus = COUNT_STATUS.READY,
 } = {}) => {
@@ -130,7 +131,8 @@ const buildCategoryCards = ({
         let countStatus = COUNT_STATUS.READY;
 
         if (category.slug === "aquaculture-fishery") {
-            productCount = catalogueCount;
+            productCount = catalogueCount + marketplaceCount;
+            countStatus = livestockCountStatus;
         } else if (category.slug === "livestock") {
             productCount = livestockCount;
             countStatus = livestockCountStatus;
@@ -224,14 +226,16 @@ const describeCategoryEntry = (
     let countStatus = COUNT_STATUS.READY;
 
     if (entry.status === CATEGORY_STATUS.CATALOGUE) {
-        if (entry.slug === "aquaculture-fishery" || entry.catalogue === "fish") {
+        if (entry.catalogue === "fish") {
             productCount = catalogueCount;
-        } else if (entry.slug === "livestock") {
-            productCount = livestockCount;
-            countStatus = livestockCountStatus;
         } else if (entry.marketplace) {
             productCount = subcategoryProductCount;
             countStatus = subcategoryProductCountStatus;
+        } else if (entry.slug === "aquaculture-fishery" || entry.slug === "livestock") {
+            productCount = entry.slug === "aquaculture-fishery"
+                ? catalogueCount + livestockCount
+                : livestockCount;
+            countStatus = livestockCountStatus;
         }
     }
 

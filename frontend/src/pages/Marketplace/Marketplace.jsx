@@ -8,8 +8,64 @@ import { fetchPublicProducts } from "../../utils/marketplace.js";
 import "./Marketplace.css";
 import marketplace from "../../assets/Farm-to-Market Animal Delivery.png"
 
-const CATEGORIES = ["All sectors", "Poultry & Eggs", "Livestock & Meat"];
-const SUBCATEGORIES = ["All livestock", "Poultry", "Cattle", "Sheep", "Goats"];
+const CATEGORIES = [
+  "All sectors",
+  "Catfish & Aquaculture",
+  "Fishery Products & Equipment",
+  "Grains & Cereals",
+  "Vegetables & Fruits",
+  "Tubers & Starch",
+  "Processed Agro-Goods",
+  "Poultry & Eggs",
+  "Livestock & Meat",
+];
+
+const ALL_TYPES = "All types";
+
+const SUBCATEGORIES = {
+  "All sectors": [
+    ALL_TYPES,
+    "Catfish",
+    "Tilapia",
+    "Other Fish",
+    "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting", "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services",
+    "Grains & Cereals",
+    "Vegetables & Fruits",
+    "Tubers & Starch",
+    "Processed Agro-Goods",
+    "Poultry",
+    "Cattle",
+    "Sheep",
+    "Goats",
+  ],
+  "Catfish & Aquaculture": [
+    ALL_TYPES,
+    "Catfish",
+    "Tilapia",
+    "Other Fish",
+    "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting",
+  ],
+  "Fishery Products & Equipment": [ALL_TYPES, "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
+  "Poultry & Eggs": [ALL_TYPES, "Poultry"],
+  "Livestock & Meat": [ALL_TYPES, "Cattle", "Sheep", "Goats"],
+  "Grains & Cereals": [ALL_TYPES, "Grains & Cereals"],
+  "Vegetables & Fruits": [ALL_TYPES, "Vegetables & Fruits"],
+  "Tubers & Starch": [ALL_TYPES, "Tubers & Starch"],
+  "Processed Agro-Goods": [ALL_TYPES, "Processed Agro-Goods"],
+};
+
+const CONDITIONS = [
+  "All conditions",
+  "Live",
+  "Fresh",
+  "Frozen",
+  "Smoked",
+  "Dried",
+  "Processed",
+];
+
+const subcategoryOptionsFor = (category) =>
+  SUBCATEGORIES[category] || SUBCATEGORIES["All sectors"];
 
 const Marketplace = () => {
   const { url } = useContext(StoreContext);
@@ -19,7 +75,13 @@ const Marketplace = () => {
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [search, setSearch] = useState(initialSearch.trim());
   const [category, setCategory] = useState("All sectors");
-  const [subcategory, setSubcategory] = useState(searchParams.get("subcategory") || "All livestock");
+  const [sectorFilter, setSectorFilter] = useState("All sectors");
+  const [subcategory, setSubcategory] = useState(searchParams.get("subcategory") || ALL_TYPES);
+  const [condition, setCondition] = useState("All conditions");
+  const [species, setSpecies] = useState("");
+  const [stateFilter, setStateFilter] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [total, setTotal] = useState(0);
@@ -33,9 +95,15 @@ const Marketplace = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchInput(value);
     setSearch(value.trim());
-    setSubcategory(searchParams.get("subcategory") || "All livestock");
+    setSubcategory(searchParams.get("subcategory") || ALL_TYPES);
     setPage(1);
   }, [searchParams]);
+
+  useEffect(() => {
+    if (subcategoryOptionsFor(category).includes(subcategory)) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSubcategory(ALL_TYPES);
+  }, [category, subcategory]);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearch(searchInput.trim()), 250);
@@ -54,7 +122,13 @@ const Marketplace = () => {
           limit: 12,
           search,
           category: category !== "All sectors" ? category : undefined,
-          subcategory: subcategory !== "All livestock" ? subcategory : undefined,
+          sector: sectorFilter !== "All sectors" ? sectorFilter : undefined,
+          subcategory: subcategory !== ALL_TYPES ? subcategory : undefined,
+          condition: condition !== "All conditions" ? condition : undefined,
+          species: category === "Catfish & Aquaculture" || category === "Fishery Products & Equipment" || (category === "All sectors" && sectorFilter !== "Agriculture") ? species : undefined,
+          state: stateFilter || undefined,
+          minPrice: minPrice || undefined,
+          maxPrice: maxPrice || undefined,
         });
         if (!current) return;
         setProducts(result.products);
@@ -76,7 +150,7 @@ const Marketplace = () => {
     };
     loadProducts();
     return () => { current = false; };
-  }, [url, search, category, subcategory, page, refresh]);
+  }, [url, search, category, sectorFilter, subcategory, condition, species, stateFilter, minPrice, maxPrice, page, refresh]);
 
   return (
     <main className="marketplace-page">
@@ -109,20 +183,36 @@ const Marketplace = () => {
         <div className="marketplace-filters">
           <label className="marketplace-search-label">
             <span>Search products</span>
-            <input value={searchInput} onChange={(event) => { setSearchInput(event.target.value); setPage(1); }} placeholder="Try poultry, cattle, sheep, goats…" type="search" />
+            <input value={searchInput} onChange={(event) => { setSearchInput(event.target.value); setPage(1); }} placeholder="Try catfish, tilapia, poultry, cattle…" type="search" />
           </label>
           <label className="marketplace-category-label">
             <span>Sector</span>
-            <select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}>
-              {CATEGORIES.map((item) => <option key={item} value={item}>{item}</option>)}
+            <select value={sectorFilter} onChange={(event) => { setSectorFilter(event.target.value); setPage(1); }}>
+              {['All sectors', 'Agriculture', 'Aquaculture', 'Fisheries'].map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
           <label className="marketplace-category-label">
-            <span>Livestock type</span>
-            <select value={subcategory} onChange={(event) => { setSubcategory(event.target.value); setPage(1); }}>
-              {SUBCATEGORIES.map((item) => <option key={item} value={item}>{item}</option>)}
+            <span>Product category</span>
+            <select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}>
+              {CATEGORIES.map((item) => <option key={item} value={item}>{item === 'All sectors' ? 'All categories' : item}</option>)}
             </select>
           </label>
+          <label className="marketplace-category-label">
+            <span>Product type</span>
+            <select value={subcategory} onChange={(event) => { setSubcategory(event.target.value); setPage(1); }}>
+              {subcategoryOptionsFor(category).map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
+          {(sectorFilter === "All sectors" || sectorFilter === "Aquaculture" || sectorFilter === "Fisheries" || category === "Catfish & Aquaculture" || category === "Fishery Products & Equipment") && <label className="marketplace-category-label">
+            <span>Fish condition</span>
+            <select value={condition} onChange={(event) => { setCondition(event.target.value); setPage(1); }}>
+              {CONDITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>}
+          {(category === "Catfish & Aquaculture" || category === "Fishery Products & Equipment" || category === "All sectors") && <label className="marketplace-category-label"><span>Species</span><input value={species} onChange={(event) => { setSpecies(event.target.value); setPage(1); }} placeholder="e.g. catfish, tilapia" /></label>}
+          <label className="marketplace-category-label"><span>State / location</span><input value={stateFilter} onChange={(event) => { setStateFilter(event.target.value); setPage(1); }} placeholder="e.g. Abuja, Lagos" /></label>
+          <label className="marketplace-category-label"><span>Minimum price (₦)</span><input type="number" min="0" value={minPrice} onChange={(event) => { setMinPrice(event.target.value); setPage(1); }} /></label>
+          <label className="marketplace-category-label"><span>Maximum price (₦)</span><input type="number" min="0" value={maxPrice} onChange={(event) => { setMaxPrice(event.target.value); setPage(1); }} /></label>
         </div>
 
         {loading && <div className="marketplace-state" role="status"><span className="marketplace-spinner" />Loading available listings…</div>}
@@ -132,7 +222,7 @@ const Marketplace = () => {
             <span className="marketplace-empty-icon" aria-hidden="true">✳</span>
             <h3>No listings match this search yet.</h3>
             <p>Try another search or category. New listings appear after the vendor and product review steps are complete.</p>
-            <button type="button" onClick={() => { setSearchInput(""); setCategory("All sectors"); setSubcategory("All livestock"); setPage(1); }}>Clear filters</button>
+            <button type="button" onClick={() => { setSearchInput(""); setCategory("All sectors"); setSubcategory(ALL_TYPES); setCondition("All conditions"); setPage(1); }}>Clear filters</button>
           </div>
         )}
 

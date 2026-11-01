@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import vendorIllustration from "../../assets/elevoni-vendor-illustration.svg";
+import vendorIllustration from "../../assets/elevoni-vendor-illustration.jfif";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { StoreContext } from "../../context/StoreContext";
@@ -242,7 +242,7 @@ const SellWithElevoni = () => {
         <title>Sell with Elevoni | Elevoni Farms</title>
         <meta
           name="description"
-          content="Apply to sell poultry, cattle, sheep or goats with Elevoni Farms. Applications are reviewed before any selling tools are enabled."
+          content="Apply to sell agricultural produce, livestock, aquaculture and fisheries products with Elevoni Farms. Applications and individual listings are reviewed before publication."
         />
       </Helmet>
 
@@ -256,7 +256,7 @@ const SellWithElevoni = () => {
         <p className="sell-eyebrow">Partner with Elevoni</p>
         <h1>Sell with Elevoni</h1>
         <p className="sell-summary">
-          Elevoni Farms is preparing its livestock category and inviting poultry, cattle, sheep and
+          Elevoni Farms welcomes agricultural, livestock, aquaculture and fisheries businesses. We invite poultry, cattle, sheep and
           goat businesses to apply. Tell us about your farm or business and our team will review
           your application.
         </p>
@@ -354,7 +354,7 @@ const SellWithElevoni = () => {
         <h2 id="sell-expectations-title">What happens next</h2>
         <ol>
           <li>
-            <strong>You apply.</strong> We receive your business details and livestock focus.
+            <strong>You apply.</strong> We receive your business details and business focus.
           </li>
           <li>
             <strong>We review.</strong> An Elevoni administrator reviews the application. Your

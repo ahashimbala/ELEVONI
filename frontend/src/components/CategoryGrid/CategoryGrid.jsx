@@ -5,7 +5,10 @@ import { assets } from "../../assets/assets";
 import { StoreContext } from "../../context/StoreContext";
 import { listCategories } from "../../config/categories.js";
 import { COUNT_STATUS, buildCategoryCards } from "../../utils/categoryViews.js";
-import { fetchLivestockParentCount } from "../../utils/marketplace.js";
+import {
+  fetchLivestockParentCount,
+  fetchPublicProductCount,
+} from "../../utils/marketplace.js";
 
 const initialsOf = (name) =>
   name
@@ -72,32 +75,43 @@ const CategoryGrid = () => {
     count: null,
     status: COUNT_STATUS.LOADING,
   });
+  const [aquaculture, setAquaculture] = useState({
+    count: null,
+    status: COUNT_STATUS.LOADING,
+  });
 
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
 
-    const fetchLivestockCount = async () => {
+    const fetchCounts = async () => {
       setLivestock({ count: null, status: COUNT_STATUS.LOADING });
+      setAquaculture({ count: null, status: COUNT_STATUS.LOADING });
 
-      try {
-        const count = await fetchLivestockParentCount({
+      const [livestockResult, aquacultureResult] = await Promise.allSettled([
+        fetchLivestockParentCount({ url, signal: controller.signal }),
+        fetchPublicProductCount({
           url,
+          category: "Catfish & Aquaculture",
           signal: controller.signal,
-        });
+        }),
+      ]);
 
-        if (!cancelled) {
-          setLivestock({ count, status: COUNT_STATUS.READY });
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Failed to fetch livestock listing count:", error);
-          setLivestock({ count: null, status: COUNT_STATUS.ERROR });
-        }
-      }
+      if (cancelled) return;
+
+      setLivestock(
+        livestockResult.status === "fulfilled"
+          ? { count: livestockResult.value, status: COUNT_STATUS.READY }
+          : { count: null, status: COUNT_STATUS.ERROR },
+      );
+      setAquaculture(
+        aquacultureResult.status === "fulfilled"
+          ? { count: aquacultureResult.value, status: COUNT_STATUS.READY }
+          : { count: null, status: COUNT_STATUS.ERROR },
+      );
     };
 
-    fetchLivestockCount();
+    fetchCounts();
 
     return () => {
       cancelled = true;
@@ -109,8 +123,16 @@ const CategoryGrid = () => {
   const cards = buildCategoryCards({
     categories,
     catalogueCount,
+    marketplaceCount: aquaculture.count ?? 0,
     livestockCount: livestock.count ?? 0,
-    livestockCountStatus: livestock.status,
+    livestockCountStatus:
+      aquaculture.status === COUNT_STATUS.LOADING ||
+      livestock.status === COUNT_STATUS.LOADING
+        ? COUNT_STATUS.LOADING
+        : aquaculture.status === COUNT_STATUS.ERROR ||
+            livestock.status === COUNT_STATUS.ERROR
+          ? COUNT_STATUS.ERROR
+          : COUNT_STATUS.READY,
   });
 
   return (

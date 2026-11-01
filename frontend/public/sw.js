@@ -1,4 +1,4 @@
-const CACHE_NAME = "elevoni-app-shell-v4";
+const CACHE_NAME = "elevoni-app-shell-v5";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
@@ -11,7 +11,7 @@ const APP_SHELL = [
   "/icons/icon-512x512-maskable.png",
   "/icons/elevoni-192.png",
   "/icons/elevoni-512.png",
-  "/icons/elevoni-maskable-512.png",
+  "/icons/elevoni-512-maskable.png",
 ];
 
 function isCacheable(request, url) {

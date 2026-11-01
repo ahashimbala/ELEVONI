@@ -39,7 +39,7 @@ test("registration validation requires a strong password of at least eight chara
   assert.equal(ok.errors.password, undefined);
 });
 
-test("registration validation requires at least one livestock focus", () => {
+test("registration validation requires at least one business sector", () => {
   const empty = validateRegistration({ productFocus: [] });
   const none = validateRegistration({ productFocus: null });
   const multiple = validateRegistration({ productFocus: ["poultry"] });
@@ -120,10 +120,10 @@ test("application payload trims and normalises focus", () => {
   assert.equal(payload.description, "");
 });
 
-test("the storefront supports all required livestock focus options", () => {
+test("the storefront supports all agriculture, aquaculture, fisheries and livestock focus options", () => {
   assert.deepEqual(
     VENDOR_PRODUCT_FOCUS.map((option) => option.value),
-    ["poultry", "cattle", "sheep", "goats"],
+    ["poultry", "cattle", "sheep", "goats", "aquaculture", "fisheries", "agriculture"],
   );
 });
 
