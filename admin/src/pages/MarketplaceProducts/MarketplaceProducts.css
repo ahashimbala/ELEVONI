@@ -38,3 +38,5 @@
 .moderation-filters button.active { border-color:#25301f; background:#25301f; }
 .moderation-actions .moderation-approve { border-color:#25301f; background:#25301f; }
 .moderation-refresh:hover,.moderation-state button:hover { background:#f7f9f4; border-color:#cbd5c1; }
+
+.moderation-sector-filter{display:flex;align-items:center;gap:10px;margin:14px 0;color:#4f574b;font-size:13px;font-weight:600}.moderation-sector-filter select{min-height:40px;padding:8px 12px;border:1px solid #dfe4da;border-radius:8px;background:#fff;color:#20251d;font:inherit}

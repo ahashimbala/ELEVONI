@@ -143,6 +143,7 @@ const readReviewResult = (payload) => {
 };
 
 const FOCUS_LABELS = Object.freeze({
+  aquaculture: "Aquaculture & Fisheries",
   poultry: "Poultry",
   cattle: "Cattle",
   sheep: "Sheep",
