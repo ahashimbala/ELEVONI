@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Elevoni Vendor</string>
+    <string name="title_activity_main">Elevoni Vendor</string>
+    <string name="package_name">com.elevoni.vendor</string>
+    <string name="custom_url_scheme">com.elevoni.vendor</string>
+</resources>

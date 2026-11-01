@@ -6,7 +6,40 @@ import api from "../../api";
 import { AuthContext } from "../../context/auth-context";
 import "./Dashboard.css";
 
-const CATEGORIES = ["Poultry & Eggs", "Livestock & Meat"];
+const CATEGORIES = ["Catfish & Aquaculture", "Fishery Products & Equipment", "Poultry & Eggs", "Livestock & Meat", "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"];
+
+const SUBCATEGORIES_BY_CATEGORY = {
+    "Catfish & Aquaculture": ["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"],
+    "Fishery Products & Equipment": ["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
+    "Grains & Cereals": ["Grains & Cereals"],
+    "Vegetables & Fruits": ["Vegetables & Fruits"],
+    "Tubers & Starch": ["Tubers & Starch"],
+    "Processed Agro-Goods": ["Processed Agro-Goods"],
+    "Poultry & Eggs": ["Poultry"],
+    "Livestock & Meat": ["Cattle", "Sheep", "Goats"],
+};
+
+const CONDITIONS = ["Live", "Fresh", "Frozen", "Smoked", "Dried", "Processed"];
+
+const PRODUCTION_METHODS = ["Farm-raised", "Wild-caught", "Free-range", "Caged", "Other"];
+
+const FOCUS_FOR_SUBCATEGORY = {
+    "Grains & Cereals": "agriculture", "Vegetables & Fruits": "agriculture", "Tubers & Starch": "agriculture", "Processed Agro-Goods": "agriculture",
+    Poultry: "poultry",
+    Cattle: "cattle",
+    Sheep: "sheep",
+    Goats: "goats",
+    Catfish: "aquaculture",
+    Tilapia: "aquaculture",
+    "Other Fish": "aquaculture",
+    "Other Aquaculture": "aquaculture", Fingerlings: "aquaculture", Juveniles: "aquaculture", Broodstock: "aquaculture", "Fish Feed": "aquaculture", "Pond & Tank Equipment": "aquaculture", "Pumps & Aeration": "aquaculture", "Water Testing": "aquaculture", Filtration: "aquaculture", "Hatchery Services": "aquaculture", "Aquaculture Consulting": "aquaculture", "Fresh Fish": "fisheries", "Smoked Fish": "fisheries", "Dried Fish": "fisheries", "Frozen Fish": "fisheries", "Fishing Nets": "fisheries", "Fishing Equipment": "fisheries", "Fish Processing": "fisheries", "Packaging & Storage": "fisheries", "Cold-chain Services": "fisheries",
+};
+
+const subcategoryOptionsFor = (category, focus = []) =>
+    (SUBCATEGORIES_BY_CATEGORY[category] || []).filter((item) => {
+        const requiredFocus = FOCUS_FOR_SUBCATEGORY[item];
+        return !requiredFocus || focus.includes(requiredFocus);
+    });
 
 const UNITS = [
     "kg",
@@ -17,6 +50,8 @@ const UNITS = [
     "bag",
     "carton",
     "litre",
+    "service",
+    "hour",
 ];
 
 const blankForm = {
@@ -24,9 +59,13 @@ const blankForm = {
     description: "",
     price: "",
     category: "Livestock & Meat",
-    subcategory: "Poultry",
+    subcategory: "Cattle",
     unitOfMeasure: "kg",
     stockQuantity: "",
+    species: "",
+    condition: "",
+    productionMethod: "",
+    weightRange: "",
     images: "",
     media: [],
 };
@@ -41,6 +80,10 @@ const categoriesForFocus = (focus = []) => {
     if (["cattle", "sheep", "goats"].some((item) => focus.includes(item))) {
         categories.push("Livestock & Meat");
     }
+
+    if (focus.includes("aquaculture")) categories.push("Catfish & Aquaculture");
+    if (focus.includes("fisheries") || focus.includes("aquaculture")) categories.push("Fishery Products & Equipment");
+    if (focus.includes("agriculture")) categories.push("Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods");
 
     return categories;
 };
@@ -99,6 +142,26 @@ const Dashboard = () => {
         application?.status,
         application?.productFocus?.join(","),
         form.category,
+    ]);
+
+    useEffect(() => {
+        const options = subcategoryOptionsFor(
+            form.category,
+            application?.productFocus
+        );
+
+        if (options.includes(form.subcategory)) {
+            return;
+        }
+
+        setForm((current) => ({
+            ...current,
+            subcategory: options[0] || "",
+        }));
+    }, [
+        application?.productFocus?.join(","),
+        form.category,
+        form.subcategory,
     ]);
 
     const loadProducts = useCallback(async () => {
@@ -161,9 +224,19 @@ const Dashboard = () => {
                 product.category ||
                 allowedCategories[0] ||
                 CATEGORIES[0],
-            subcategory: product.subcategory || "Poultry",
+            subcategory:
+                product.subcategory ||
+                subcategoryOptionsFor(
+                    product.category || allowedCategories[0],
+                    application?.productFocus
+                )[0] ||
+                "",
             unitOfMeasure: product.unitOfMeasure || "kg",
             stockQuantity: String(product.stockQuantity ?? ""),
+            species: product.species || "",
+            condition: product.condition || "",
+            productionMethod: product.productionMethod || "",
+            weightRange: product.weightRange || "",
             images: Array.isArray(product.images)
                 ? product.images.join("\n")
                 : "",
@@ -424,6 +497,10 @@ const Dashboard = () => {
             subcategory: form.subcategory,
             unitOfMeasure: form.unitOfMeasure,
             stockQuantity,
+            species: form.species.trim(),
+            condition: form.condition,
+            productionMethod: form.productionMethod,
+            weightRange: form.weightRange.trim(),
             images: form.media
                 .filter((item) => item.type === "image")
                 .map((item) => item.url),
@@ -729,30 +806,84 @@ const Dashboard = () => {
                                         </label>
 
                                         <label>
-                                            Livestock type
+                                            Product type
 
                                             <select
                                                 name="subcategory"
                                                 value={form.subcategory}
                                                 onChange={updateField}
                                             >
-                                                {[
-                                                    "Poultry",
-                                                    "Cattle",
-                                                    "Sheep",
-                                                    "Goats",
-                                                ]
-                                                    .filter((item) =>
-                                                        application?.productFocus?.includes(
-                                                            item.toLowerCase()
-                                                        )
-                                                    )
-                                                    .map((item) => (
-                                                        <option key={item}>
-                                                            {item}
-                                                        </option>
-                                                    ))}
+                                                {subcategoryOptionsFor(
+                                                    form.category,
+                                                    application?.productFocus
+                                                ).map((item) => (
+                                                    <option key={item}>
+                                                        {item}
+                                                    </option>
+                                                ))}
                                             </select>
+                                        </label>
+                                    </div>
+
+                                    <div className="vendor-form-row">
+                                        <label>
+                                            Species
+
+                                            <input
+                                                name="species"
+                                                value={form.species}
+                                                onChange={updateField}
+                                                maxLength={80}
+                                                placeholder="e.g. Clarias catfish"
+                                            />
+                                        </label>
+
+                                        <label>
+                                            Condition
+
+                                            <select
+                                                name="condition"
+                                                value={form.condition}
+                                                onChange={updateField}
+                                            >
+                                                <option value="">Not specified</option>
+                                                {CONDITIONS.map((item) => (
+                                                    <option key={item}>
+                                                        {item}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </label>
+                                    </div>
+
+                                    <div className="vendor-form-row">
+                                        <label>
+                                            Production method
+
+                                            <select
+                                                name="productionMethod"
+                                                value={form.productionMethod}
+                                                onChange={updateField}
+                                            >
+                                                <option value="">Not specified</option>
+                                                {PRODUCTION_METHODS.map((item) => (
+                                                    <option key={item}>
+                                                        {item}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </label>
+
+                                        <label>
+                                            Weight / size range
+
+                                            <input
+                                                name="weightRange"
+                                                value={form.weightRange}
+                                                onChange={updateField}
+                                                maxLength={60}
+                                                placeholder="e.g. 1–2 kg"
+                                            />
                                         </label>
                                     </div>
 

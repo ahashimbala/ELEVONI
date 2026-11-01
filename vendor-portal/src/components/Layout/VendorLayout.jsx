@@ -4,6 +4,13 @@ import { AuthContext } from "../../context/auth-context";
 import logo from "../../assets/elevoni-logo.png";
 import "./VendorLayout.css";
 
+const navigation = [
+  { to: "/", label: "Home", shortLabel: "Home", icon: "⌂", end: true },
+  { to: "/sales", label: "Sales log", shortLabel: "Sales", icon: "▤" },
+  { to: "/apply", label: "Application", shortLabel: "Apply", icon: "＋" },
+  { to: "/login", label: "Account", shortLabel: "Account", icon: "◎" },
+];
+
 const VendorLayout = () => {
   const { isAuthenticated, signOut } = useContext(AuthContext);
 
@@ -17,10 +24,11 @@ const VendorLayout = () => {
             <span className="vendor-brand-sub">Vendor portal</span>
           </Link>
           <nav className="vendor-nav" aria-label="Vendor portal navigation">
-            <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : undefined)}>Workspace</NavLink>
-            <NavLink to="/sales" className={({ isActive }) => (isActive ? "active" : undefined)}>Sales log</NavLink>
-            <NavLink to="/apply" className={({ isActive }) => (isActive ? "active" : undefined)}>Application</NavLink>
-            <NavLink to="/login" className={({ isActive }) => (isActive ? "active" : undefined)}>{isAuthenticated ? "Account" : "Sign in"}</NavLink>
+            {navigation.map(({ to, label, end }) => (
+              <NavLink key={to} to={to} end={end} className={({ isActive }) => (isActive ? "active" : undefined)}>
+                {to === "/login" && isAuthenticated ? "Account" : to === "/login" ? "Sign in" : label}
+              </NavLink>
+            ))}
           </nav>
           <div className="vendor-header-actions">
             <a className="vendor-storefront-link" href="https://elevonifarms.vercel.app/marketplace" target="_blank" rel="noopener noreferrer">View marketplace <span aria-hidden="true">↗</span></a>
@@ -35,6 +43,14 @@ const VendorLayout = () => {
           <p className="vendor-footer-note">Vendor approval and product-listing approval are separate. A listing is not a completed order.</p>
         </div>
       </footer>
+      <nav className="vendor-mobile-nav" aria-label="Vendor app navigation">
+        {navigation.map(({ to, shortLabel, icon, end }) => (
+          <NavLink key={to} to={to} end={end} className={({ isActive }) => `vendor-mobile-nav-item${isActive ? " active" : ""}`}>
+            <span className="vendor-mobile-nav-icon" aria-hidden="true">{icon}</span>
+            <span>{to === "/login" && isAuthenticated ? "Account" : shortLabel}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 };
