@@ -84,6 +84,28 @@ hr {
     }
 }
 
+@supports (padding: max(0px)) {
+    body {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+}
+
+@media (max-width: 768px) {
+    .pagination-btn,
+    .logout-btn,
+    .house-sales-submit,
+    .house-sales-list-header button,
+    .list .actions button,
+    .review-actions button,
+    .vendors-review,
+    .vendors-secondary,
+    .vendors-action,
+    .moderation-actions button,
+    .moderation-refresh {
+        min-height: 44px;
+    }
+}
+
 :root {
     color: #191c17;
     background: #fff;

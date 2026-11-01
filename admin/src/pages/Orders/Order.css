@@ -7,6 +7,7 @@
     padding: 20px;
     margin: 30px auto;
     width: calc(100% - 60px);
+    max-width: 1280px;
     font-size: 14px;
     color: #505050;
     border-radius: 10px;
@@ -48,14 +49,21 @@
         padding: 15px;
         margin: 20px auto;
         width: calc(100% - 40px);
-        grid-template-columns: 0.5fr 2fr 1fr;
+        grid-template-columns: 52px minmax(0, 1.5fr) minmax(0, 1fr);
+    }
+    .order-item > img {
+        grid-row: 1 / span 2;
+        width: 44px;
+    }
+    .order-item > div {
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
     .order-item select {
+        grid-column: 2 / -1;
+        max-width: 320px;
         padding: 8px;
         font-size: 12px;
-    }
-    .order-item img {
-        width: 40px;
     }
 }
 
@@ -76,6 +84,7 @@
     }
     .order-item select {
         max-width: none;
+        min-height: 44px;
     }
 }
 

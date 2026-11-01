@@ -1,5 +1,3 @@
-import React from "react";
-
 const PricingTiersFields = ({ tiers, onChange }) => {
   const updateTier = (index, field, value) => {
     const next = tiers.map((tier, tierIndex) => {
@@ -19,11 +17,11 @@ const PricingTiersFields = ({ tiers, onChange }) => {
   };
 
   return (
-    <fieldset style={{ border: "1px solid #ddd", borderRadius: 10, padding: 14 }}>
+    <fieldset className="pricing-tiers">
       <legend>Wholesale pricing tiers (per kg)</legend>
       <p>Ranges must start at 1 kg, continue without gaps, and leave the final maximum blank.</p>
       {tiers.map((tier, index) => (
-        <div key={index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 8, marginBottom: 10, alignItems: "center" }}>
+        <div key={index} className="pricing-tier-row">
           <label>
             Minimum kg
             <input type="number" min="1" step="1" value={tier.minQuantity ?? ""} onChange={(event) => updateTier(index, "minQuantity", event.target.value)} required />

@@ -1,5 +1,6 @@
 .pagination {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 16px 0;
@@ -26,4 +27,17 @@
   color: #a3a3a3;
   border-color: #e5e5e5;
   cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .pagination {
+    gap: 8px;
+  }
+  .pagination-status {
+    flex: 1 0 100%;
+  }
+  .pagination-btn {
+    flex: 1;
+    min-height: 44px;
+  }
 }

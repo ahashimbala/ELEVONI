@@ -82,7 +82,11 @@ const HouseSales = ({ url }) => {
         <label>Buyer state<input name="buyerState" maxLength={100} value={form.buyerState} onChange={update} /></label>
         <label>Buyer town / area<input name="buyerArea" maxLength={120} value={form.buyerArea} onChange={update} /></label>
         <label className="house-sales-wide">Notes<textarea name="notes" rows="3" maxLength={1000} value={form.notes} onChange={update} placeholder="Optional context about the transaction" /></label>
-        <div className="house-sales-total"><span>Sale total</span><strong>{money(total)}</strong><span>Amount received</span><strong>{money(received)}</strong><span>Balance due</span><strong>{money(Math.max(0, total - received))}</strong></div>
+        <div className="house-sales-total">
+          <div><span>Sale total</span><strong>{money(total)}</strong></div>
+          <div><span>Amount received</span><strong>{money(received)}</strong></div>
+          <div><span>Balance due</span><strong>{money(Math.max(0, total - received))}</strong></div>
+        </div>
         <p className="house-sales-note house-sales-wide">Offline entries are marked unverified by default. Do not invent missing buyer details or exact sale times. Payment and fulfilment are tracked separately.</p>
         <button className="house-sales-submit" type="submit" disabled={saving}>{saving ? "Saving…" : "Record sale"}</button>
       </form>

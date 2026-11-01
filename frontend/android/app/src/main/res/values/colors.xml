@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#A2A288</color>
+    <color name="colorPrimaryDark">#7C8760</color>
+    <color name="colorAccent">#626D48</color>
+    <color name="elevoni_sage">#A2A288</color>
+    <color name="elevoni_ink">#191C17</color>
+    <color name="elevoni_white">#FFFFFF</color>
+</resources>

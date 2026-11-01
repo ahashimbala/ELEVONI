@@ -602,3 +602,25 @@
         flex: 1;
     }
 }
+
+@media (max-width: 400px) {
+    .sales-history-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .sales-history-meta div {
+        flex-wrap: wrap;
+    }
+
+    .sales-history-meta dd {
+        text-align: left;
+    }
+
+    .sales-history-total {
+        white-space: normal;
+    }
+
+    .sales-pagination .sales-secondary {
+        min-height: 44px;
+    }
+}

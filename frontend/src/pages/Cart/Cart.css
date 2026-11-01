@@ -23,3 +23,4 @@
 .cart-state { padding:30px 0; color:var(--elevoni-muted); }
 .cart-items-item .cross { display:inline-flex; align-items:center; justify-content:center; width:34px; min-height:34px; border:0; background:transparent; font:inherit; font-size:20px; line-height:1; cursor:pointer; }
 .cart-items-item .cross:focus-visible { outline:2px solid var(--elevoni-sage); outline-offset:2px; }
+@media (max-width: 700px) { .cart-items-item p { min-width:0; overflow-wrap:anywhere; } .cart-items-item .cross { width:44px; min-height:44px; } }

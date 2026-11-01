@@ -456,7 +456,12 @@
         gap: 9px;
     }
     .marketplace-enquire {
+        min-height: 44px;
         padding: 8px 10px;
+    }
+
+    .marketplace-pagination button {
+        min-height: 44px;
     }
 }
 

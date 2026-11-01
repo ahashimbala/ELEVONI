@@ -77,6 +77,85 @@
     transform: scale(.98);
 }
 
+.pricing-tiers {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+.pricing-tiers legend {
+    padding: 0 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pricing-tiers > p {
+    margin: 0 0 12px;
+    color: #666;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.pricing-tier-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    align-items: end;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.pricing-tier-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    color: #555;
+    font-size: 12px;
+}
+
+.pricing-tier-row input {
+    min-width: 0;
+}
+
+.pricing-tier-row button,
+.pricing-tiers > button {
+    width: auto;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid #d7dbd4;
+    border-radius: 8px;
+    background: #fff;
+    color: #3f4738;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.pricing-tier-row button:hover,
+.pricing-tiers > button:hover {
+    background: #f6f8f3;
+    transform: none;
+}
+
+.pricing-tiers > button {
+    margin-top: 4px;
+    background: #f6f8f3;
+    font-size: 13px;
+}
+
+@media (max-width: 640px) {
+    .pricing-tier-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    .pricing-tier-row label:nth-child(3) {
+        grid-column: 1 / -1;
+    }
+    .pricing-tier-row button {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+}
+
 @media (max-width:768px) {
     .add-form {
         margin: 50px auto;
