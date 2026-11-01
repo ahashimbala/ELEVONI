@@ -105,21 +105,22 @@ test("smoked catfish is the only live direct listing", () => {
   assert.deepEqual(directListings.map((category) => category.id), ["smoked-catfish"]);
 });
 
-test("third-party fish remains a planned marketplace category", () => {
+test("third-party fish is an active marketplace category", () => {
   const otherFish = getCategoryById("other-fish-aquaculture");
 
   assert.equal(otherFish.parentId, "aquaculture-fishery");
   assert.equal(otherFish.channel, CATEGORY_CHANNELS.MARKETPLACE);
-  assert.equal(otherFish.launchStatus, CATEGORY_LAUNCH_STATUSES.PLANNED);
-  assert.deepEqual(otherFish.vendorFocus, []);
+  assert.equal(otherFish.launchStatus, CATEGORY_LAUNCH_STATUSES.LIVE);
+  assert.deepEqual(otherFish.vendorFocus, ["aquaculture"]);
 });
 
-test("livestock categories are active while unlaunched aquaculture marketplace remains planned", () => {
+test("livestock, aquaculture and fisheries categories are active marketplace categories", () => {
   for (const id of ["poultry-eggs", "cattle", "sheep", "goats"]) {
     assert.equal(getCategoryById(id).launchStatus, CATEGORY_LAUNCH_STATUSES.LIVE);
     assert.equal(getCategoryById(id).channel, CATEGORY_CHANNELS.MARKETPLACE);
   }
-  assert.equal(getCategoryById("other-fish-aquaculture").launchStatus, CATEGORY_LAUNCH_STATUSES.PLANNED);
+  assert.equal(getCategoryById("other-fish-aquaculture").launchStatus, CATEGORY_LAUNCH_STATUSES.LIVE);
+  assert.equal(getCategoryById("fishery-products-equipment").launchStatus, CATEGORY_LAUNCH_STATUSES.LIVE);
 });
 
 test("other farm products is reserved and has no active sales channel", () => {
@@ -155,6 +156,6 @@ test("children are discoverable from their parent", () => {
 
   assert.deepEqual(
     listChildCategories("aquaculture-fishery").map((category) => category.id),
-    ["smoked-catfish", "other-fish-aquaculture"],
+    ["smoked-catfish", "other-fish-aquaculture", "fishery-products-equipment"],
   );
 });

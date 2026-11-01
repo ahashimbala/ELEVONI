@@ -21,6 +21,7 @@ const MAPPINGS = Object.freeze([
   Object.freeze({ value: "Smoked Catfish", categoryId: "smoked-catfish" }),
   Object.freeze({ value: "Aquaculture & Fishery", categoryId: "aquaculture-fishery" }),
   Object.freeze({ value: "Catfish & Aquaculture", categoryId: "other-fish-aquaculture" }),
+  Object.freeze({ value: "Fishery Products & Equipment", categoryId: "fishery-products-equipment" }),
   Object.freeze({ value: "Livestock", categoryId: "livestock" }),
   Object.freeze({ value: "Poultry & Eggs", categoryId: "poultry-eggs" }),
   Object.freeze({ value: "Cattle", categoryId: "cattle" }),
