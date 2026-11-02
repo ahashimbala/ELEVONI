@@ -70,8 +70,6 @@ test("top-level categories are groups and cannot be mistaken for listings", () =
     [
       "aquaculture-fishery",
       "livestock",
-      "crops-produce",
-      "processed-other-farm-products",
     ],
   );
 
@@ -121,14 +119,6 @@ test("livestock, aquaculture and fisheries categories are active marketplace cat
   }
   assert.equal(getCategoryById("other-fish-aquaculture").launchStatus, CATEGORY_LAUNCH_STATUSES.LIVE);
   assert.equal(getCategoryById("fishery-products-equipment").launchStatus, CATEGORY_LAUNCH_STATUSES.LIVE);
-});
-
-test("other farm products is reserved and has no active sales channel", () => {
-  const otherFarmProducts = getCategoryById("other-farm-products");
-
-  assert.equal(otherFarmProducts.parentId, "processed-other-farm-products");
-  assert.equal(otherFarmProducts.channel, CATEGORY_CHANNELS.NONE);
-  assert.equal(otherFarmProducts.launchStatus, CATEGORY_LAUNCH_STATUSES.RESERVED);
 });
 
 test("Livestock & Meat is not classified as cattle, sheep, or goats", () => {

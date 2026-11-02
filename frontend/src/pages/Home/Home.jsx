@@ -14,24 +14,24 @@ const Home = () => {
     <div>
       <Helmet>
         <title>
-          Elevoni Farms | Agricultural Products & Smoked Catfish
+          Elevoni Farms | Livestock, Aquaculture & Smoked Catfish
         </title>
 
         <meta
           name="description"
-          content="Explore agricultural marketplace listings and buy Elevoni smoked catfish directly. Confirm availability and delivery before ordering."
+          content="Explore livestock, aquaculture and fisheries listings and buy Elevoni smoked catfish directly. Confirm availability and delivery before ordering."
         />
 
         <link rel="canonical" href="https://elevonifarms.vercel.app/" />
 
         <meta
           property="og:title"
-          content="Elevoni Farms - Agricultural Products and Smoked Catfish"
+          content="Elevoni Farms - Livestock, Aquaculture and Smoked Catfish"
         />
 
         <meta
           property="og:description"
-          content="Explore agricultural marketplace listings or shop Elevoni smoked catfish directly."
+          content="Explore livestock, aquaculture and fisheries listings or shop Elevoni smoked catfish directly."
         />
 
         <meta property="og:type" content="website" />

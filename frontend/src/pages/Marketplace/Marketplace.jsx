@@ -12,10 +12,6 @@ const CATEGORIES = [
   "All sectors",
   "Catfish & Aquaculture",
   "Fishery Products & Equipment",
-  "Grains & Cereals",
-  "Vegetables & Fruits",
-  "Tubers & Starch",
-  "Processed Agro-Goods",
   "Poultry & Eggs",
   "Livestock & Meat",
 ];
@@ -29,10 +25,6 @@ const SUBCATEGORIES = {
     "Tilapia",
     "Other Fish",
     "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting", "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services",
-    "Grains & Cereals",
-    "Vegetables & Fruits",
-    "Tubers & Starch",
-    "Processed Agro-Goods",
     "Poultry",
     "Cattle",
     "Sheep",
@@ -48,10 +40,6 @@ const SUBCATEGORIES = {
   "Fishery Products & Equipment": [ALL_TYPES, "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
   "Poultry & Eggs": [ALL_TYPES, "Poultry"],
   "Livestock & Meat": [ALL_TYPES, "Cattle", "Sheep", "Goats"],
-  "Grains & Cereals": [ALL_TYPES, "Grains & Cereals"],
-  "Vegetables & Fruits": [ALL_TYPES, "Vegetables & Fruits"],
-  "Tubers & Starch": [ALL_TYPES, "Tubers & Starch"],
-  "Processed Agro-Goods": [ALL_TYPES, "Processed Agro-Goods"],
 };
 
 const CONDITIONS = [
@@ -125,7 +113,7 @@ const Marketplace = () => {
           sector: sectorFilter !== "All sectors" ? sectorFilter : undefined,
           subcategory: subcategory !== ALL_TYPES ? subcategory : undefined,
           condition: condition !== "All conditions" ? condition : undefined,
-          species: category === "Catfish & Aquaculture" || category === "Fishery Products & Equipment" || (category === "All sectors" && sectorFilter !== "Agriculture") ? species : undefined,
+          species: category === "Catfish & Aquaculture" || category === "Fishery Products & Equipment" ? species : undefined,
           state: stateFilter || undefined,
           minPrice: minPrice || undefined,
           maxPrice: maxPrice || undefined,
@@ -162,7 +150,7 @@ const Marketplace = () => {
       <section className="marketplace-hero">
         <div className="marketplace-hero-copy">
           <p className="marketplace-eyebrow">Beyond the Elevoni catalogue</p>
-          <h1>Discover agricultural products from reviewed vendors.</h1>
+          <h1>Discover livestock, aquaculture and fisheries products from reviewed vendors.</h1>
           <p>Explore products listed by vendors whose applications and products have passed the relevant review steps. Confirm availability, final price and delivery arrangements with Elevoni before ordering.</p>
           <Link to="/sell-with-elevoni" className="marketplace-sell-link">Are you a farmer? Apply to sell <span aria-hidden="true">→</span></Link>
         </div>
@@ -188,7 +176,7 @@ const Marketplace = () => {
           <label className="marketplace-category-label">
             <span>Sector</span>
             <select value={sectorFilter} onChange={(event) => { setSectorFilter(event.target.value); setPage(1); }}>
-              {['All sectors', 'Agriculture', 'Aquaculture', 'Fisheries'].map((item) => <option key={item} value={item}>{item}</option>)}
+              {['All sectors', 'Livestock', 'Aquaculture', 'Fisheries'].map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
           <label className="marketplace-category-label">

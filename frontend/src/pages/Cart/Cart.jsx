@@ -80,7 +80,7 @@ const Cart = () => {
         <section className="cart-empty" aria-labelledby="cart-empty-title">
           <p className="cart-empty-eyebrow">Your cart</p>
           <h1 id="cart-empty-title">Your cart is empty.</h1>
-          <p>Browse the Elevoni Direct catalogue for smoked catfish, or explore agricultural marketplace listings.</p>
+          <p>Browse the Elevoni Direct catalogue for smoked catfish, or explore livestock, aquaculture and fisheries marketplace listings.</p>
           <div className="cart-empty-actions"><Link to="/#fish-display">Shop smoked catfish</Link><Link to="/marketplace">Explore marketplace</Link></div>
         </section>
       </main>

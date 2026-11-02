@@ -443,7 +443,7 @@ const CategoryPage = () => {
           <p className="category-sell-cta-eyebrow">Sell with Elevoni</p>
           <h2 id="category-sell-cta-title">Are you a farmer?</h2>
           <p>
-            Approved vendors can submit livestock and other agricultural product listings to the
+            Approved vendors can submit livestock, aquaculture and fisheries listings to the
             Elevoni marketplace. Vendor applications and individual products are reviewed separately;
             listings appear publicly only after approval.
           </p>

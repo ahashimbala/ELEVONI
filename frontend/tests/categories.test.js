@@ -179,3 +179,13 @@ test("a livestock subcategory entry uses its listing count", () => {
   assert.equal(view.availability.orderable, true);
   assert.equal(view.emptyState, null);
 });
+
+test("every category and subcategory card resolves to a registered category route", () => {
+  for (const category of listCategories()) {
+    assert.equal(resolveCategoryEntry(category.slug)?.path, categoryPath(category.slug));
+    for (const child of category.children || []) {
+      const path = categoryPath(category.slug, child.slug);
+      assert.equal(resolveCategoryEntry(category.slug, child.slug)?.path, path);
+    }
+  }
+});

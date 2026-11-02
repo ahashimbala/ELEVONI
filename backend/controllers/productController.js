@@ -13,14 +13,10 @@ const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$
 const validObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 const currentUserId = (req) => req.auth && (req.auth.userId || req.auth.id);
 const PRODUCT_UNITS = ["kg", "gram", "piece", "crate", "ton", "bag", "carton", "litre", "service", "hour"];
-const ACTIVE_MARKETPLACE_CATEGORIES = ["Catfish & Aquaculture", "Poultry & Eggs", "Livestock & Meat", "Fishery Products & Equipment", "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"];
+const ACTIVE_MARKETPLACE_CATEGORIES = ["Catfish & Aquaculture", "Poultry & Eggs", "Livestock & Meat", "Fishery Products & Equipment"];
 const SUBCATEGORIES_BY_CATEGORY = Object.freeze({
     "Catfish & Aquaculture": Object.freeze(["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"]),
     "Fishery Products & Equipment": Object.freeze(["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"]),
-    "Grains & Cereals": Object.freeze(["Grains & Cereals"]),
-    "Vegetables & Fruits": Object.freeze(["Vegetables & Fruits"]),
-    "Tubers & Starch": Object.freeze(["Tubers & Starch"]),
-    "Processed Agro-Goods": Object.freeze(["Processed Agro-Goods"]),
     "Poultry & Eggs": Object.freeze(["Poultry"]),
     "Livestock & Meat": Object.freeze(["Cattle", "Sheep", "Goats"])
 });
@@ -28,7 +24,6 @@ const ALL_SUBCATEGORIES = Object.freeze([...new Set(Object.values(SUBCATEGORIES_
 const PRODUCT_CONDITIONS = Object.freeze(["Live", "Fresh", "Frozen", "Smoked", "Dried", "Processed"]);
 const PRODUCTION_METHODS = Object.freeze(["Farm-raised", "Wild-caught", "Free-range", "Caged", "Other"]);
 const FOCUS_FOR_SUBCATEGORY = Object.freeze({
-    "Grains & Cereals": "agriculture", "Vegetables & Fruits": "agriculture", "Tubers & Starch": "agriculture", "Processed Agro-Goods": "agriculture",
     "Fresh Fish": "fisheries", "Smoked Fish": "fisheries", "Dried Fish": "fisheries", "Frozen Fish": "fisheries", "Fishing Nets": "fisheries", "Fishing Equipment": "fisheries", "Fish Processing": "fisheries", "Packaging & Storage": "fisheries", "Cold-chain Services": "fisheries",
     Poultry: "poultry",
     Cattle: "cattle",
@@ -107,7 +102,7 @@ export const getPublicProducts = async(req, res, next) => {
         }
 
         if (sector) {
-            if (!["Agriculture", "Aquaculture", "Fisheries"].includes(String(sector))) return res.status(400).json({ success: false, message: "Invalid marketplace sector" });
+            if (!["Livestock", "Aquaculture", "Fisheries"].includes(String(sector))) return res.status(400).json({ success: false, message: "Invalid marketplace sector" });
             filter.sector = String(sector);
         }
 
@@ -257,7 +252,7 @@ export const createVendorProduct = async(req, res, next) => {
             });
         }
 
-        if ((sector && !["Agriculture", "Aquaculture", "Fisheries"].includes(sector)) || (availability && !["Available", "Pre-order", "Seasonal", "Out of stock"].includes(availability))) {
+        if ((sector && !["Livestock", "Aquaculture", "Fisheries"].includes(sector)) || (availability && !["Available", "Pre-order", "Seasonal", "Out of stock"].includes(availability))) {
             return res.status(400).json({ success: false, message: "Choose a valid sector and availability status" });
         }
 
@@ -329,7 +324,7 @@ export const createVendorProduct = async(req, res, next) => {
             condition,
             productionMethod,
             weightRange: typeof weightRange === "string" ? weightRange.trim() : "",
-            sector: ["Agriculture", "Aquaculture", "Fisheries"].includes(sector) ? sector : (category === "Fishery Products & Equipment" ? "Fisheries" : category === "Catfish & Aquaculture" ? "Aquaculture" : "Agriculture"),
+            sector: ["Livestock", "Aquaculture", "Fisheries"].includes(sector) ? sector : (category === "Fishery Products & Equipment" ? "Fisheries" : category === "Catfish & Aquaculture" ? "Aquaculture" : "Livestock"),
             availability: ["Available", "Pre-order", "Seasonal", "Out of stock"].includes(availability) ? availability : (Number(stockQuantity) > 0 ? "Available" : "Out of stock"),
             vendorId: profile._id,
             status: "pending",
@@ -460,7 +455,7 @@ export const updateVendorProduct = async(req, res, next) => {
             return res.status(400).json({ success: false, message: "Stock quantity cannot be negative" });
         }
 
-        if (req.body.sector !== undefined && !["", "Agriculture", "Aquaculture", "Fisheries"].includes(req.body.sector)) {
+        if (req.body.sector !== undefined && !["", "Livestock", "Aquaculture", "Fisheries"].includes(req.body.sector)) {
             return res.status(400).json({ success: false, message: "Choose a valid product sector" });
         }
         if (req.body.availability !== undefined && !["", "Available", "Pre-order", "Seasonal", "Out of stock"].includes(req.body.availability)) {
@@ -629,7 +624,7 @@ export const deleteVendorProduct = async(req, res, next) => {
 
 export const adminGetAllProducts = async(req, res, next) => {
     try {
-        const filter = {};
+        const filter = { category: { $in: ACTIVE_MARKETPLACE_CATEGORIES } };
 
         if (req.query.status) {
             if (!["pending", "approved", "rejected"].includes(req.query.status)) {

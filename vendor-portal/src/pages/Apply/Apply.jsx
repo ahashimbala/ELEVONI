@@ -9,6 +9,8 @@ const PRODUCT_OPTIONS = [
   { value: "cattle", label: "Cattle" },
   { value: "sheep", label: "Sheep" },
   { value: "goats", label: "Goats" },
+  { value: "aquaculture", label: "Aquaculture & Fish Farming" },
+  { value: "fisheries", label: "Fisheries & Fish Products" },
 ];
 
 const STATUS_DETAILS = {

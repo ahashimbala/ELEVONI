@@ -6,15 +6,11 @@ import api from "../../api";
 import { AuthContext } from "../../context/auth-context";
 import "./Dashboard.css";
 
-const CATEGORIES = ["Catfish & Aquaculture", "Fishery Products & Equipment", "Poultry & Eggs", "Livestock & Meat", "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"];
+const CATEGORIES = ["Catfish & Aquaculture", "Fishery Products & Equipment", "Poultry & Eggs", "Livestock & Meat"];
 
 const SUBCATEGORIES_BY_CATEGORY = {
     "Catfish & Aquaculture": ["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"],
     "Fishery Products & Equipment": ["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
-    "Grains & Cereals": ["Grains & Cereals"],
-    "Vegetables & Fruits": ["Vegetables & Fruits"],
-    "Tubers & Starch": ["Tubers & Starch"],
-    "Processed Agro-Goods": ["Processed Agro-Goods"],
     "Poultry & Eggs": ["Poultry"],
     "Livestock & Meat": ["Cattle", "Sheep", "Goats"],
 };
@@ -24,7 +20,6 @@ const CONDITIONS = ["Live", "Fresh", "Frozen", "Smoked", "Dried", "Processed"];
 const PRODUCTION_METHODS = ["Farm-raised", "Wild-caught", "Free-range", "Caged", "Other"];
 
 const FOCUS_FOR_SUBCATEGORY = {
-    "Grains & Cereals": "agriculture", "Vegetables & Fruits": "agriculture", "Tubers & Starch": "agriculture", "Processed Agro-Goods": "agriculture",
     Poultry: "poultry",
     Cattle: "cattle",
     Sheep: "sheep",
@@ -83,7 +78,6 @@ const categoriesForFocus = (focus = []) => {
 
     if (focus.includes("aquaculture")) categories.push("Catfish & Aquaculture");
     if (focus.includes("fisheries") || focus.includes("aquaculture")) categories.push("Fishery Products & Equipment");
-    if (focus.includes("agriculture")) categories.push("Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods");
 
     return categories;
 };

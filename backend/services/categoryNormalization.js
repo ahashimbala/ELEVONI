@@ -16,11 +16,7 @@ import {
 const PRODUCT_CATEGORIES = Object.freeze([
     "Catfish & Aquaculture",
     "Poultry & Eggs",
-    "Grains & Cereals",
-    "Vegetables & Fruits",
-    "Tubers & Starch",
     "Livestock & Meat",
-    "Processed Agro-Goods",
     "Fishery Products & Equipment",
 ]);
 
@@ -102,7 +98,6 @@ const resolveProductCategoryFilter = (value) => {
 };
 
 const productCategoryForVendorFocus = (focus) => {
-    if (focus === "agriculture") return "Grains & Cereals";
     if (focus === "fisheries") return "Fishery Products & Equipment";
     const category = CATEGORIES.find((candidate) => candidate.vendorFocus.includes(focus));
     return category ? productCategoryForTaxonomyCategory(category) : null;
@@ -115,10 +110,6 @@ const categoriesForVendor = (profile) => {
     const allowed = new Set();
 
     for (const value of focus) {
-        if (value === "agriculture") {
-            ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"].forEach((category) => allowed.add(category));
-            continue;
-        }
         const category = productCategoryForVendorFocus(value);
         if (category) allowed.add(category);
     }

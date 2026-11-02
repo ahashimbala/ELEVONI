@@ -21,14 +21,14 @@ const Header = () => {
   return (
     <header className="header-hero">
       <div className="hero-copy-col">
-        <h1 className="hero-title">Find the agricultural products <span className="hero-title-accent">your business needs.</span></h1>
+        <h1 className="hero-title">Find livestock and fishery products <span className="hero-title-accent">your business needs.</span></h1>
         <p className="hero-description">
           Explore marketplace listings from approved farms, or buy Elevoni&apos;s smoked catfish directly. Availability and delivery are confirmed before an enquiry becomes an order.
         </p>
 
-        <form className="hero-search" onSubmit={submitSearch} role="search" aria-label="Search agricultural marketplace">
+        <form className="hero-search" onSubmit={submitSearch} role="search" aria-label="Search livestock and fisheries marketplace">
           <FaSearch aria-hidden="true" className="hero-search-icon" />
-          <label className="sr-only" htmlFor="homepage-marketplace-search">Search agricultural products</label>
+          <label className="sr-only" htmlFor="homepage-marketplace-search">Search livestock and fisheries products</label>
           <input
             id="homepage-marketplace-search"
             type="search"

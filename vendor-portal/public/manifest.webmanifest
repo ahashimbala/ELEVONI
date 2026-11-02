@@ -1,5 +1,6 @@
 {
   "id": "/",
+  "prefer_related_applications": false,
   "name": "Elevoni Vendor Portal",
   "short_name": "Elevoni Vendor",
   "description": "Manage your Elevoni vendor workspace, listings and sales.",
@@ -7,8 +8,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#A2A288",
+  "theme_color": "#A2A288",
   "icons": [
     {
       "src": "/icons/elevoni-192.png",

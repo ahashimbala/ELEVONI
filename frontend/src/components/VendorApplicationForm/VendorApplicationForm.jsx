@@ -168,7 +168,7 @@ const VendorApplicationForm = ({
 
       <fieldset className="vendor-focus" aria-describedby={errors.productFocus ? "vendor-productFocus-error" : undefined}>
         <legend>Products and sectors</legend>
-        <p className="vendor-field-hint">Select every agricultural or fisheries sector relevant to your business.</p>
+        <p className="vendor-field-hint">Select every livestock, aquaculture or fisheries sector relevant to your business.</p>
         <div className="vendor-focus-options">
           {VENDOR_PRODUCT_FOCUS.map((option) => (
             <label

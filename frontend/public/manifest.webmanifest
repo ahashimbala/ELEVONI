@@ -1,13 +1,14 @@
 {
   "id": "/",
+  "prefer_related_applications": false,
   "name": "Elevoni Farms",
   "short_name": "Elevoni",
-  "description": "Explore agricultural marketplace listings and shop Elevoni smoked catfish directly.",
+  "description": "Explore livestock, aquaculture and fisheries listings and shop Elevoni smoked catfish directly.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#9F9F86",
-  "theme_color": "#ffffff",
+  "background_color": "#A2A288",
+  "theme_color": "#A2A288",
   "orientation": "portrait-primary",
   "icons": [
     {

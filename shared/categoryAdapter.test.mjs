@@ -22,11 +22,6 @@ const EXPLICIT_MAPPINGS = Object.freeze([
   ["Cattle", "cattle"],
   ["Sheep", "sheep"],
   ["Goats", "goats"],
-  ["Grains & Cereals", "grains-cereals"],
-  ["Vegetables & Fruits", "vegetables-fruits"],
-  ["Tubers & Starch", "tubers-starch"],
-  ["Processed Agro-Goods", "processed-agro-goods"],
-  ["Other Farm Products", "other-farm-products"],
 ]);
 
 test("every explicit mapping resolves to a stable canonical ID", () => {
@@ -90,6 +85,12 @@ test("Catfish & Aquaculture maps to the other-fish category, never to direct smo
   assert.equal(result.category.channel, CATEGORY_CHANNELS.MARKETPLACE);
   assert.equal(result.category.launchStatus, CATEGORY_LAUNCH_STATUSES.LIVE);
   assert.equal(result.isSellable, true);
+});
+
+test("crop and agricultural produce categories are no longer recognized", () => {
+  for (const value of ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods", "Other Farm Products"]) {
+    assert.equal(lookupCategory(value).kind, CATEGORY_ADAPTER_KINDS.UNKNOWN, value);
+  }
 });
 
 test("unknown values return an explicit unknown result", () => {
@@ -165,9 +166,8 @@ test("internal whitespace is not silently collapsed", () => {
   assert.equal(result.categoryId, null);
 });
 
-test("groups and reserved categories are never reported as sellable", () => {
+test("top-level groups are never reported as sellable", () => {
   const groupResults = ["Aquaculture & Fishery", "Livestock"].map(lookupCategory);
-  const reserved = lookupCategory("Other Farm Products");
 
   for (const result of groupResults) {
     assert.equal(result.kind, CATEGORY_ADAPTER_KINDS.MAPPED);
@@ -175,16 +175,10 @@ test("groups and reserved categories are never reported as sellable", () => {
     assert.equal(result.isListing, false);
     assert.equal(result.isSellable, false);
   }
-
-  assert.equal(reserved.kind, CATEGORY_ADAPTER_KINDS.MAPPED);
-  assert.equal(reserved.category.type, CATEGORY_TYPES.LISTING);
-  assert.equal(reserved.category.launchStatus, CATEGORY_LAUNCH_STATUSES.RESERVED);
-  assert.equal(reserved.isListing, true);
-  assert.equal(reserved.isSellable, false);
 });
 
-test("agriculture, aquaculture and livestock categories are active marketplace categories", () => {
-  const activeValues = ["Poultry & Eggs", "Cattle", "Sheep", "Goats", "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Catfish & Aquaculture"];
+test("aquaculture and livestock categories are active marketplace categories", () => {
+  const activeValues = ["Poultry & Eggs", "Cattle", "Sheep", "Goats", "Catfish & Aquaculture", "Fishery Products & Equipment"];
   for (const value of activeValues) {
     const result = lookupCategory(value);
     assert.equal(result.kind, CATEGORY_ADAPTER_KINDS.MAPPED, value);
@@ -210,6 +204,6 @@ test("live direct smoked catfish and livestock category mappings are sellable", 
   assert.equal(smoked.category.channel, CATEGORY_CHANNELS.DIRECT);
   assert.deepEqual(
     sellableMappings.map((result) => result.categoryId),
-    ["smoked-catfish", "other-fish-aquaculture", "fishery-products-equipment", "poultry-eggs", "cattle", "sheep", "goats", "grains-cereals", "vegetables-fruits", "tubers-starch", "processed-agro-goods"],
+    ["smoked-catfish", "other-fish-aquaculture", "fishery-products-equipment", "poultry-eggs", "cattle", "sheep", "goats"],
   );
 });

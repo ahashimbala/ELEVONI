@@ -12,7 +12,7 @@ const isAppleMobile = () => {
 };
 
 const AppDownload = () => {
-  const [installPrompt, setInstallPrompt] = useState(null);
+  const [installPrompt, setInstallPrompt] = useState(() => window.deferredInstallPrompt || null);
   const [installed, setInstalled] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [appleMobile] = useState(isAppleMobile);
@@ -26,30 +26,22 @@ const AppDownload = () => {
       setInstalled(true);
     }
 
-    const handleBeforeInstallPrompt = (event) => {
-      event.preventDefault();
-      setInstallPrompt(event);
+    const handleBeforeInstallPrompt = () => {
+      setInstallPrompt(window.deferredInstallPrompt || null);
     };
 
     const handleAppInstalled = () => {
       setInstalled(true);
       setInstallPrompt(null);
+      window.deferredInstallPrompt = null;
     };
 
-    window.addEventListener(
-      "beforeinstallprompt",
-      handleBeforeInstallPrompt
-    );
-
-    window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener("elevoni-install-available", handleBeforeInstallPrompt);
+    window.addEventListener("elevoni-app-installed", handleAppInstalled);
 
     return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt
-      );
-
-      window.removeEventListener("appinstalled", handleAppInstalled);
+      window.removeEventListener("elevoni-install-available", handleBeforeInstallPrompt);
+      window.removeEventListener("elevoni-app-installed", handleAppInstalled);
     };
   }, []);
 
@@ -59,9 +51,16 @@ const AppDownload = () => {
       return;
     }
 
-    await installPrompt.prompt();
-    await installPrompt.userChoice;
-    setInstallPrompt(null);
+    try {
+      await installPrompt.prompt();
+      await installPrompt.userChoice;
+    } catch (error) {
+      console.warn("Elevoni installation prompt could not be opened:", error);
+      setShowInstructions(true);
+    } finally {
+      setInstallPrompt(null);
+      window.deferredInstallPrompt = null;
+    }
   };
 
   return (

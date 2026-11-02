@@ -7,7 +7,7 @@
 
 const VENDOR_STATUSES = Object.freeze(["pending", "approved", "rejected", "suspended"]);
 
-const VENDOR_PRODUCT_FOCUS = Object.freeze(["poultry", "cattle", "sheep", "goats", "aquaculture", "agriculture", "fisheries"]);
+const VENDOR_PRODUCT_FOCUS = Object.freeze(["poultry", "cattle", "sheep", "goats", "aquaculture", "fisheries"]);
 
 const VENDOR_DECISIONS = Object.freeze({
     approve: { from: "pending", to: "approved" },
@@ -76,7 +76,7 @@ const validateVendorApplicationFields = (body = {}) => {
 
     const productFocus = parseProductFocus(body.productFocus);
     if (!productFocus) {
-        return { error: "Select at least one agricultural or fisheries sector" };
+        return { error: "Select at least one livestock, aquaculture or fisheries sector" };
     }
 
     const description = isPlainText(body.description) ? body.description.trim() : "";
@@ -115,7 +115,7 @@ const publicVendorApplication = (profile) => ({
         state: profile.state || profile.farmAddress?.state || "",
         country: profile.farmAddress?.country || "Nigeria"
     },
-    productFocus: profile.productFocus || [],
+    productFocus: (profile.productFocus || []).filter((focus) => VENDOR_PRODUCT_FOCUS.includes(focus)),
     description: profile.description || "",
     status: profile.status,
     submittedAt: profile.createdAt,
@@ -154,7 +154,7 @@ const adminVendorSummary = (profile) => ({
         state: profile.state || profile.farmAddress?.state || "",
         country: profile.farmAddress?.country || "Nigeria"
     },
-    productFocus: profile.productFocus || [],
+    productFocus: (profile.productFocus || []).filter((focus) => VENDOR_PRODUCT_FOCUS.includes(focus)),
     status: profile.status,
     submittedAt: profile.createdAt,
     reviewedAt: profile.reviewedAt || null

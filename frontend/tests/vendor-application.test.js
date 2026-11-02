@@ -120,10 +120,10 @@ test("application payload trims and normalises focus", () => {
   assert.equal(payload.description, "");
 });
 
-test("the storefront supports all agriculture, aquaculture, fisheries and livestock focus options", () => {
+test("the storefront supports livestock, aquaculture and fisheries focus options only", () => {
   assert.deepEqual(
     VENDOR_PRODUCT_FOCUS.map((option) => option.value),
-    ["poultry", "cattle", "sheep", "goats", "aquaculture", "fisheries", "agriculture"],
+    ["poultry", "cattle", "sheep", "goats", "aquaculture", "fisheries"],
   );
 });
 

@@ -136,19 +136,12 @@ test("known legacy display-name categories keep their stored values", () => {
 test("canonical IDs are not accepted as public filters", () => {
     const canonicalIds = [
         "poultry-eggs",
-        "grains-cereals",
-        "vegetables-fruits",
-        "tubers-starch",
-        "processed-agro-goods",
         "other-fish-aquaculture",
         "cattle",
         "sheep",
         "goats",
         "livestock",
         "aquaculture-fishery",
-        "crops-produce",
-        "processed-other-farm-products",
-        "other-farm-products",
         "smoked-catfish",
     ];
 
@@ -227,8 +220,6 @@ test("groups and reserved categories are never sellable product filters", () => 
     for (const canonicalId of [
         "aquaculture-fishery",
         "livestock",
-        "crops-produce",
-        "processed-other-farm-products",
     ]) {
         assert.equal(
             resolveProductCategoryFilter(canonicalId).kind,
@@ -237,18 +228,7 @@ test("groups and reserved categories are never sellable product filters", () => 
         );
     }
 
-    const reserved = interpretCategory("Other Farm Products");
-    assert.equal(reserved.category.type, CATEGORY_TYPES.LISTING);
-    assert.equal(reserved.category.launchStatus, CATEGORY_LAUNCH_STATUSES.RESERVED);
-    assert.equal(reserved.isSellable, false);
-    assert.equal(
-        resolveProductCategoryFilter("Other Farm Products").kind,
-        PUBLIC_CATEGORY_FILTER_KINDS.UNSUPPORTED,
-    );
-    assert.equal(
-        resolveProductCategoryFilter("other-farm-products").kind,
-        PUBLIC_CATEGORY_FILTER_KINDS.UNSUPPORTED,
-    );
+
 });
 
 test("All categories and fish attributes are not product categories", () => {
@@ -282,11 +262,7 @@ test("the product write allow-list remains the legacy display names", () => {
     assert.deepEqual(PRODUCT_CATEGORIES, [
         "Catfish & Aquaculture",
         "Poultry & Eggs",
-        "Grains & Cereals",
-        "Vegetables & Fruits",
-        "Tubers & Starch",
         "Livestock & Meat",
-        "Processed Agro-Goods",
         "Fishery Products & Equipment",
     ]);
 
@@ -295,6 +271,7 @@ test("the product write allow-list remains the legacy display names", () => {
     }
     assert.equal(isProductCategory("Smoked"), false);
     assert.equal(isProductCategory("Other Farm Products"), false);
+    for (const removed of ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"]) assert.equal(isProductCategory(removed), false, removed);
 });
 
 // ---------------------------------------------------------------------------
@@ -338,10 +315,8 @@ test("canonical planned filters return an empty result without querying products
         for (const category of [
             "poultry-eggs",
             "other-fish-aquaculture",
-            "grains-cereals",
-            "cattle",
-            "other-farm-products",
-            "smoked-catfish",
+                "cattle",
+                "smoked-catfish",
         ]) {
             const res = response();
             await getPublicProducts({ query: { category } }, res, failOnNext);
@@ -432,7 +407,7 @@ test("unknown and non-listing filters return an explicit empty result without br
     ];
 
     await withPublicProductStubs({ products }, async (calls) => {
-        for (const category of ["Seafood", "Smoked", "Fresh", "Poultry", "Other Farm Products"]) {
+        for (const category of ["Seafood", "Smoked", "Fresh", "Poultry", "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"]) {
             const res = response();
             await getPublicProducts({ query: { category } }, res, failOnNext);
 
@@ -466,7 +441,7 @@ test("vendor focus still maps to the existing aggregate permission buckets", () 
     );
     assert.deepEqual(categoriesForVendor({ productFocus: ["grains"] }), []);
     assert.deepEqual(categoriesForVendor({ productFocus: ["processed"] }), []);
-    assert.deepEqual(categoriesForVendor({ productFocus: ["agriculture"] }), ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods"]);
+    assert.deepEqual(categoriesForVendor({ productFocus: ["agriculture"] }), []);
     assert.deepEqual(categoriesForVendor({ productFocus: ["fisheries"] }), ["Fishery Products & Equipment"]);
     assert.deepEqual(categoriesForVendor({ productFocus: ["aquaculture"] }), ["Catfish & Aquaculture"]);
 
@@ -474,7 +449,7 @@ test("vendor focus still maps to the existing aggregate permission buckets", () 
     assert.equal(productCategoryForVendorFocus("cattle"), "Livestock & Meat");
     assert.equal(productCategoryForVendorFocus("goats"), "Livestock & Meat");
     assert.equal(productCategoryForVendorFocus("grains"), null);
-    assert.equal(productCategoryForVendorFocus("agriculture"), "Grains & Cereals");
+    assert.equal(productCategoryForVendorFocus("agriculture"), null);
     assert.equal(productCategoryForVendorFocus("fisheries"), "Fishery Products & Equipment");
 });
 
@@ -490,7 +465,7 @@ test("a vendor still cannot create a product outside its focus", async () => {
         await createVendorProduct(
             {
                 auth: { userId: "user-1", role: "customer" },
-                body: vendorBody({ category: "Grains & Cereals" }),
+                body: vendorBody({ category: "Catfish & Aquaculture" }),
             },
             res,
             failOnNext,

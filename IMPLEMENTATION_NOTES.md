@@ -2,7 +2,7 @@
 
 ## Included
 
-- Customer-facing top-level category cards are limited to Aquaculture & Fishery and Livestock. Other Farm Products remains reserved rather than appearing as an active shop category.
+- The active marketplace is limited to Aquaculture & Fishery and Livestock. Crop and agricultural-produce categories have been removed from the shared taxonomy, storefront, vendor portal, admin filters and backend product permissions. Legacy database records are retained for audit/history but are excluded from active marketplace and vendor-facing responses.
 - Smoked catfish remains connected to the existing catalogue and cart/checkout flow.
 - Livestock subcategories (poultry, cattle, sheep, goats) are filterable in the marketplace. Empty inventory is represented honestly; no sample listings were added.
 - Vendor product records support ordered image/video media entries while retaining the legacy `images` array for compatibility.

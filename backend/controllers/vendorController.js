@@ -6,6 +6,7 @@ import {
     VENDOR_DECISIONS,
     VENDOR_DECISION_NAMES,
     VENDOR_STATUSES,
+    VENDOR_PRODUCT_FOCUS,
     adminVendorApplication,
     adminVendorSummary,
     publicVendorApplication,
@@ -221,7 +222,7 @@ export const getAllApprovedVendors = async (req, res) => {
         return res.status(200).json({ success: true, count: profiles.length, data: profiles.map((profile) => ({
             id: profile._id, businessName: profile.businessName,
             location: profile.location, state: profile.state || profile.farmAddress?.state || "", lga: profile.lga || profile.farmAddress?.lga || "",
-            farmAddress: { street: profile.farmAddress?.street || "", area: profile.farmAddress?.area || profile.location || "", state: profile.state || profile.farmAddress?.state || "", lga: profile.lga || profile.farmAddress?.lga || "", country: profile.farmAddress?.country || "Nigeria" }, productFocus: profile.productFocus || [], description: profile.description || "", status: profile.status
+            farmAddress: { street: profile.farmAddress?.street || "", area: profile.farmAddress?.area || profile.location || "", state: profile.state || profile.farmAddress?.state || "", lga: profile.lga || profile.farmAddress?.lga || "", country: profile.farmAddress?.country || "Nigeria" }, productFocus: (profile.productFocus || []).filter((focus) => VENDOR_PRODUCT_FOCUS.includes(focus)), description: profile.description || "", status: profile.status
         })) });
     } catch {
         return sendServerError(res, "Unable to load approved vendors");
@@ -236,7 +237,7 @@ export const getApprovedVendorById = async (req, res) => {
         return res.status(200).json({ success: true, data: {
             id: profile._id, businessName: profile.businessName,
             location: profile.location, state: profile.state || profile.farmAddress?.state || "", lga: profile.lga || profile.farmAddress?.lga || "",
-            farmAddress: { street: profile.farmAddress?.street || "", area: profile.farmAddress?.area || profile.location || "", state: profile.state || profile.farmAddress?.state || "", lga: profile.lga || profile.farmAddress?.lga || "", country: profile.farmAddress?.country || "Nigeria" }, productFocus: profile.productFocus || [], description: profile.description || "", status: profile.status
+            farmAddress: { street: profile.farmAddress?.street || "", area: profile.farmAddress?.area || profile.location || "", state: profile.state || profile.farmAddress?.state || "", lga: profile.lga || profile.farmAddress?.lga || "", country: profile.farmAddress?.country || "Nigeria" }, productFocus: (profile.productFocus || []).filter((focus) => VENDOR_PRODUCT_FOCUS.includes(focus)), description: profile.description || "", status: profile.status
         } });
     } catch {
         return sendServerError(res, "Unable to load approved vendor");

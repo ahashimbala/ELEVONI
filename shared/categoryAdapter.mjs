@@ -27,11 +27,6 @@ const MAPPINGS = Object.freeze([
   Object.freeze({ value: "Cattle", categoryId: "cattle" }),
   Object.freeze({ value: "Sheep", categoryId: "sheep" }),
   Object.freeze({ value: "Goats", categoryId: "goats" }),
-  Object.freeze({ value: "Grains & Cereals", categoryId: "grains-cereals" }),
-  Object.freeze({ value: "Vegetables & Fruits", categoryId: "vegetables-fruits" }),
-  Object.freeze({ value: "Tubers & Starch", categoryId: "tubers-starch" }),
-  Object.freeze({ value: "Processed Agro-Goods", categoryId: "processed-agro-goods" }),
-  Object.freeze({ value: "Other Farm Products", categoryId: "other-farm-products" }),
 ]);
 
 const LEGACY_REVIEWS = Object.freeze([

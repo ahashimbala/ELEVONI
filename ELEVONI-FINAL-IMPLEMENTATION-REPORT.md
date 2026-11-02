@@ -21,11 +21,11 @@
 - External vendor enquiries continue to use `2348163303950`.
 - Customer marketplace filters now include sector, product category, subcategory, fish condition, species, location/state and price range. Fish-specific filters are conditionally shown.
 
-### Agriculture, aquaculture and fisheries
-- Expanded shared category taxonomy and product category validation to include active agriculture, aquaculture and fisheries marketplace categories.
+### Livestock, aquaculture and fisheries
+- Expanded shared category taxonomy and product category validation to include livestock, aquaculture and fisheries marketplace categories.
 - Added fish supply and service subcategories including fingerlings, juveniles, broodstock, feed, tanks/pond equipment, pumps/aeration, water testing, filtration, hatchery services, fish products, fishing nets/equipment, processing, packaging/storage and cold-chain services.
 - Expanded product schema for sector, availability, fish condition (including dried), fish production method, species, weight range and service/hour units.
-- Extended vendor application focus options to agriculture and fisheries, retained aquaculture, and kept the existing livestock/poultry options.
+- Extended vendor application focus options to fisheries, retained aquaculture, and kept the existing livestock/poultry options.
 - Extended vendor listing category choices and focus restrictions.
 - Added admin moderation sector filtering and sector display.
 - Preserved vendor ownership checks and the pending-review workflow for new/edited vendor listings.

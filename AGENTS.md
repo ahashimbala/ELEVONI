@@ -31,14 +31,14 @@ Elevoni should NOT be described or treated as merely an online fish store.
 
 The broader vision is:
 
-**agricultural commerce + structured transaction data + analytics + intelligence + smarter agriculture**
+**livestock, aquaculture and fisheries commerce + structured transaction data + analytics + intelligence**
 
 However, the current business must always be distinguished from the long-term vision.
 
 ## Current reality
 
 * Elevoni is a real agricultural business; the existing smoked-catfish operation remains part of the product.
-* Elevoni is transitioning from a sole-vendor smoked-catfish storefront toward a multi-vendor agricultural marketplace.
+* Elevoni is transitioning from a sole-vendor smoked-catfish storefront toward a multi-vendor livestock, aquaculture and fisheries marketplace. Crop and general agricultural-produce categories are outside the current platform scope.
 * The marketplace and vendor portal are part of the current COUCH product direction.
 * The existing catfish catalogue and commerce flow remain part of Elevoni.
 * Real customers, orders, payments, and deliveries exist for the existing smoked-catfish business.
@@ -64,12 +64,12 @@ The product and pitch must both be taken seriously.
 
 The central product story is:
 
-**Real agricultural commerce**
+**Real livestock, aquaculture and fisheries commerce**
 → **real transactions**
 → **structured data**
 → **analytics**
 → **intelligence**
-→ **better agricultural decisions**
+→ **better farmer and buyer decisions**
 
 The strongest existing evidence is the working commerce operation and real-world traction.
 
@@ -378,7 +378,7 @@ For example, product pricing logic should preferably live in a pricing service r
 The current product includes:
 
 * Elevoni's existing smoked-catfish commerce.
-* The multi-vendor agricultural marketplace and vendor portal, which are part of the current COUCH product direction.
+* The multi-vendor livestock, aquaculture and fisheries marketplace and vendor portal, which are part of the current COUCH product direction.
 
 The marketplace is under active development. Do not describe it as fully implemented, and do not assume marketplace checkout or fulfilment works until verified.
 

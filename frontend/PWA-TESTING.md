@@ -17,8 +17,8 @@ Open the local preview URL shown by Vite. Service workers and install prompts sh
 ## Browser checks
 
 1. Open DevTools → Application (Chrome/Edge) → Manifest. Confirm the app name, standalone display mode, and all three icon files load without errors.
-2. In DevTools → Application → Service Workers, confirm `/sw.js` installs and activates successfully.
-3. Reload once after the service worker activates. Confirm there are no missing JavaScript or CSS files in the Network panel.
+2. In DevTools → Application → Service Workers, confirm `/sw.js` installs and activates successfully. The app buffers Chromium’s one-time `beforeinstallprompt` event before React mounts, so the install button should not miss it.
+3. Confirm `/manifest.webmanifest` returns JSON (not the SPA HTML fallback), includes 192px and 512px PNG icons, and uses the sage `#A2A288` background/theme. Reload once after the service worker activates. Confirm there are no missing JavaScript or CSS files in the Network panel.
 4. Use the browser's install option or the page's install guidance. Confirm the installed app opens in a standalone window.
 5. With the app loaded once online, switch DevTools Network to Offline and navigate to a page. The cached app shell should load; live catalogue/account/order/payment actions are expected to require a connection.
 6. Restore the network and verify browsing, login, product detail, cart, order placement, Paystack verification, and marketplace enquiry behavior.
