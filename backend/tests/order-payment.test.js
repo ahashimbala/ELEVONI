@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import mongoose from "mongoose";
+import orderModel from "../models/orderModel.js";
 import { createOrderHandlers } from "../controllers/orderController.js";
 import { createPaymentHandlers } from "../controllers/paymentController.js";
 
@@ -15,6 +17,34 @@ const quote = {
     currency: "NGN"
 };
 const response = () => ({ statusCode: 200, body: null, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } });
+const inconsistentQuote = (item) => ({
+    items: [{
+        productId: new mongoose.Types.ObjectId(),
+        name: "Fresh Catfish",
+        quantity: 1,
+        unit: "kg",
+        unitPrice: 1000,
+        lineTotal: 1000,
+        ...item
+    }],
+    subtotal: 1000,
+    deliveryFee: 2500,
+    totalAmount: 3500,
+    currency: "NGN"
+});
+const createValidatingOrderModel = () => {
+    const records = [];
+    class ValidatingOrderModel {
+        constructor(fields) { this.document = new orderModel(fields); }
+        async save() {
+            await this.document.validate();
+            records.push(this.document);
+            return this.document;
+        }
+    }
+    ValidatingOrderModel.records = records;
+    return ValidatingOrderModel;
+};
 
 class FakeOrder {
     static records = [];
@@ -112,6 +142,67 @@ test("payment initialization creates an owner-bound order and uses its server am
     assert.equal(initialized.amount, 450000);
     assert.equal(initialized.email, "customer@example.com");
     assert.equal(res.body.orderId, FakeOrder.records[0]._id);
+});
+
+test("payment initialization preserves server-resolved vendor attribution", async() => {
+    FakeOrder.reset();
+    const vendorId = new mongoose.Types.ObjectId();
+    const attributedQuote = {
+        ...quote,
+        items: [{
+            ...quote.items[0],
+            vendorId,
+            vendorBusinessName: "Green Acres Farm",
+            sellerType: "vendor",
+            sellerBusinessName: "Green Acres Farm"
+        }]
+    };
+    const attributedSnapshot = async(items) => {
+        if (!Array.isArray(items) || !items.length) throw new Error("Order must contain between 1 and 50 items");
+        return attributedQuote;
+    };
+    const paymentClient = { transaction: { initialize: async(input) => ({ data: { authorization_url: "https://pay.example/auth", reference: input.reference } }) } };
+    const handlers = createPaymentHandlers({ paymentClient, OrderModel: FakeOrder, UserModel: fakeUserModel, snapshotOrder: attributedSnapshot });
+    const res = response();
+    await handlers.initializePayment(initRequest(), res);
+
+    assert.equal(res.statusCode, 201);
+    assert.equal(String(FakeOrder.records[0].items[0].vendorId), String(vendorId));
+    assert.equal(FakeOrder.records[0].items[0].vendorBusinessName, "Green Acres Farm");
+    assert.equal(FakeOrder.records[0].items[0].sellerType, "vendor");
+});
+
+test("manual order creation rejects an inconsistent seller snapshot", async() => {
+    const OrderModel = createValidatingOrderModel();
+    const invalidSnapshot = async() => inconsistentQuote({
+        sellerType: "house",
+        sellerBusinessName: "Elevoni Farms",
+        vendorId: new mongoose.Types.ObjectId()
+    });
+    const handlers = createOrderHandlers({ OrderModel, UserModel: fakeUserModel, snapshotOrder: invalidSnapshot });
+    const res = response();
+    await handlers.placeOrder(initRequest(), res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(OrderModel.records.length, 0);
+});
+
+test("payment initialization rejects an inconsistent seller snapshot", async() => {
+    const OrderModel = createValidatingOrderModel();
+    let initializeCalls = 0;
+    const paymentClient = { transaction: { initialize: async() => { initializeCalls += 1; return { data: {} }; } } };
+    const invalidSnapshot = async() => inconsistentQuote({
+        sellerType: "unknown",
+        sellerBusinessName: "Elevoni Farms"
+    });
+    const handlers = createPaymentHandlers({ paymentClient, OrderModel, UserModel: fakeUserModel, snapshotOrder: invalidSnapshot });
+    const res = response();
+    await handlers.initializePayment(initRequest(), res);
+
+    assert.equal(res.body.success, false);
+    assert.notEqual(res.statusCode, 201);
+    assert.equal(initializeCalls, 0);
+    assert.equal(OrderModel.records.length, 0);
 });
 
 test("valid payment verification confirms the matching pending order", async() => {

@@ -292,11 +292,15 @@ const CategoryPage = () => {
   const catalogueCount = Array.isArray(fish_list) ? fish_list.length : 0;
   const isMarketplaceSubcategory =
     entry?.level === "subcategory" && Boolean(entry?.marketplace);
-  const marketplaceChildren = entry?.level === "category"
-    ? (entry.children || []).filter((child) => child.marketplace)
-    : entry?.parent
-      ? (entry.parent.children || []).filter((child) => child.marketplace)
-      : NO_CHILDREN;
+  const marketplaceChildren = useMemo(
+    () =>
+      entry?.level === "category"
+        ? (entry.children || []).filter((child) => child.marketplace)
+        : entry?.parent
+          ? (entry.parent.children || []).filter((child) => child.marketplace)
+          : NO_CHILDREN,
+    [entry],
+  );
   const isMarketplaceGroup =
     isMarketplaceSubcategory || marketplaceChildren.length > 0;
   const counts = useLivestockCounts({

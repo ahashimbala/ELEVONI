@@ -9,7 +9,7 @@
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#A2A288",
-  "theme_color": "#A2A288",
+  "theme_color": "#FFFFFF",
   "icons": [
     {
       "src": "/icons/elevoni-192.png",

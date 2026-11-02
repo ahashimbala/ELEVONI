@@ -13,6 +13,9 @@ const fishSchema = new mongoose.Schema({
     price: { type: Number, required: true, min: 0 },
     image: { type: String, required: true },
     category: { type: String, required: true },
+    // Optional link to the vendor profile that owns this product. A null value
+    // means Elevoni sells the product directly as a house item.
+    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "vendorProfile", default: null },
     visible: { type: Boolean, default: true },
     media: { type: [String], default: [] },
     pricingMode: { type: String, enum: ["single", "tiered"], default: "single" },
