@@ -7,6 +7,7 @@ import SalesLog from "./pages/SalesLog/SalesLog";
 import Login from "./pages/Login/Login";
 import Apply from "./pages/Apply/Apply";
 import NotFound from "./pages/NotFound/NotFound";
+import NAtlas from "./pages/NAtlas/NAtlas";
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
         <Route element={<VendorLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/sales" element={<SalesLog />} />
+          <Route path="/n-atlas" element={<NAtlas />} />
           <Route path="/login" element={<Login />} />
           <Route path="/apply" element={<Apply />} />
           <Route path="*" element={<NotFound />} />

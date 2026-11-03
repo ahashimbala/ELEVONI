@@ -124,7 +124,17 @@ const Dashboard = () => {
     const [productsLoading, setProductsLoading] = useState(false);
     const [productsError, setProductsError] = useState("");
 
-    const [form, setForm] = useState(blankForm);
+    const [form, setForm] = useState(() => {
+        try {
+            const savedDraft = JSON.parse(localStorage.getItem("natlas-product-draft") || "null");
+            if (!savedDraft) return blankForm;
+            localStorage.removeItem("natlas-product-draft");
+            return { ...blankForm, ...savedDraft };
+        } catch {
+            localStorage.removeItem("natlas-product-draft");
+            return blankForm;
+        }
+    });
     const [editingId, setEditingId] = useState("");
 
     const [saving, setSaving] = useState(false);
