@@ -242,7 +242,7 @@ const SellWithElevoni = () => {
         <title>Sell with Elevoni | Elevoni Farms</title>
         <meta
           name="description"
-          content="Apply to sell livestock, aquaculture and fisheries products with Elevoni Farms. Applications and individual listings are reviewed before publication."
+          content="Apply to sell food crops, livestock, aquaculture and fisheries products with Elevoni Farms. Applications and individual listings are reviewed before publication."
         />
       </Helmet>
 
@@ -256,9 +256,9 @@ const SellWithElevoni = () => {
         <p className="sell-eyebrow">Partner with Elevoni</p>
         <h1>Sell with Elevoni</h1>
         <p className="sell-summary">
-          Elevoni Farms welcomes livestock, aquaculture and fisheries businesses. We invite poultry, cattle, sheep and
-          goat businesses to apply. Tell us about your farm or business and our team will review
-          your application.
+          Elevoni Farms welcomes food-crop, livestock, aquaculture and fisheries businesses. We invite
+          food-crop, poultry, cattle, sheep and goat businesses to apply. Tell us about your farm or
+          business and our team will review your application.
         </p>
         <p className="sell-summary-note">
           Applications are reviewed by a person. Applying does not create a listing, verify stock or

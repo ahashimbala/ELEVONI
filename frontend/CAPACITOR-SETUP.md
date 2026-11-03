@@ -2,7 +2,7 @@
 
 ## Splash artwork
 
-The provided `src/assets/Home-image.jpeg` is preserved as the source artwork. A square, sage-background splash source for Capacitor's asset generator is at `assets/splash.png` (2732 × 2732). The splash screen is a brief native launch screen; it is not a replacement for the React home page. Android 12 and later may display a system-controlled splash treatment, so the exact full-image composition can vary by OS version.
+The clean splash master is `assets/splash.png` (1080 × 1920, flat sage `#A2A288`, no texture bands). Android portrait/landscape splash drawables and installed-PWA icons/startup images are generated from this master plus the transparent Android emblem. Do not use the older banded `splash-screen.png` copies for new compositions. The splash screen is a brief launch screen; it is not a replacement for the React home page. Android 12 and later may display a system-controlled splash treatment, so the exact full-image composition can vary by OS version.
 
 ## Requirements
 
@@ -47,8 +47,8 @@ npx cap sync
 
 ## Important limitations
 
-- Native projects are generated locally by the commands above; merely having `capacitor.config.json` does not mean an Android/iOS project already exists.
-- The current execution environment could not resolve `registry.npmjs.org` when tested, so package installation and native project generation could not be completed here. Run the commands on a computer with working npm access.
+- Android projects already exist in `frontend/android` and `vendor-portal/android`; the iOS project does not exist yet. Run the iOS commands on a Mac with Xcode.
+- Dependency installation and native project generation require working npm access. Run `npx cap copy android` or `npx cap sync android` after rebuilding the web app so the APK does not retain an older bundle.
 - Test account login, product browsing, ordering, Paystack checkout/verification, WhatsApp links, and deep links on devices. Live products, accounts, orders and payments require internet.
 - Do not commit signing keys, `.env` files, or store credentials.
 

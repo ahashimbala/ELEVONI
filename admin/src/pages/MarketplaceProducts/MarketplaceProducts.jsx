@@ -5,6 +5,14 @@ import Pagination from "../../components/Pagination/Pagination";
 import "./MarketplaceProducts.css";
 
 const FILTERS = ["pending", "approved", "rejected", "all"];
+const CATEGORY_FILTERS = ["Catfish & Aquaculture", "Fishery Products & Equipment", "Poultry & Eggs", "Livestock & Meat", "Food Crops"];
+const SUBCATEGORY_FILTERS = {
+  "Catfish & Aquaculture": ["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"],
+  "Fishery Products & Equipment": ["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
+  "Poultry & Eggs": ["Poultry"],
+  "Livestock & Meat": ["Cattle", "Sheep", "Goats"],
+  "Food Crops": ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"],
+};
 const label = (status) => ({ pending: "Pending review", approved: "Approved", rejected: "Rejected", all: "All listings" }[status] || status);
 const formatMoney = (value) => `₦${Number(value || 0).toLocaleString("en-NG")}`;
 const vendorLocation = (vendor) => {
@@ -16,6 +24,8 @@ const vendorLocation = (vendor) => {
 const MarketplaceProducts = ({ url }) => {
   const [status, setStatus] = useState("pending");
   const [sectorFilter, setSectorFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [subcategoryFilter, setSubcategoryFilter] = useState("all");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -62,7 +72,13 @@ const MarketplaceProducts = ({ url }) => {
     } finally { setSubmitting(""); }
   };
 
-  const filteredProducts = products.filter((product) => sectorFilter === "all" || (product.sector || (product.category === "Fishery Products & Equipment" ? "Fisheries" : product.category === "Catfish & Aquaculture" ? "Aquaculture" : product.category === "Food Crops" ? "Food Crops" : "Livestock")) === sectorFilter);
+  const filteredProducts = products.filter((product) => {
+    const sector = product.sector || (product.category === "Fishery Products & Equipment" ? "Fisheries" : product.category === "Catfish & Aquaculture" ? "Aquaculture" : product.category === "Food Crops" ? "Food Crops" : "Livestock");
+    const matchesSector = sectorFilter === "all" || sector === sectorFilter;
+    const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
+    const matchesSubcategory = subcategoryFilter === "all" || product.subcategory === subcategoryFilter;
+    return matchesSector && matchesCategory && matchesSubcategory;
+  });
   const pages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const visible = filteredProducts.slice((page - 1) * pageSize, page * pageSize);
 
@@ -70,7 +86,11 @@ const MarketplaceProducts = ({ url }) => {
     <main className="marketplace-moderation">
       <header className="marketplace-moderation-header"><div><p className="moderation-eyebrow">Marketplace governance</p><h1>Product listings</h1><p>Review vendor submissions separately from vendor applications. Approval publishes a listing only while its vendor remains approved.</p></div><button type="button" className="moderation-refresh" onClick={loadProducts}>Refresh</button></header>
       <div className="moderation-filters" role="group" aria-label="Filter listings by status">{FILTERS.map((filter) => <button type="button" key={filter} className={status === filter ? "active" : ""} aria-pressed={status === filter} onClick={() => setStatus(filter)}>{label(filter)}</button>)}</div>
-      <label className="moderation-sector-filter">Sector <select value={sectorFilter} onChange={(event) => { setSectorFilter(event.target.value); setPage(1); }}><option value="all">All sectors</option><option value="Livestock">Livestock</option><option value="Aquaculture">Aquaculture</option><option value="Fisheries">Fisheries</option><option value="Food Crops">Food Crops</option></select></label>
+      <div className="moderation-filter-row">
+        <label className="moderation-sector-filter">Sector <select value={sectorFilter} onChange={(event) => { setSectorFilter(event.target.value); setPage(1); }}><option value="all">All sectors</option><option value="Livestock">Livestock</option><option value="Aquaculture">Aquaculture</option><option value="Fisheries">Fisheries</option><option value="Food Crops">Food Crops</option></select></label>
+        <label className="moderation-sector-filter">Category <select value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setSubcategoryFilter("all"); setPage(1); }}><option value="all">All categories</option>{CATEGORY_FILTERS.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
+        <label className="moderation-sector-filter">Product type <select value={subcategoryFilter} onChange={(event) => { setSubcategoryFilter(event.target.value); setPage(1); }} disabled={categoryFilter === "all"}><option value="all">All product types</option>{(SUBCATEGORY_FILTERS[categoryFilter] || []).map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}</select></label>
+      </div>
       {loading && <p className="moderation-state" role="status">Loading listings…</p>}
       {!loading && error && <div className="moderation-state moderation-error" role="alert"><p>{error}</p><button type="button" onClick={loadProducts}>Try again</button></div>}
       {!loading && !error && products.length === 0 && <div className="moderation-state"><h2>No {status === "all" ? "" : `${status} `}listings</h2><p>Vendor product submissions will appear here after they are saved.</p></div>}
@@ -78,7 +98,7 @@ const MarketplaceProducts = ({ url }) => {
         <p className="moderation-result-count">{filteredProducts.length} {filteredProducts.length === 1 ? "listing" : "listings"}</p>
         <div className="moderation-product-list">{visible.map((product) => <article className="moderation-product" key={product._id}>
           <div className="moderation-product-image">{product.images?.[0] ? <img src={product.images[0]} alt="" loading="lazy" /> : <span aria-hidden="true">✳</span>}</div>
-          <div className="moderation-product-info"><div className="moderation-product-top"><h2>{product.name}</h2><span className={`moderation-status moderation-status-${product.status}`}>{label(product.status)}</span></div><p className="moderation-product-vendor">{product.vendorId?.businessName || "No vendor profile linked"} {vendorLocation(product.vendorId) ? `· ${vendorLocation(product.vendorId)}` : ""}</p><p className="moderation-product-description">{product.description || "No description provided."}</p><div className="moderation-product-meta"><strong>{formatMoney(product.price)} / {product.unitOfMeasure || "unit"}</strong><span>Stock: {product.stockQuantity ?? 0}</span><span>{product.sector || (product.category === "Fishery Products & Equipment" ? "Fisheries" : product.category === "Catfish & Aquaculture" ? "Aquaculture" : product.category === "Food Crops" ? "Food Crops" : "Livestock")}</span><span>{product.category}</span><span>Vendor: {label(product.vendorId?.status || "unknown")}</span></div>{product.status === "rejected" && product.rejectionReason && <p className="moderation-reason">Previous reason: {product.rejectionReason}</p>}
+          <div className="moderation-product-info"><div className="moderation-product-top"><h2>{product.name}</h2><span className={`moderation-status moderation-status-${product.status}`}>{label(product.status)}</span></div><p className="moderation-product-vendor">{product.vendorId?.businessName || "No vendor profile linked"} {vendorLocation(product.vendorId) ? `· ${vendorLocation(product.vendorId)}` : ""}</p><p className="moderation-product-description">{product.description || "No description provided."}</p><div className="moderation-product-meta"><strong>{formatMoney(product.price)} / {product.unitOfMeasure || "unit"}</strong><span>Stock: {product.stockQuantity ?? 0}</span><span>{product.sector || (product.category === "Fishery Products & Equipment" ? "Fisheries" : product.category === "Catfish & Aquaculture" ? "Aquaculture" : product.category === "Food Crops" ? "Food Crops" : "Livestock")}</span><span>{product.category}</span>{product.subcategory && <span>{product.subcategory}</span>}{product.species && <span>{product.category === "Food Crops" ? "Variety" : "Species"}: {product.species}</span>}{product.condition && <span>Condition: {product.condition}</span>}{product.productionMethod && <span>Method: {product.productionMethod}</span>}{product.weightRange && <span>Size: {product.weightRange}</span>}{product.availability && <span>Availability: {product.availability}</span>}<span>Vendor: {label(product.vendorId?.status || "unknown")}</span></div>{product.status === "rejected" && product.rejectionReason && <p className="moderation-reason">Previous reason: {product.rejectionReason}</p>}
             {product.status !== "approved" && <label className="moderation-note-label">Review note / rejection reason<textarea rows="2" value={notes[product._id] || ""} onChange={(event) => setNotes((current) => ({ ...current, [product._id]: event.target.value.slice(0, 500) }))} placeholder="Explain what needs to be fixed, if applicable" /></label>}
             <div className="moderation-actions">{product.status !== "approved" && <button type="button" className="moderation-approve" disabled={Boolean(submitting)} onClick={() => moderate(product, "approved")}>{submitting === product._id ? "Saving…" : "Approve listing"}</button>}{product.status !== "rejected" && <button type="button" className="moderation-reject" disabled={Boolean(submitting)} onClick={() => moderate(product, "rejected")}>Reject</button>}{product.status !== "pending" && <button type="button" className="moderation-secondary" disabled={Boolean(submitting)} onClick={() => moderate(product, "pending")}>Return to pending</button>}</div>
           </div>

@@ -69,8 +69,8 @@ test("top-level categories are groups and cannot be mistaken for listings", () =
     topLevel.map((category) => category.id),
     [
       "aquaculture-fishery",
-      "food-crops",
       "livestock",
+      "food-crops",
     ],
   );
 

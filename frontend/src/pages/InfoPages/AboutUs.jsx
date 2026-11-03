@@ -7,18 +7,18 @@ const AboutUs = () => (
   <main className="info-page-container">
     <Helmet>
       <title>About Elevoni Farms</title>
-      <meta name="description" content="Learn about Elevoni Farms, its smoked-catfish business and its developing livestock, aquaculture and fisheries marketplace." />
+      <meta name="description" content="Learn about Elevoni Farms, its smoked-catfish business and its developing food crops, livestock, aquaculture and fisheries marketplace." />
     </Helmet>
     <p className="info-page-eyebrow">About us</p>
-    <h1>Building more structure into livestock and fisheries commerce.</h1>
+    <h1>Building more structure into agricultural commerce.</h1>
     <p className="info-page-subtitle">
-      Elevoni Farms began with a real agricultural supply business in smoked catfish. We are using that experience to build clearer ways for buyers to discover products and communicate with livestock, aquaculture and fisheries businesses.
+      Elevoni Farms began with a real agricultural supply business in smoked catfish. We are using that experience to build clearer ways for buyers to discover products and communicate with food-crop, livestock, aquaculture and fisheries businesses.
     </p>
 
     <div className="info-callout-box">
       <h3>What exists today</h3>
       <p>
-        Elevoni Direct offers smoked catfish through its existing catalogue and order flow. Separately, the livestock and fisheries marketplace is being developed to display reviewed vendor listings and support enquiries. A marketplace enquiry is not a confirmed sale or delivery.
+        Elevoni Direct offers smoked catfish through its existing catalogue and order flow. Separately, the food crops, livestock, aquaculture and fisheries marketplace is being developed to display reviewed vendor listings and support enquiries. A marketplace enquiry is not a confirmed sale or delivery.
       </p>
     </div>
 
@@ -32,7 +32,7 @@ const AboutUs = () => (
 
     <h2>Where we are going</h2>
     <p>
-      Our longer-term direction is a livestock, aquaculture and fisheries commerce platform that can support more product categories and help businesses make better-informed decisions. These are development goals, not a claim that every category, vendor or analytics capability is live today.
+      Our longer-term direction is a food crops, livestock, aquaculture and fisheries commerce platform that can support more product categories and help businesses make better-informed decisions. These are development goals, not a claim that every category, vendor or analytics capability is live today.
     </p>
     <p><Link to="/marketplace">Explore marketplace listings</Link> or <Link to="/sell-with-elevoni">apply to sell with Elevoni</Link>.</p>
   </main>

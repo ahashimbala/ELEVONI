@@ -264,6 +264,7 @@ test("the product write allow-list remains the legacy display names", () => {
         "Poultry & Eggs",
         "Livestock & Meat",
         "Fishery Products & Equipment",
+        "Food Crops",
     ]);
 
     for (const category of PRODUCT_CATEGORIES) {
@@ -379,7 +380,7 @@ test("Livestock & Meat remains an exact legacy filter", async () => {
     });
 });
 
-test("All categories removes the category filter instead of querying that label", async () => {
+test("All categories queries every active marketplace category instead of the filter label", async () => {
     const products = [
         { _id: "product-1", name: "Eggs", category: "Poultry & Eggs" },
     ];
@@ -394,7 +395,16 @@ test("All categories removes the category filter instead of querying that label"
 
         assert.equal(res.statusCode, 200);
         assert.equal(calls.productFind, 1);
-        assert.equal(Object.hasOwn(calls.filters[0], "category"), false);
+        assert.deepEqual(calls.filters[0].category, {
+            $in: [
+                "Catfish & Aquaculture",
+                "Poultry & Eggs",
+                "Livestock & Meat",
+                "Fishery Products & Equipment",
+                "Food Crops",
+            ],
+        });
+        assert.equal(calls.filters[0].category.$in.includes("All categories"), false);
         assert.equal(calls.filters[0].status, "approved");
         assert.equal(calls.filters[0].isAvailable, true);
         assert.equal(res.body.data[0].category, "Poultry & Eggs");

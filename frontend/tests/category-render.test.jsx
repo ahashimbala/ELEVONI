@@ -53,10 +53,12 @@ test("the homepage category section lists every configured category", () => {
 
   assert.match(markup, /Aquaculture &amp; Fishery/);
   assert.match(markup, /Livestock/);
+  assert.match(markup, /Food Crops/);
   assert.doesNotMatch(markup, /Other Farm Products/);
 
   assert.match(markup, /href="\/category\/aquaculture-fishery"/);
   assert.match(markup, /href="\/category\/livestock"/);
+  assert.match(markup, /href="\/category\/food-crops"/);
 });
 
 test("the homepage category section uses existing project imagery where it exists", () => {
@@ -66,11 +68,15 @@ test("the homepage category section uses existing project imagery where it exist
   assert.match(markup, /<img[^>]*alt="Cattle and goats grazing on a Nigerian farm"/);
 });
 
-test("the homepage category section reports the real catalogue count", () => {  const withProducts = renderCategoryGrid([CATALOGUE_PRODUCT, { ...CATALOGUE_PRODUCT, _id: "fish-2" }]);
-  assert.match(withProducts, /2 products available/);
+test("the homepage category section does not guess counts before marketplace totals load", () => {
+  const withProducts = renderCategoryGrid([CATALOGUE_PRODUCT, { ...CATALOGUE_PRODUCT, _id: "fish-2" }]);
+  assert.match(withProducts, /Checking availability/);
+  assert.doesNotMatch(withProducts, /2 products available/);
+  assert.doesNotMatch(withProducts, /No products listed right now/);
 
   const withoutProducts = renderCategoryGrid([]);
-  assert.match(withoutProducts, /No products listed right now/);
+  assert.match(withoutProducts, /Checking availability/);
+  assert.doesNotMatch(withoutProducts, /No products listed right now/);
 });
 
 test("the homepage never presents an unverified livestock count as zero", () => {

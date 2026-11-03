@@ -1,4 +1,4 @@
-const CACHE_NAME = "elevoni-vendor-shell-v3";
+const CACHE_NAME = "elevoni-vendor-shell-v4";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/apple-touch-icon.png", "/icons/elevoni-192.png", "/icons/elevoni-512.png", "/icons/elevoni-512-maskable.png"];
 
 self.addEventListener("install", (event) => {

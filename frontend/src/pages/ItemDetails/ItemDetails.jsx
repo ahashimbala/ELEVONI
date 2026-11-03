@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import axios from "axios";
 import { StoreContext } from "../../context/StoreContext";
+import ProductMediaGallery, { buildProductGallery } from "../../components/ProductMediaGallery/ProductMediaGallery.jsx";
 import "./ItemDetails.css";
 import getProductPrice from "../../utils/pricing";
 import { ELEVONI_WHATSAPP_PHONE } from "../../config/contact.js";
@@ -63,7 +64,6 @@ const ItemDetails = () => {
     };
   }, [id, fish_list, url]);
 
-  const [selected, setSelected] = useState(0);
   const [draftQuantity, setDraftQuantity] = useState("0");
   const quantity = Number(item ? cartItems?.[item._id] || 0 : 0);
   const previousQuantity = useRef(quantity);
@@ -71,11 +71,6 @@ const ItemDetails = () => {
   const isValidQuantity = Number.isSafeInteger(parsedQuantity) && parsedQuantity >= 0;
   const previewQuantity = isValidQuantity ? parsedQuantity : 0;
   const hasQuantity = previewQuantity > 0;
-  const [failedMedia, setFailedMedia] = useState({});
-  const [galleryOpen, setGalleryOpen] = useState(false);
-  const videoRef = useRef(null);
-  const modalTouchStartX = useRef(null);
-  const touchStartX = useRef(null);
 
   useEffect(() => {
     if (previousQuantity.current !== quantity) {
@@ -98,41 +93,8 @@ const ItemDetails = () => {
   const isMarketplaceProduct = item._source === "marketplace";
   const unit = item.unitOfMeasure || "kg";
   const currentPrice = isMarketplaceProduct ? Number(item.price || 0) : getProductPrice(item, Math.max(1, previewQuantity));
-  const gallery = item._source === "marketplace"
-    ? (Array.isArray(item.media) && item.media.length
-        ? item.media.map((media) => ({ type: media.type === "video" ? "video" : "image", src: media.url }))
-        : (item.images || []).map((src) => ({ type: "image", src })))
-    : [
-        ...(item.image ? [{ type: "image", src: item.image.startsWith("http") ? item.image : `${url}/images/${item.image}` }] : []),
-        ...(item.media?.map((file) => {
-          if (file && typeof file === "object" && file.url) return { type: file.type === "video" ? "video" : "image", src: file.url };
-          const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(file);
-          let srcPath = file && file.startsWith("http") ? file : `${url}/images/${file}`;
-          if (isVideo) srcPath = `${srcPath}#t=0.001`;
-          return { type: isVideo ? "video" : "image", src: srcPath };
-        }) || []),
-      ];
-
-  if (!gallery.length) gallery.push({ type: "placeholder", src: "" });
-
-  const safeIndex = Math.min(selected, gallery.length - 1);
-  const moveGallery = (direction) => setSelected((value) => (value + direction + gallery.length) % gallery.length);
-
-  useEffect(() => {
-    if (!galleryOpen) return undefined;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") setGalleryOpen(false);
-      if (event.key === "ArrowRight") moveGallery(1);
-      if (event.key === "ArrowLeft") moveGallery(-1);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [galleryOpen, gallery.length]);
+  const gallery = buildProductGallery(item, url);
+  const schemaImage = gallery.find((media) => media.type === "image")?.src || gallery[0]?.src;
 
   const saveQuantity = async (event) => {
     event.preventDefault();
@@ -151,7 +113,7 @@ const ItemDetails = () => {
     "@context": "https://schema.org/",
     "@type": "Product",
     name: item.name,
-    image: gallery[0]?.src,
+    image: schemaImage,
     description: item.description,
     category: item.category,
     offers: {
@@ -181,9 +143,9 @@ const ItemDetails = () => {
         />
         <meta
           property="og:description"
-          content={`Shop ${item.name} from Elevoni Farms. Carefully prepared and richly smoked for your table.`}
+          content={`View ${item.name} from Elevoni Farms, including product details, media, vendor and availability information.`}
         />
-        <meta property="og:image" content={gallery[0]?.src} />
+        <meta property="og:image" content={schemaImage} />
         <meta
           property="og:url"
           content={`https://elevonifarms.vercel.app/product/${item._id}`}
@@ -198,86 +160,8 @@ const ItemDetails = () => {
 
       <div className="item-details-container">
         <div className="item-details-left">
-          <div className="main-media" role="button" tabIndex={0} aria-label="Open product media gallery" onClick={() => setGalleryOpen(true)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setGalleryOpen(true); } }} onTouchStart={(event) => { touchStartX.current = event.changedTouches[0]?.clientX ?? null; }} onTouchEnd={(event) => {
-            const endX = event.changedTouches[0]?.clientX;
-            if (touchStartX.current == null || typeof endX !== "number" || gallery.length < 2) return;
-            const delta = endX - touchStartX.current;
-            if (Math.abs(delta) > 45) setSelected((value) => (value + (delta < 0 ? 1 : -1) + gallery.length) % gallery.length);
-            touchStartX.current = null;
-          }}>
-            {failedMedia[safeIndex] ? (
-              <div className="product-media-placeholder" role="img" aria-label={`Product media unavailable for ${item.name}`}>Product media unavailable</div>
-            ) : gallery[safeIndex].type === "video" ? (
-              <div className="main-video-wrapper">
-                <video
-                  ref={videoRef}
-                  key={gallery[safeIndex].src}
-                  src={gallery[safeIndex].src}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  onError={() => setFailedMedia((current) => ({ ...current, [safeIndex]: true }))}
-                />
-              </div>
-            ) : gallery[safeIndex].type === "placeholder" ? (
-              <div className="product-media-placeholder" role="img" aria-label={`Product media unavailable for ${item.name}`}>Product media unavailable</div>
-            ) : (
-              <img src={gallery[safeIndex].src} alt={item.name} onError={() => setFailedMedia((current) => ({ ...current, [safeIndex]: true }))} />
-            )}
-          </div>
-
-          {gallery.length > 0 && <p className="gallery-open-hint">Tap the photo or video to view full screen</p>}
-          {gallery.length > 1 && <div className="gallery-navigation"><button type="button" onClick={() => setSelected((value) => (value - 1 + gallery.length) % gallery.length)} aria-label="Previous media">‹</button><span>{safeIndex + 1} / {gallery.length}</span><button type="button" onClick={() => setSelected((value) => (value + 1) % gallery.length)} aria-label="Next media">›</button></div>}
-          {gallery.length > 1 && <div className="thumbnail-row">
-            {gallery.map((media, index) => (
-              <button
-                key={index}
-                type="button"
-                className={`thumb ${safeIndex === index ? "active" : ""}`}
-                onClick={() => setSelected(index)}
-                aria-label={`Show ${media.type} ${index + 1}`}
-                aria-pressed={safeIndex === index}
-              >
-                {media.type === "video" ? (
-                  failedMedia[index] ? (
-                    <span className="video-thumbnail-fallback">Video unavailable</span>
-                  ) : <div className="video-thumb-container">
-                    <video
-                      src={media.src}
-                      muted
-                      playsInline
-                      preload="metadata"
-                      className="video-thumbnail"
-                      onLoadedMetadata={(event) => {
-                        const preview = event.currentTarget;
-                        if (Number.isFinite(preview.duration) && preview.duration > 0) {
-                          try { preview.currentTime = Math.min(0.001, preview.duration / 2); } catch { /* keep browser's initial frame */ }
-                        }
-                      }}
-                      onError={() => setFailedMedia((current) => ({ ...current, [index]: true }))}
-                    />
-                    <div className="play-icon">▶</div>
-                  </div>
-                ) : (
-                  <img src={media.src} alt="" />
-                )}
-              </button>
-            ))}
-          </div>}
+          <ProductMediaGallery key={item._id} item={item} url={url} />
         </div>
-
-        {galleryOpen && (
-          <div className="media-lightbox" role="dialog" aria-modal="true" aria-label={`${item.name} media gallery`} onClick={(event) => { if (event.target === event.currentTarget) setGalleryOpen(false); }} onTouchStart={(event) => { modalTouchStartX.current = event.changedTouches[0]?.clientX ?? null; }} onTouchEnd={(event) => { const end = event.changedTouches[0]?.clientX; if (modalTouchStartX.current == null || typeof end !== "number" || gallery.length < 2) return; const delta = end - modalTouchStartX.current; if (Math.abs(delta) > 40) moveGallery(delta < 0 ? 1 : -1); modalTouchStartX.current = null; }}>
-            <button className="media-lightbox-close" type="button" onClick={() => setGalleryOpen(false)} aria-label="Close gallery">×</button>
-            {gallery.length > 1 && <button className="media-lightbox-arrow previous" type="button" onClick={() => moveGallery(-1)} aria-label="Previous media">‹</button>}
-            <div className="media-lightbox-stage">
-              {failedMedia[safeIndex] || gallery[safeIndex].type === "placeholder" ? <div className="product-media-placeholder">Product media unavailable</div> : gallery[safeIndex].type === "video" ? <video key={gallery[safeIndex].src} src={gallery[safeIndex].src} controls autoPlay playsInline preload="metadata" onError={() => setFailedMedia((current) => ({ ...current, [safeIndex]: true }))} /> : <img src={gallery[safeIndex].src} alt={`${item.name} ${safeIndex + 1}`} onError={() => setFailedMedia((current) => ({ ...current, [safeIndex]: true }))} />}
-            </div>
-            {gallery.length > 1 && <button className="media-lightbox-arrow next" type="button" onClick={() => moveGallery(1)} aria-label="Next media">›</button>}
-            <div className="media-lightbox-count">{safeIndex + 1} / {gallery.length}</div>
-            {gallery.length > 1 && <div className="media-lightbox-thumbnails">{gallery.map((media, index) => <button key={`${media.src}-${index}`} type="button" className={index === safeIndex ? "active" : ""} onClick={() => setSelected(index)} aria-label={`Show media ${index + 1}`}>{media.type === "video" ? <span>▶ Video</span> : <img src={media.src} alt="" />}</button>)}</div>}
-          </div>
-        )}
 
         <div className="item-details-right">
           <h1>{item.name}</h1>
@@ -316,6 +200,16 @@ const ItemDetails = () => {
           )}
 
           <p className="item-details-desc">{item.description}</p>
+          {(item.subcategory || item.species || item.condition || item.productionMethod || item.weightRange || item.availability) && (
+            <dl className="product-attributes">
+              {item.subcategory && <div><dt>Product type</dt><dd>{item.subcategory}</dd></div>}
+              {item.species && <div><dt>{item.category === "Food Crops" ? "Crop variety" : "Species"}</dt><dd>{item.species}</dd></div>}
+              {item.condition && <div><dt>Condition</dt><dd>{item.condition}</dd></div>}
+              {item.productionMethod && <div><dt>{item.category === "Food Crops" ? "Growing method" : "Production method"}</dt><dd>{item.productionMethod}</dd></div>}
+              {item.weightRange && <div><dt>{item.category === "Food Crops" ? "Pack size" : "Size range"}</dt><dd>{item.weightRange}</dd></div>}
+              {item.availability && <div><dt>Availability</dt><dd>{item.availability}</dd></div>}
+            </dl>
+          )}
           {isMarketplaceProduct && item.vendorId && <section className="product-vendor-panel" aria-labelledby="product-vendor-title"><h2 id="product-vendor-title">Listed by {item.vendorId.businessName || "Approved vendor"}</h2>{(item.vendorId.lga || item.vendorId.state || item.vendorId.location) && <p><strong>Location:</strong> {[item.vendorId.lga, item.vendorId.state].filter(Boolean).join(", ") || item.vendorId.location}{item.vendorId.location && (item.vendorId.state || item.vendorId.lga) ? ` · ${item.vendorId.location}` : ""}</p>}{item.vendorId.description && <p>{item.vendorId.description}</p>}<p className="vendor-verification-note">{item.vendorId.status === "approved" ? "Vendor application approved by Elevoni" : "Vendor status not available"}</p><p className="marketplace-disclaimer">Marketplace listings are enquiries, not confirmed orders. Confirm availability, final price, payment and delivery arrangements before paying.</p><a className="add-to-cart-btn primary-btn marketplace-detail-enquire" href={`https://wa.me/${ELEVONI_WHATSAPP_PHONE}?text=${encodeURIComponent(`Hello Elevoni Farms, I would like to enquire about ${item.name}. Please confirm availability, final price and delivery arrangements.`)}`} target="_blank" rel="noopener noreferrer">Enquire with Elevoni</a></section>}
 
           {!isMarketplaceProduct && <form className="item-quantity-form" onSubmit={saveQuantity}>

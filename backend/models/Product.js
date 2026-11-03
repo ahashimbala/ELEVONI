@@ -56,7 +56,7 @@ const productSchema = new mongoose.Schema(
     productionMethod: {
       type: String,
       default: '',
-      enum: ['', 'Farm-raised', 'Wild-caught', 'Free-range', 'Caged', 'Hatchery-produced', 'Other'],
+      enum: ['', 'Farm-raised', 'Wild-caught', 'Free-range', 'Caged', 'Hatchery-produced', 'Irrigated', 'Rain-fed', 'Organic', 'Greenhouse', 'Other'],
       trim: true
     },
     weightRange: {

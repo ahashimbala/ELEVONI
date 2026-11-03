@@ -71,13 +71,10 @@ const CategoryGrid = () => {
   const { fish_list, url } = useContext(StoreContext);
   const catalogueCount = Array.isArray(fish_list) ? fish_list.length : 0;
 
-  const [livestock, setLivestock] = useState({
-    count: null,
-    status: COUNT_STATUS.LOADING,
-  });
-  const [aquaculture, setAquaculture] = useState({
-    count: null,
-    status: COUNT_STATUS.LOADING,
+  const [counts, setCounts] = useState({
+    aquaculture: { count: null, status: COUNT_STATUS.LOADING },
+    livestock: { count: null, status: COUNT_STATUS.LOADING },
+    foodCrops: { count: null, status: COUNT_STATUS.LOADING },
   });
 
   useEffect(() => {
@@ -85,30 +82,38 @@ const CategoryGrid = () => {
     const controller = new AbortController();
 
     const fetchCounts = async () => {
-      setLivestock({ count: null, status: COUNT_STATUS.LOADING });
-      setAquaculture({ count: null, status: COUNT_STATUS.LOADING });
+      setCounts({
+        aquaculture: { count: null, status: COUNT_STATUS.LOADING },
+        livestock: { count: null, status: COUNT_STATUS.LOADING },
+        foodCrops: { count: null, status: COUNT_STATUS.LOADING },
+      });
 
-      const [livestockResult, aquacultureResult] = await Promise.allSettled([
+      const [livestock, aquaculture, foodCrops] = await Promise.allSettled([
         fetchLivestockParentCount({ url, signal: controller.signal }),
         fetchPublicProductCount({
           url,
           category: "Catfish & Aquaculture",
           signal: controller.signal,
         }),
+        fetchPublicProductCount({
+          url,
+          category: "Food Crops",
+          signal: controller.signal,
+        }),
       ]);
 
       if (cancelled) return;
 
-      setLivestock(
-        livestockResult.status === "fulfilled"
-          ? { count: livestockResult.value, status: COUNT_STATUS.READY }
-          : { count: null, status: COUNT_STATUS.ERROR },
-      );
-      setAquaculture(
-        aquacultureResult.status === "fulfilled"
-          ? { count: aquacultureResult.value, status: COUNT_STATUS.READY }
-          : { count: null, status: COUNT_STATUS.ERROR },
-      );
+      const result = (settled) =>
+        settled.status === "fulfilled"
+          ? { count: settled.value, status: COUNT_STATUS.READY }
+          : { count: null, status: COUNT_STATUS.ERROR };
+
+      setCounts({
+        aquaculture: result(aquaculture),
+        livestock: result(livestock),
+        foodCrops: result(foodCrops),
+      });
     };
 
     fetchCounts();
@@ -119,20 +124,23 @@ const CategoryGrid = () => {
     };
   }, [url]);
 
+  const countStatuses = Object.values(counts).map((entry) => entry.status);
+  const marketplaceCountStatus = countStatuses.includes(COUNT_STATUS.LOADING)
+    ? COUNT_STATUS.LOADING
+    : countStatuses.includes(COUNT_STATUS.ERROR)
+      ? COUNT_STATUS.ERROR
+      : COUNT_STATUS.READY;
+
   const categories = listCategories();
   const cards = buildCategoryCards({
     categories,
     catalogueCount,
-    marketplaceCount: aquaculture.count ?? 0,
-    livestockCount: livestock.count ?? 0,
-    livestockCountStatus:
-      aquaculture.status === COUNT_STATUS.LOADING ||
-      livestock.status === COUNT_STATUS.LOADING
-        ? COUNT_STATUS.LOADING
-        : aquaculture.status === COUNT_STATUS.ERROR ||
-            livestock.status === COUNT_STATUS.ERROR
-          ? COUNT_STATUS.ERROR
-          : COUNT_STATUS.READY,
+    marketplaceCounts: {
+      aquaculture: counts.aquaculture.count ?? 0,
+      livestock: counts.livestock.count ?? 0,
+      "food-crops": counts.foodCrops.count ?? 0,
+    },
+    marketplaceCountStatus,
   });
 
   return (
@@ -141,8 +149,8 @@ const CategoryGrid = () => {
         <p className="category-section-eyebrow">Shop by category</p>
         <h2 id="category-section-title">Start with what you need</h2>
         <p className="category-section-intro">
-          Elevoni is growing beyond smoked catfish. Explore the categories we
-          are building, and see exactly what is available to order today.
+          Explore aquaculture and fishery, livestock, and food crops. See what
+          approved vendors have listed, and what is available to order today.
         </p>
       </div>
 

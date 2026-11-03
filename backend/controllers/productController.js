@@ -23,7 +23,7 @@ const SUBCATEGORIES_BY_CATEGORY = Object.freeze({
 });
 const ALL_SUBCATEGORIES = Object.freeze([...new Set(Object.values(SUBCATEGORIES_BY_CATEGORY).flat())]);
 const PRODUCT_CONDITIONS = Object.freeze(["Live", "Fresh", "Frozen", "Smoked", "Dried", "Processed"]);
-const PRODUCTION_METHODS = Object.freeze(["Farm-raised", "Wild-caught", "Free-range", "Caged", "Other"]);
+const PRODUCTION_METHODS = Object.freeze(["Farm-raised", "Wild-caught", "Free-range", "Caged", "Irrigated", "Rain-fed", "Organic", "Greenhouse", "Other"]);
 const FOCUS_FOR_SUBCATEGORY = Object.freeze({
     "Fresh Fish": "fisheries", "Smoked Fish": "fisheries", "Dried Fish": "fisheries", "Frozen Fish": "fisheries", "Fishing Nets": "fisheries", "Fishing Equipment": "fisheries", "Fish Processing": "fisheries", "Packaging & Storage": "fisheries", "Cold-chain Services": "fisheries",
     Poultry: "poultry",
@@ -459,7 +459,7 @@ export const updateVendorProduct = async(req, res, next) => {
             return res.status(400).json({ success: false, message: "Stock quantity cannot be negative" });
         }
 
-        if (req.body.sector !== undefined && !["", "Livestock", "Aquaculture", "Fisheries"].includes(req.body.sector)) {
+        if (req.body.sector !== undefined && !["", "Livestock", "Aquaculture", "Fisheries", "Food Crops"].includes(req.body.sector)) {
             return res.status(400).json({ success: false, message: "Choose a valid product sector" });
         }
         if (req.body.availability !== undefined && !["", "Available", "Pre-order", "Seasonal", "Out of stock"].includes(req.body.availability)) {

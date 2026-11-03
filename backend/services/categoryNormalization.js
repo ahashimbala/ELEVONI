@@ -31,10 +31,14 @@ const PUBLIC_CATEGORY_FILTER_KINDS = Object.freeze({
 
 // Cattle, sheep and goats have no standalone legacy Product.category. Existing
 // vendor permissions use the aggregate Livestock & Meat bucket for all three.
-const LEGACY_AGGREGATE_PRODUCT_CATEGORY_BY_GROUP = Object.freeze({
+// Food Crops is a top-level group whose products use the group label directly.
+const PRODUCT_CATEGORY_BY_GROUP = Object.freeze({
     livestock: "Livestock & Meat",
     "food-crops": "Food Crops",
 });
+
+// Food Crops is the only group whose own label is stored on Product.category.
+const GROUP_LEVEL_PRODUCT_CATEGORIES = new Set(["food-crops"]);
 
 const interpretationOf = (value) => lookupCategory(value);
 
@@ -51,7 +55,21 @@ const productCategoryForTaxonomyCategory = (category) => {
     const direct = legacyProductCategoryFor(category);
     if (direct) return direct;
     if (!category || category.type !== CATEGORY_TYPES.LISTING) return null;
-    return LEGACY_AGGREGATE_PRODUCT_CATEGORY_BY_GROUP[category.parentId] || null;
+    return PRODUCT_CATEGORY_BY_GROUP[category.parentId] || null;
+};
+
+const storedProductCategoryFor = (category) => {
+    const direct = legacyProductCategoryFor(category);
+    if (direct) return direct;
+
+    if (
+        category?.type === CATEGORY_TYPES.GROUP &&
+        GROUP_LEVEL_PRODUCT_CATEGORIES.has(category.id)
+    ) {
+        return PRODUCT_CATEGORY_BY_GROUP[category.id] || null;
+    }
+
+    return null;
 };
 
 const filterResult = (kind, category, interpretation) =>
@@ -76,7 +94,7 @@ const resolveProductCategoryFilter = (value) => {
     const interpretation = interpretationOf(value);
 
     if (interpretation.kind === CATEGORY_ADAPTER_KINDS.MAPPED) {
-        const category = legacyProductCategoryFor(interpretation.category);
+        const category = storedProductCategoryFor(interpretation.category);
         return category
             ? filterResult(PUBLIC_CATEGORY_FILTER_KINDS.FILTER, category, interpretation)
             : filterResult(PUBLIC_CATEGORY_FILTER_KINDS.UNSUPPORTED, null, interpretation);

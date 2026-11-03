@@ -5,8 +5,8 @@ import assert from "node:assert/strict";
 
 test("the storefront exposes exactly the approved top-level categories", () => {
   const categories = listCategories();
-  assert.deepEqual(categories.map((category) => category.slug), ["aquaculture-fishery", "livestock"]);
-  assert.deepEqual(categories.map((category) => category.name), ["Aquaculture & Fishery", "Livestock"]);
+  assert.deepEqual(categories.map((category) => category.slug), ["aquaculture-fishery", "livestock", "food-crops"]);
+  assert.deepEqual(categories.map((category) => category.name), ["Aquaculture & Fishery", "Livestock", "Food Crops"]);
 });
 
 test("livestock exposes poultry, cattle, sheep and goats", () => {
@@ -92,10 +92,23 @@ test("empty states never promise that something can be ordered", () => {
 
 test("the homepage cards are built from the configuration", () => {
   const cards = buildCategoryCards({ categories: listCategories(), catalogueCount: 1 });
-  assert.equal(cards.length, 2);
-  assert.deepEqual(cards.map((card) => card.slug), ["aquaculture-fishery", "livestock"]);
+  assert.equal(cards.length, 3);
+  assert.deepEqual(cards.map((card) => card.slug), ["aquaculture-fishery", "livestock", "food-crops"]);
   assert.equal(cards[0].availability.orderable, true);
   assert.equal(cards[1].availability.orderable, false);
+  assert.equal(cards[2].availability.orderable, false);
+});
+
+test("food crop counts are used when they are available", () => {
+  const cards = buildCategoryCards({
+    categories: listCategories(),
+    catalogueCount: 3,
+    marketplaceCounts: { aquaculture: 1, livestock: 2, "food-crops": 3 },
+  });
+
+  assert.equal(cards[0].availability.label, "4 products available");
+  assert.equal(cards[1].availability.label, "2 products available");
+  assert.equal(cards[2].availability.label, "3 products available");
 });
 
 test("subcategory cards carry their own route and availability", () => {
@@ -166,6 +179,18 @@ test("subcategory cards can show loading and real API counts", () => {
   assert.equal(ready[1].availability.label, "1 product available");
   assert.equal(ready[2].availability.label, "No products listed right now");
   assert.equal(ready[3].availability.label, "3 products available");
+});
+
+test("a food crops entry uses its marketplace group count", () => {
+  const entry = resolveCategoryEntry("food-crops");
+  const view = describeCategoryEntry(entry, {
+    marketplaceGroupCount: 5,
+    marketplaceGroupCountStatus: COUNT_STATUS.READY,
+  });
+
+  assert.equal(view.availability.label, "5 products available");
+  assert.equal(view.availability.orderable, true);
+  assert.equal(view.emptyState, null);
 });
 
 test("a livestock subcategory entry uses its listing count", () => {

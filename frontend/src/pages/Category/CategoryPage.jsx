@@ -326,8 +326,8 @@ const CategoryPage = () => {
 
   const view = describeCategoryEntry(entry, {
     catalogueCount,
-    livestockCount: counts.total ?? 0,
-    livestockCountStatus: counts.totalStatus,
+    marketplaceGroupCount: counts.total ?? 0,
+    marketplaceGroupCountStatus: counts.totalStatus,
     subcategoryProductCount: activeListing.total ?? 0,
     subcategoryProductCountStatus: activeListing.status,
   });
@@ -442,12 +442,12 @@ const CategoryPage = () => {
         </section>
       )}
 
-      {(entry.slug === "livestock" || entry.slug === "aquaculture-fishery") && (
+      {(["livestock", "aquaculture-fishery", "food-crops"].includes(entry.slug)) && (
         <section className="category-sell-cta" aria-labelledby="category-sell-cta-title">
           <p className="category-sell-cta-eyebrow">Sell with Elevoni</p>
           <h2 id="category-sell-cta-title">Are you a farmer?</h2>
           <p>
-            Approved vendors can submit livestock, aquaculture and fisheries listings to the
+            Approved vendors can submit livestock, aquaculture, fisheries and food-crop listings to the
             Elevoni marketplace. Vendor applications and individual products are reviewed separately;
             listings appear publicly only after approval.
           </p>

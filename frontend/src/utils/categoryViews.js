@@ -122,20 +122,19 @@ const childNames = (category) => {
 const buildCategoryCards = ({
     categories = [],
     catalogueCount = 0,
-    marketplaceCount = 0,
-    livestockCount = 0,
-    livestockCountStatus = COUNT_STATUS.READY,
+    marketplaceCounts = {},
+    marketplaceCountStatus = COUNT_STATUS.READY,
 } = {}) => {
     return categories.map((category) => {
         let productCount = 0;
         let countStatus = COUNT_STATUS.READY;
 
         if (category.slug === "aquaculture-fishery") {
-            productCount = catalogueCount + marketplaceCount;
-            countStatus = livestockCountStatus;
-        } else if (category.slug === "livestock") {
-            productCount = livestockCount;
-            countStatus = livestockCountStatus;
+            productCount = catalogueCount + (marketplaceCounts.aquaculture || 0);
+            countStatus = marketplaceCountStatus;
+        } else if (category.slug === "livestock" || category.slug === "food-crops") {
+            productCount = marketplaceCounts[category.slug] || 0;
+            countStatus = marketplaceCountStatus;
         }
 
         return {
@@ -204,8 +203,8 @@ const describeCategoryEntry = (
     entry,
     {
         catalogueCount = 0,
-        livestockCount = 0,
-        livestockCountStatus = COUNT_STATUS.READY,
+        marketplaceGroupCount = 0,
+        marketplaceGroupCountStatus = COUNT_STATUS.READY,
         subcategoryProductCount = 0,
         subcategoryProductCountStatus = COUNT_STATUS.READY,
     } = {}
@@ -231,11 +230,15 @@ const describeCategoryEntry = (
         } else if (entry.marketplace) {
             productCount = subcategoryProductCount;
             countStatus = subcategoryProductCountStatus;
-        } else if (entry.slug === "aquaculture-fishery" || entry.slug === "livestock") {
+        } else if (
+            entry.slug === "aquaculture-fishery" ||
+            entry.slug === "livestock" ||
+            entry.slug === "food-crops"
+        ) {
             productCount = entry.slug === "aquaculture-fishery"
-                ? catalogueCount + livestockCount
-                : livestockCount;
-            countStatus = livestockCountStatus;
+                ? catalogueCount + marketplaceGroupCount
+                : marketplaceGroupCount;
+            countStatus = marketplaceGroupCountStatus;
         }
     }
 

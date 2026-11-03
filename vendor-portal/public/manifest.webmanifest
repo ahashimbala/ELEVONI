@@ -3,7 +3,7 @@
   "prefer_related_applications": false,
   "name": "Elevoni Vendor Portal",
   "short_name": "Elevoni Vendor",
-  "description": "Manage your Elevoni vendor workspace, listings and sales.",
+  "description": "Manage your Elevoni vendor workspace and reviewed livestock, aquaculture and food crop listings.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

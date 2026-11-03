@@ -1,4 +1,4 @@
-const CACHE_NAME = "elevoni-app-shell-v5";
+const CACHE_NAME = "elevoni-app-shell-v6";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",

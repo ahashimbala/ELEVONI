@@ -3,7 +3,7 @@
   "prefer_related_applications": false,
   "name": "Elevoni Farms",
   "short_name": "Elevoni",
-  "description": "Explore livestock, aquaculture and fisheries listings and shop Elevoni smoked catfish directly.",
+  "description": "Explore livestock, aquaculture and fisheries, and food crop listings, and shop Elevoni smoked catfish directly.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

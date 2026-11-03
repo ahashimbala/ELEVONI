@@ -55,8 +55,13 @@ const CONDITIONS = [
   "Processed",
 ];
 
+const CROP_CONDITIONS = ["All conditions", "Fresh", "Dried", "Processed"];
+
 const subcategoryOptionsFor = (category) =>
   SUBCATEGORIES[category] || SUBCATEGORIES["All sectors"];
+
+const conditionOptionsFor = (category, sector) =>
+  category === "Food Crops" || sector === "Food Crops" ? CROP_CONDITIONS : CONDITIONS;
 
 const Marketplace = () => {
   const { url } = useContext(StoreContext);
@@ -95,6 +100,12 @@ const Marketplace = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSubcategory(ALL_TYPES);
   }, [category, subcategory]);
+
+  useEffect(() => {
+    if (conditionOptionsFor(category, sectorFilter).includes(condition)) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCondition("All conditions");
+  }, [category, sectorFilter, condition]);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearch(searchInput.trim()), 250);
@@ -153,7 +164,7 @@ const Marketplace = () => {
       <section className="marketplace-hero">
         <div className="marketplace-hero-copy">
           <p className="marketplace-eyebrow">Beyond the Elevoni catalogue</p>
-          <h1>Discover livestock, aquaculture and fisheries products from reviewed vendors.</h1>
+          <h1>Discover food crops, livestock, aquaculture and fishery products from reviewed vendors.</h1>
           <p>Explore products listed by vendors whose applications and products have passed the relevant review steps. Confirm availability, final price and delivery arrangements with Elevoni before ordering.</p>
           <Link to="/sell-with-elevoni" className="marketplace-sell-link">Are you a farmer? Apply to sell <span aria-hidden="true">→</span></Link>
         </div>
@@ -174,7 +185,7 @@ const Marketplace = () => {
         <div className="marketplace-filters">
           <label className="marketplace-search-label">
             <span>Search products</span>
-            <input value={searchInput} onChange={(event) => { setSearchInput(event.target.value); setPage(1); }} placeholder="Try catfish, tilapia, poultry, cattle…" type="search" />
+            <input value={searchInput} onChange={(event) => { setSearchInput(event.target.value); setPage(1); }} placeholder="Try catfish, poultry, maize, yam…" type="search" />
           </label>
           <label className="marketplace-category-label">
             <span>Sector</span>
@@ -194,13 +205,13 @@ const Marketplace = () => {
               {subcategoryOptionsFor(category).map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
-          {(sectorFilter === "All sectors" || sectorFilter === "Aquaculture" || sectorFilter === "Fisheries" || category === "Catfish & Aquaculture" || category === "Fishery Products & Equipment") && <label className="marketplace-category-label">
-            <span>Fish condition</span>
+          <label className="marketplace-category-label">
+            <span>Condition</span>
             <select value={condition} onChange={(event) => { setCondition(event.target.value); setPage(1); }}>
-              {CONDITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
+              {conditionOptionsFor(category, sectorFilter).map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
-          </label>}
-          {(category === "Catfish & Aquaculture" || category === "Fishery Products & Equipment" || category === "All sectors") && <label className="marketplace-category-label"><span>Species</span><input value={species} onChange={(event) => { setSpecies(event.target.value); setPage(1); }} placeholder="e.g. catfish, tilapia" /></label>}
+          </label>
+          {(category === "Catfish & Aquaculture" || category === "All sectors") && <label className="marketplace-category-label"><span>Species / crop variety</span><input value={species} onChange={(event) => { setSpecies(event.target.value); setPage(1); }} placeholder="e.g. catfish, tilapia, maize" /></label>}
           <label className="marketplace-category-label"><span>State / location</span><input value={stateFilter} onChange={(event) => { setStateFilter(event.target.value); setPage(1); }} placeholder="e.g. Abuja, Lagos" /></label>
           <label className="marketplace-category-label"><span>Minimum price (₦)</span><input type="number" min="0" value={minPrice} onChange={(event) => { setMinPrice(event.target.value); setPage(1); }} /></label>
           <label className="marketplace-category-label"><span>Maximum price (₦)</span><input type="number" min="0" value={maxPrice} onChange={(event) => { setMaxPrice(event.target.value); setPage(1); }} /></label>
@@ -213,7 +224,7 @@ const Marketplace = () => {
             <span className="marketplace-empty-icon" aria-hidden="true">✳</span>
             <h3>No listings match this search yet.</h3>
             <p>Try another search or category. New listings appear after the vendor and product review steps are complete.</p>
-            <button type="button" onClick={() => { setSearchInput(""); setCategory("All sectors"); setSubcategory(ALL_TYPES); setCondition("All conditions"); setPage(1); }}>Clear filters</button>
+            <button type="button" onClick={() => { setSearchInput(""); setCategory("All sectors"); setSectorFilter("All sectors"); setSubcategory(ALL_TYPES); setCondition("All conditions"); setSpecies(""); setStateFilter(""); setMinPrice(""); setMaxPrice(""); setPage(1); }}>Clear filters</button>
           </div>
         )}
 

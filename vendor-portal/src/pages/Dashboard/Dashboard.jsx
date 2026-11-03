@@ -18,7 +18,13 @@ const SUBCATEGORIES_BY_CATEGORY = {
 
 const CONDITIONS = ["Live", "Fresh", "Frozen", "Smoked", "Dried", "Processed"];
 
+const CROP_CONDITIONS = ["Fresh", "Dried", "Processed"];
+
 const PRODUCTION_METHODS = ["Farm-raised", "Wild-caught", "Free-range", "Caged", "Other"];
+
+const CROP_PRODUCTION_METHODS = ["Irrigated", "Rain-fed", "Organic", "Greenhouse", "Other"];
+
+const AVAILABILITY_OPTIONS = ["Available", "Pre-order", "Seasonal", "Out of stock"];
 
 const FOCUS_FOR_SUBCATEGORY = {
     Poultry: "poultry",
@@ -39,6 +45,12 @@ const subcategoryOptionsFor = (category, focus = []) =>
         const requiredFocus = FOCUS_FOR_SUBCATEGORY[item];
         return !requiredFocus || focus.includes(requiredFocus);
     });
+
+const conditionsForCategory = (category) =>
+    category === "Food Crops" ? CROP_CONDITIONS : CONDITIONS;
+
+const productionMethodsForCategory = (category) =>
+    category === "Food Crops" ? CROP_PRODUCTION_METHODS : PRODUCTION_METHODS;
 
 const UNITS = [
     "kg",
@@ -65,6 +77,7 @@ const blankForm = {
     condition: "",
     productionMethod: "",
     weightRange: "",
+    availability: "",
     images: "",
     media: [],
 };
@@ -125,6 +138,8 @@ const Dashboard = () => {
         application?.productFocus
     );
 
+    const isFoodCrops = form.category === "Food Crops";
+
     useEffect(() => {
         if (
             !allowedCategories.length ||
@@ -162,6 +177,22 @@ const Dashboard = () => {
         form.category,
         form.subcategory,
     ]);
+
+    useEffect(() => {
+        const conditions = conditionsForCategory(form.category);
+        const methods = productionMethodsForCategory(form.category);
+
+        if (conditions.includes(form.condition) && methods.includes(form.productionMethod)) {
+            return;
+        }
+
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setForm((current) => ({
+            ...current,
+            condition: conditionsForCategory(current.category).includes(current.condition) ? current.condition : "",
+            productionMethod: productionMethodsForCategory(current.category).includes(current.productionMethod) ? current.productionMethod : "",
+        }));
+    }, [form.category, form.condition, form.productionMethod]);
 
     const loadProducts = useCallback(async () => {
         if (
@@ -236,6 +267,7 @@ const Dashboard = () => {
             condition: product.condition || "",
             productionMethod: product.productionMethod || "",
             weightRange: product.weightRange || "",
+            availability: product.availability || "",
             images: Array.isArray(product.images)
                 ? product.images.join("\n")
                 : "",
@@ -500,6 +532,7 @@ const Dashboard = () => {
             condition: form.condition,
             productionMethod: form.productionMethod,
             weightRange: form.weightRange.trim(),
+            availability: form.availability,
             images: form.media
                 .filter((item) => item.type === "image")
                 .map((item) => item.url),
@@ -783,12 +816,12 @@ const Dashboard = () => {
                                         </label>
                                     </div>
 
-                                    <div className="vendor-form-row">
-                                        <label>
-                                            Sector
+                                     <div className="vendor-form-row">
+                                         <label>
+                                             Category
 
-                                            <select
-                                                name="category"
+                                             <select
+                                                 name="category"
                                                 value={form.category}
                                                 onChange={updateField}
                                             >
@@ -824,80 +857,97 @@ const Dashboard = () => {
                                         </label>
                                     </div>
 
-                                    <div className="vendor-form-row">
-                                        <label>
-                                            Species
+                                     <div className="vendor-form-row">
+                                         <label>
+                                             {isFoodCrops ? "Crop variety" : "Species"}
 
-                                            <input
-                                                name="species"
-                                                value={form.species}
-                                                onChange={updateField}
-                                                maxLength={80}
-                                                placeholder="e.g. Clarias catfish"
-                                            />
-                                        </label>
+                                             <input
+                                                 name="species"
+                                                 value={form.species}
+                                                 onChange={updateField}
+                                                 maxLength={80}
+                                                 placeholder={isFoodCrops ? "e.g. Yellow maize" : "e.g. Clarias catfish"}
+                                             />
+                                         </label>
 
-                                        <label>
-                                            Condition
+                                         <label>
+                                             Condition
 
-                                            <select
-                                                name="condition"
-                                                value={form.condition}
-                                                onChange={updateField}
-                                            >
-                                                <option value="">Not specified</option>
-                                                {CONDITIONS.map((item) => (
-                                                    <option key={item}>
-                                                        {item}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </label>
-                                    </div>
+                                             <select
+                                                 name="condition"
+                                                 value={form.condition}
+                                                 onChange={updateField}
+                                             >
+                                                 <option value="">Not specified</option>
+                                                 {conditionsForCategory(form.category).map((item) => (
+                                                     <option key={item}>
+                                                         {item}
+                                                     </option>
+                                                 ))}
+                                             </select>
+                                         </label>
+                                     </div>
 
-                                    <div className="vendor-form-row">
-                                        <label>
-                                            Production method
+                                     <div className="vendor-form-row">
+                                         <label>
+                                             {isFoodCrops ? "Growing method" : "Production method"}
 
-                                            <select
-                                                name="productionMethod"
-                                                value={form.productionMethod}
-                                                onChange={updateField}
-                                            >
-                                                <option value="">Not specified</option>
-                                                {PRODUCTION_METHODS.map((item) => (
-                                                    <option key={item}>
-                                                        {item}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </label>
+                                             <select
+                                                 name="productionMethod"
+                                                 value={form.productionMethod}
+                                                 onChange={updateField}
+                                             >
+                                                 <option value="">Not specified</option>
+                                                 {productionMethodsForCategory(form.category).map((item) => (
+                                                     <option key={item}>
+                                                         {item}
+                                                     </option>
+                                                 ))}
+                                             </select>
+                                         </label>
 
-                                        <label>
-                                            Weight / size range
+                                         <label>
+                                             {isFoodCrops ? "Pack size / size range" : "Weight / size range"}
 
-                                            <input
-                                                name="weightRange"
-                                                value={form.weightRange}
-                                                onChange={updateField}
-                                                maxLength={60}
-                                                placeholder="e.g. 1–2 kg"
-                                            />
-                                        </label>
-                                    </div>
+                                             <input
+                                                 name="weightRange"
+                                                 value={form.weightRange}
+                                                 onChange={updateField}
+                                                 maxLength={60}
+                                                 placeholder={isFoodCrops ? "e.g. 50 kg bag" : "e.g. 1–2 kg"}
+                                             />
+                                         </label>
+                                     </div>
 
-                                    <label>
-                                        Available stock
+                                     <div className="vendor-form-row">
+                                         <label>
+                                             Available stock
 
-                                        <input
-                                            name="stockQuantity"
-                                            type="number"
-                                            min="0"
-                                            step="any"
-                                            value={form.stockQuantity}
-                                            onChange={updateField}
-                                        />
-                                    </label>
+                                             <input
+                                                 name="stockQuantity"
+                                                 type="number"
+                                                 min="0"
+                                                 step="any"
+                                                 value={form.stockQuantity}
+                                                 onChange={updateField}
+                                             />
+                                         </label>
+
+                                         <label>
+                                             Availability
+
+                                             <select
+                                                 name="availability"
+                                                 value={form.availability}
+                                                 onChange={updateField}
+                                             >
+                                                 <option value="">Use stock quantity</option>
+                                                 {AVAILABILITY_OPTIONS.map((item) => (
+                                                     <option key={item}>{item}</option>
+                                                 ))}
+                                             </select>
+                                         </label>
+                                     </div>
 
                                     <div className="vendor-media-field">
                                         <label htmlFor="vendor-product-media">
