@@ -11,6 +11,7 @@ const PRODUCT_OPTIONS = [
   { value: "goats", label: "Goats" },
   { value: "aquaculture", label: "Aquaculture & Fish Farming" },
   { value: "fisheries", label: "Fisheries & Fish Products" },
+  { value: "food-crops", label: "Food Crops" },
 ];
 
 const STATUS_DETAILS = {

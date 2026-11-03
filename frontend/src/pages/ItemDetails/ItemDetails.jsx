@@ -72,7 +72,9 @@ const ItemDetails = () => {
   const previewQuantity = isValidQuantity ? parsedQuantity : 0;
   const hasQuantity = previewQuantity > 0;
   const [failedMedia, setFailedMedia] = useState({});
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const videoRef = useRef(null);
+  const modalTouchStartX = useRef(null);
   const touchStartX = useRef(null);
 
   useEffect(() => {
@@ -114,6 +116,23 @@ const ItemDetails = () => {
   if (!gallery.length) gallery.push({ type: "placeholder", src: "" });
 
   const safeIndex = Math.min(selected, gallery.length - 1);
+  const moveGallery = (direction) => setSelected((value) => (value + direction + gallery.length) % gallery.length);
+
+  useEffect(() => {
+    if (!galleryOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setGalleryOpen(false);
+      if (event.key === "ArrowRight") moveGallery(1);
+      if (event.key === "ArrowLeft") moveGallery(-1);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [galleryOpen, gallery.length]);
 
   const saveQuantity = async (event) => {
     event.preventDefault();
@@ -179,7 +198,7 @@ const ItemDetails = () => {
 
       <div className="item-details-container">
         <div className="item-details-left">
-          <div className="main-media" onTouchStart={(event) => { touchStartX.current = event.changedTouches[0]?.clientX ?? null; }} onTouchEnd={(event) => {
+          <div className="main-media" role="button" tabIndex={0} aria-label="Open product media gallery" onClick={() => setGalleryOpen(true)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setGalleryOpen(true); } }} onTouchStart={(event) => { touchStartX.current = event.changedTouches[0]?.clientX ?? null; }} onTouchEnd={(event) => {
             const endX = event.changedTouches[0]?.clientX;
             if (touchStartX.current == null || typeof endX !== "number" || gallery.length < 2) return;
             const delta = endX - touchStartX.current;
@@ -207,6 +226,7 @@ const ItemDetails = () => {
             )}
           </div>
 
+          {gallery.length > 0 && <p className="gallery-open-hint">Tap the photo or video to view full screen</p>}
           {gallery.length > 1 && <div className="gallery-navigation"><button type="button" onClick={() => setSelected((value) => (value - 1 + gallery.length) % gallery.length)} aria-label="Previous media">‹</button><span>{safeIndex + 1} / {gallery.length}</span><button type="button" onClick={() => setSelected((value) => (value + 1) % gallery.length)} aria-label="Next media">›</button></div>}
           {gallery.length > 1 && <div className="thumbnail-row">
             {gallery.map((media, index) => (
@@ -245,6 +265,19 @@ const ItemDetails = () => {
             ))}
           </div>}
         </div>
+
+        {galleryOpen && (
+          <div className="media-lightbox" role="dialog" aria-modal="true" aria-label={`${item.name} media gallery`} onClick={(event) => { if (event.target === event.currentTarget) setGalleryOpen(false); }} onTouchStart={(event) => { modalTouchStartX.current = event.changedTouches[0]?.clientX ?? null; }} onTouchEnd={(event) => { const end = event.changedTouches[0]?.clientX; if (modalTouchStartX.current == null || typeof end !== "number" || gallery.length < 2) return; const delta = end - modalTouchStartX.current; if (Math.abs(delta) > 40) moveGallery(delta < 0 ? 1 : -1); modalTouchStartX.current = null; }}>
+            <button className="media-lightbox-close" type="button" onClick={() => setGalleryOpen(false)} aria-label="Close gallery">×</button>
+            {gallery.length > 1 && <button className="media-lightbox-arrow previous" type="button" onClick={() => moveGallery(-1)} aria-label="Previous media">‹</button>}
+            <div className="media-lightbox-stage">
+              {failedMedia[safeIndex] || gallery[safeIndex].type === "placeholder" ? <div className="product-media-placeholder">Product media unavailable</div> : gallery[safeIndex].type === "video" ? <video key={gallery[safeIndex].src} src={gallery[safeIndex].src} controls autoPlay playsInline preload="metadata" onError={() => setFailedMedia((current) => ({ ...current, [safeIndex]: true }))} /> : <img src={gallery[safeIndex].src} alt={`${item.name} ${safeIndex + 1}`} onError={() => setFailedMedia((current) => ({ ...current, [safeIndex]: true }))} />}
+            </div>
+            {gallery.length > 1 && <button className="media-lightbox-arrow next" type="button" onClick={() => moveGallery(1)} aria-label="Next media">›</button>}
+            <div className="media-lightbox-count">{safeIndex + 1} / {gallery.length}</div>
+            {gallery.length > 1 && <div className="media-lightbox-thumbnails">{gallery.map((media, index) => <button key={`${media.src}-${index}`} type="button" className={index === safeIndex ? "active" : ""} onClick={() => setSelected(index)} aria-label={`Show media ${index + 1}`}>{media.type === "video" ? <span>▶ Video</span> : <img src={media.src} alt="" />}</button>)}</div>}
+          </div>
+        )}
 
         <div className="item-details-right">
           <h1>{item.name}</h1>

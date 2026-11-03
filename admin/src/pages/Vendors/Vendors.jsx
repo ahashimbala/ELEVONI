@@ -292,7 +292,7 @@ const Vendors = ({ url }) => {
                   <dd>{formatVendorLocation(selected)}</dd>
                 </div>
                 <div>
-                  <dt>Livestock focus</dt>
+                  <dt>Product focus</dt>
                   <dd>{vendorFocusLabel(selected.productFocus)}</dd>
                 </div>
                 <div>

@@ -14,7 +14,7 @@ const Home = () => {
     <div>
       <Helmet>
         <title>
-          Elevoni Farms | Livestock, Aquaculture & Smoked Catfish
+          Elevoni Farms | Food Crops, Livestock, Aquaculture & Smoked Catfish
         </title>
 
         <meta
@@ -26,7 +26,7 @@ const Home = () => {
 
         <meta
           property="og:title"
-          content="Elevoni Farms - Livestock, Aquaculture and Smoked Catfish"
+          content="Elevoni Farms - Food Crops, Livestock, Aquaculture and Smoked Catfish"
         />
 
         <meta

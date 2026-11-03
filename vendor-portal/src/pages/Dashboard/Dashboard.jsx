@@ -6,13 +6,14 @@ import api from "../../api";
 import { AuthContext } from "../../context/auth-context";
 import "./Dashboard.css";
 
-const CATEGORIES = ["Catfish & Aquaculture", "Fishery Products & Equipment", "Poultry & Eggs", "Livestock & Meat"];
+const CATEGORIES = ["Catfish & Aquaculture", "Fishery Products & Equipment", "Poultry & Eggs", "Livestock & Meat", "Food Crops"];
 
 const SUBCATEGORIES_BY_CATEGORY = {
     "Catfish & Aquaculture": ["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"],
     "Fishery Products & Equipment": ["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
     "Poultry & Eggs": ["Poultry"],
     "Livestock & Meat": ["Cattle", "Sheep", "Goats"],
+    "Food Crops": ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"],
 };
 
 const CONDITIONS = ["Live", "Fresh", "Frozen", "Smoked", "Dried", "Processed"];
@@ -24,6 +25,9 @@ const FOCUS_FOR_SUBCATEGORY = {
     Cattle: "cattle",
     Sheep: "sheep",
     Goats: "goats",
+    "Grains & Cereals": "food-crops",
+    "Vegetables & Fruits": "food-crops",
+    "Tubers & Starch": "food-crops",
     Catfish: "aquaculture",
     Tilapia: "aquaculture",
     "Other Fish": "aquaculture",
@@ -78,6 +82,7 @@ const categoriesForFocus = (focus = []) => {
 
     if (focus.includes("aquaculture")) categories.push("Catfish & Aquaculture");
     if (focus.includes("fisheries") || focus.includes("aquaculture")) categories.push("Fishery Products & Equipment");
+    if (focus.includes("food-crops")) categories.push("Food Crops");
 
     return categories;
 };

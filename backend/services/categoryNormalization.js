@@ -18,6 +18,7 @@ const PRODUCT_CATEGORIES = Object.freeze([
     "Poultry & Eggs",
     "Livestock & Meat",
     "Fishery Products & Equipment",
+    "Food Crops",
 ]);
 
 const PRODUCT_CATEGORY_SET = new Set(PRODUCT_CATEGORIES);
@@ -32,6 +33,7 @@ const PUBLIC_CATEGORY_FILTER_KINDS = Object.freeze({
 // vendor permissions use the aggregate Livestock & Meat bucket for all three.
 const LEGACY_AGGREGATE_PRODUCT_CATEGORY_BY_GROUP = Object.freeze({
     livestock: "Livestock & Meat",
+    "food-crops": "Food Crops",
 });
 
 const interpretationOf = (value) => lookupCategory(value);

@@ -100,7 +100,6 @@ self.addEventListener("fetch", (event) => {
   const isStaticAsset =
     url.pathname.startsWith("/assets/") ||
     url.pathname.startsWith("/icons/") ||
-    url.pathname.startsWith("/apple-splash-") ||
     ["style", "script", "image", "font", "manifest"].includes(request.destination);
 
   if (isStaticAsset) {

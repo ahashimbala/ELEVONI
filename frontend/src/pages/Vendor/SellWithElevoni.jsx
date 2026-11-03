@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import vendorIllustration from "../../assets/elevoni-vendor-illustration.svg";
+import vendorIllustration from "../../assets/elevoni-vendor-illustration.jfif";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { StoreContext } from "../../context/StoreContext";

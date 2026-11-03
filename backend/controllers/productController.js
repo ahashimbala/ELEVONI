@@ -13,12 +13,13 @@ const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$
 const validObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 const currentUserId = (req) => req.auth && (req.auth.userId || req.auth.id);
 const PRODUCT_UNITS = ["kg", "gram", "piece", "crate", "ton", "bag", "carton", "litre", "service", "hour"];
-const ACTIVE_MARKETPLACE_CATEGORIES = ["Catfish & Aquaculture", "Poultry & Eggs", "Livestock & Meat", "Fishery Products & Equipment"];
+const ACTIVE_MARKETPLACE_CATEGORIES = ["Catfish & Aquaculture", "Poultry & Eggs", "Livestock & Meat", "Fishery Products & Equipment", "Food Crops"];
 const SUBCATEGORIES_BY_CATEGORY = Object.freeze({
     "Catfish & Aquaculture": Object.freeze(["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"]),
     "Fishery Products & Equipment": Object.freeze(["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"]),
     "Poultry & Eggs": Object.freeze(["Poultry"]),
-    "Livestock & Meat": Object.freeze(["Cattle", "Sheep", "Goats"])
+    "Livestock & Meat": Object.freeze(["Cattle", "Sheep", "Goats"]),
+    "Food Crops": Object.freeze(["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"])
 });
 const ALL_SUBCATEGORIES = Object.freeze([...new Set(Object.values(SUBCATEGORIES_BY_CATEGORY).flat())]);
 const PRODUCT_CONDITIONS = Object.freeze(["Live", "Fresh", "Frozen", "Smoked", "Dried", "Processed"]);
@@ -29,6 +30,9 @@ const FOCUS_FOR_SUBCATEGORY = Object.freeze({
     Cattle: "cattle",
     Sheep: "sheep",
     Goats: "goats",
+    "Grains & Cereals": "food-crops",
+    "Vegetables & Fruits": "food-crops",
+    "Tubers & Starch": "food-crops",
     Catfish: "aquaculture",
     Tilapia: "aquaculture",
     "Other Fish": "aquaculture",
@@ -102,7 +106,7 @@ export const getPublicProducts = async(req, res, next) => {
         }
 
         if (sector) {
-            if (!["Livestock", "Aquaculture", "Fisheries"].includes(String(sector))) return res.status(400).json({ success: false, message: "Invalid marketplace sector" });
+            if (!["Livestock", "Aquaculture", "Fisheries", "Food Crops"].includes(String(sector))) return res.status(400).json({ success: false, message: "Invalid marketplace sector" });
             filter.sector = String(sector);
         }
 
@@ -252,7 +256,7 @@ export const createVendorProduct = async(req, res, next) => {
             });
         }
 
-        if ((sector && !["Livestock", "Aquaculture", "Fisheries"].includes(sector)) || (availability && !["Available", "Pre-order", "Seasonal", "Out of stock"].includes(availability))) {
+        if ((sector && !["Livestock", "Aquaculture", "Fisheries", "Food Crops"].includes(sector)) || (availability && !["Available", "Pre-order", "Seasonal", "Out of stock"].includes(availability))) {
             return res.status(400).json({ success: false, message: "Choose a valid sector and availability status" });
         }
 
@@ -324,7 +328,7 @@ export const createVendorProduct = async(req, res, next) => {
             condition,
             productionMethod,
             weightRange: typeof weightRange === "string" ? weightRange.trim() : "",
-            sector: ["Livestock", "Aquaculture", "Fisheries"].includes(sector) ? sector : (category === "Fishery Products & Equipment" ? "Fisheries" : category === "Catfish & Aquaculture" ? "Aquaculture" : "Livestock"),
+            sector: ["Livestock", "Aquaculture", "Fisheries", "Food Crops"].includes(sector) ? sector : (category === "Fishery Products & Equipment" ? "Fisheries" : category === "Catfish & Aquaculture" ? "Aquaculture" : category === "Food Crops" ? "Food Crops" : "Livestock"),
             availability: ["Available", "Pre-order", "Seasonal", "Out of stock"].includes(availability) ? availability : (Number(stockQuantity) > 0 ? "Available" : "Out of stock"),
             vendorId: profile._id,
             status: "pending",

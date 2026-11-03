@@ -14,6 +14,7 @@ const CATEGORIES = [
   "Fishery Products & Equipment",
   "Poultry & Eggs",
   "Livestock & Meat",
+  "Food Crops",
 ];
 
 const ALL_TYPES = "All types";
@@ -29,6 +30,7 @@ const SUBCATEGORIES = {
     "Cattle",
     "Sheep",
     "Goats",
+    "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch",
   ],
   "Catfish & Aquaculture": [
     ALL_TYPES,
@@ -40,6 +42,7 @@ const SUBCATEGORIES = {
   "Fishery Products & Equipment": [ALL_TYPES, "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
   "Poultry & Eggs": [ALL_TYPES, "Poultry"],
   "Livestock & Meat": [ALL_TYPES, "Cattle", "Sheep", "Goats"],
+  "Food Crops": [ALL_TYPES, "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"],
 };
 
 const CONDITIONS = [
@@ -176,7 +179,7 @@ const Marketplace = () => {
           <label className="marketplace-category-label">
             <span>Sector</span>
             <select value={sectorFilter} onChange={(event) => { setSectorFilter(event.target.value); setPage(1); }}>
-              {['All sectors', 'Livestock', 'Aquaculture', 'Fisheries'].map((item) => <option key={item} value={item}>{item}</option>)}
+              {['All sectors', 'Livestock', 'Aquaculture', 'Fisheries', 'Food Crops'].map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
           <label className="marketplace-category-label">

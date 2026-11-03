@@ -7,6 +7,7 @@ const VENDOR_PRODUCT_FOCUS = Object.freeze([
   { value: "goats", label: "Goats" },
   { value: "aquaculture", label: "Aquaculture & Fish Farming" },
   { value: "fisheries", label: "Fisheries & Fish Products" },
+  { value: "food-crops", label: "Food Crops" },
 ]);
 
 const VENDOR_STATUS_COPY = Object.freeze({
@@ -88,7 +89,7 @@ const validateRegistration = (data = {}) => {
     errors.lga = "Enter a local government area between 2 and 100 characters";
   }
   if (!Array.isArray(data.productFocus) || data.productFocus.length === 0) {
-    errors.productFocus = "Select at least one livestock, aquaculture or fisheries sector";
+    errors.productFocus = "Select at least one product sector";
   }
   const description = trimmed(data.description);
   if (description.length > MAX_DESCRIPTION_LENGTH) {
@@ -116,7 +117,7 @@ const validateApplication = (data = {}) => {
     errors.lga = "Enter a local government area between 2 and 100 characters";
   }
   if (!Array.isArray(data.productFocus) || data.productFocus.length === 0) {
-    errors.productFocus = "Select at least one livestock, aquaculture or fisheries sector";
+    errors.productFocus = "Select at least one product sector";
   }
   const description = trimmed(data.description);
   if (description.length > MAX_DESCRIPTION_LENGTH) {

@@ -87,8 +87,11 @@ test("Catfish & Aquaculture maps to the other-fish category, never to direct smo
   assert.equal(result.isSellable, true);
 });
 
-test("crop and agricultural produce categories are no longer recognized", () => {
-  for (const value of ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch", "Processed Agro-Goods", "Other Farm Products"]) {
+test("Food Crops and its initial listing categories are recognized", () => {
+  for (const value of ["Food Crops", "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"]) {
+    assert.equal(lookupCategory(value).kind, CATEGORY_ADAPTER_KINDS.MAPPED, value);
+  }
+  for (const value of ["Processed Agro-Goods", "Other Farm Products"]) {
     assert.equal(lookupCategory(value).kind, CATEGORY_ADAPTER_KINDS.UNKNOWN, value);
   }
 });

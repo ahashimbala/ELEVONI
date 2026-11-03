@@ -22,7 +22,7 @@ const productSchema = new mongoose.Schema(
       required: [true, 'Product price is required'],
       min: [0, 'Price must be greater than or equal to 0']
     },
-    subcategory: { type: String, enum: ["", "Poultry", "Cattle", "Sheep", "Goats", "Catfish", "Tilapia", "Other Fish", "Smoked Catfish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services", "Hatchery Services", "Aquaculture Consulting", "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish"], default: "", trim: true },
+    subcategory: { type: String, enum: ["", "Poultry", "Cattle", "Sheep", "Goats", "Catfish", "Tilapia", "Other Fish", "Smoked Catfish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services", "Hatchery Services", "Aquaculture Consulting", "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"], default: "", trim: true },
     category: {
       type: String,
       required: [true, 'Category is required'],
@@ -30,7 +30,8 @@ const productSchema = new mongoose.Schema(
         'Catfish & Aquaculture',
         'Poultry & Eggs',
         'Livestock & Meat',
-        'Fishery Products & Equipment'
+        'Fishery Products & Equipment',
+        'Food Crops'
       ],
       default: 'Catfish & Aquaculture'
     },
@@ -64,7 +65,7 @@ const productSchema = new mongoose.Schema(
       trim: true,
       maxlength: [60, 'Weight range cannot exceed 60 characters']
     },
-    sector: { type: String, enum: ['', 'Livestock', 'Aquaculture', 'Fisheries'], default: '' },
+    sector: { type: String, enum: ['', 'Livestock', 'Aquaculture', 'Fisheries', 'Food Crops'], default: '' },
     availability: { type: String, enum: ['', 'Available', 'Pre-order', 'Seasonal', 'Out of stock'], default: '' },
     stockQuantity: {
       type: Number,

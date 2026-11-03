@@ -520,3 +520,23 @@
     font-size: 9px;
     text-align: center;
 }
+
+
+/* Full-screen, swipeable product media viewer. */
+.main-media { cursor: zoom-in; }
+.gallery-open-hint { margin: 8px 0 0; color: var(--elevoni-muted); font-size: 12px; text-align: center; }
+.media-lightbox { position: fixed; inset: 0; z-index: 1500; display: flex; align-items: center; justify-content: center; padding: 56px 72px 92px; background: rgba(12, 15, 12, .96); }
+.media-lightbox-stage { display: flex; align-items: center; justify-content: center; width: min(100%, 1200px); height: 100%; min-height: 0; }
+.media-lightbox-stage img, .media-lightbox-stage video { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
+.media-lightbox-stage video { width: 100%; height: 100%; }
+.media-lightbox-close, .media-lightbox-arrow { position: absolute; z-index: 2; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.4); border-radius: 50%; background: rgba(0,0,0,.45); color: white; cursor: pointer; }
+.media-lightbox-close { top: 18px; right: 22px; width: 44px; height: 44px; font-size: 30px; }
+.media-lightbox-arrow { top: 50%; width: 48px; height: 48px; transform: translateY(-50%); font-size: 36px; }
+.media-lightbox-arrow.previous { left: 18px; }
+.media-lightbox-arrow.next { right: 18px; }
+.media-lightbox-count { position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%); color: white; font-size: 13px; }
+.media-lightbox-thumbnails { position: absolute; bottom: 12px; left: 50%; display: flex; gap: 8px; max-width: calc(100vw - 32px); overflow-x: auto; transform: translateX(-50%); }
+.media-lightbox-thumbnails button { flex: 0 0 54px; width: 54px; height: 48px; overflow: hidden; border: 2px solid transparent; border-radius: 4px; background: #333; color: white; cursor: pointer; }
+.media-lightbox-thumbnails button.active { border-color: #fff; }
+.media-lightbox-thumbnails img { width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 600px) { .media-lightbox { padding: 56px 8px 94px; } .media-lightbox-arrow.previous { left: 6px; } .media-lightbox-arrow.next { right: 6px; } .media-lightbox-arrow { width: 38px; height: 38px; } }

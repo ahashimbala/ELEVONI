@@ -69,6 +69,7 @@ test("top-level categories are groups and cannot be mistaken for listings", () =
     topLevel.map((category) => category.id),
     [
       "aquaculture-fishery",
+      "food-crops",
       "livestock",
     ],
   );
@@ -140,6 +141,11 @@ test("Livestock & Meat is not classified as cattle, sheep, or goats", () => {
 
 test("children are discoverable from their parent", () => {
   assert.deepEqual(
+    listChildCategories("food-crops").map((category) => category.id),
+    ["grains-cereals", "vegetables-fruits", "tubers-starch"],
+  );
+
+  assert.deepEqual(
     listChildCategories("livestock").map((category) => category.id),
     ["poultry-eggs", "cattle", "sheep", "goats"],
   );
@@ -148,4 +154,16 @@ test("children are discoverable from their parent", () => {
     listChildCategories("aquaculture-fishery").map((category) => category.id),
     ["smoked-catfish", "other-fish-aquaculture", "fishery-products-equipment"],
   );
+});
+
+
+test("Food Crops is a live marketplace category group", () => {
+  const foodCrops = getCategoryById("food-crops");
+  assert.equal(foodCrops.type, CATEGORY_TYPES.GROUP);
+  for (const id of ["grains-cereals", "vegetables-fruits", "tubers-starch"]) {
+    const category = getCategoryById(id);
+    assert.equal(category.parentId, "food-crops");
+    assert.equal(category.channel, CATEGORY_CHANNELS.MARKETPLACE);
+    assert.equal(category.launchStatus, CATEGORY_LAUNCH_STATUSES.LIVE);
+  }
 });
