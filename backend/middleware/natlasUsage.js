@@ -1,8 +1,5 @@
 import { recordNAtlasUsage } from "../services/natlasUsage.js";
-import {
-  NATLAS_USER_LIMIT,
-  resolveNAtlasIdentity,
-} from "../services/natlasUsageRules.mjs";
+import { NATLAS_USER_LIMIT, resolveNAtlasIdentity } from "../services/natlasUsageRules.mjs";
 
 export function prepareNAtlasIdentity(req, res, next) {
   if (process.env.NATLAS_ENABLED === "false") {

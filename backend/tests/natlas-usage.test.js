@@ -15,7 +15,7 @@ const cutoff = new Date(now.getTime() - NATLAS_ROLLING_WINDOW_MS);
 
 test("the N-ATLaS cap is 1,000 unique users over exactly 30 days", () => {
   assert.equal(NATLAS_USER_LIMIT, 1000);
-  assert.equal(NATLAS_MAX_ACTIVE_USERS, 999);
+  assert.equal(NATLAS_MAX_ACTIVE_USERS, 1000);
   assert.equal(NATLAS_ROLLING_WINDOW_MS, 30 * 24 * 60 * 60 * 1000);
   assert.equal(cutoff.toISOString(), "2026-10-08T10:00:00.000Z");
 });
@@ -50,9 +50,8 @@ test("HMAC identity hashes are stable and do not expose source identifiers", () 
 test("admission filter allows an existing active user or a new user below capacity", () => {
   const filter = buildNAtlasAdmissionFilter("hashed-user", cutoff);
   assert.equal(filter._id, "natlas-rolling-30d");
-  assert.equal(filter.$expr.$and[1].$or.length, 2);
-  assert.equal(filter.$expr.$and[0].$lt[1], NATLAS_USER_LIMIT);
-  assert.equal(filter.$expr.$and[1].$or[1].$lt[1], NATLAS_MAX_ACTIVE_USERS);
+  assert.equal(filter.$expr.$or.length, 2);
+  assert.equal(filter.$expr.$or[1].$lt[1], NATLAS_MAX_ACTIVE_USERS);
 });
 
 test("admission update prunes expired users, refreshes returning users and appends new users", () => {
@@ -90,7 +89,7 @@ test("production usage hashing fails closed without the dedicated secret", async
 
 test("authenticated usage can merge the same browser's anonymous identity", () => {
   const filter = buildNAtlasAdmissionFilter("account-hash", cutoff, "anonymous-hash");
-  assert.equal(filter.$expr.$and[1].$or.length, 3);
+  assert.equal(filter.$expr.$or.length, 3);
   const pipeline = buildNAtlasAdmissionPipeline({
     userKey: "account-hash", aliasKey: "anonymous-hash", identityType: "account",
     service: "customer-chat", now, cutoff,

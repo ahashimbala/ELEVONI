@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { natlasApi } from "../../api";
 import { PRODUCT_CATEGORIES, PRODUCT_UNITS, SUBCATEGORIES_BY_CATEGORY } from "../../constants/categoryExport";
 import "./NAtlas.css";
@@ -20,7 +19,8 @@ const LANGUAGE_TTS_CODES = { "en-NG": "en", "pcm-NG": "pcm", "ha-NG": "ha", "ig-
 const suggestions = [
   { icon: "＋", title: "Prepare a product listing", detail: "Turn your product details into a draft" },
   { icon: "⌕", title: "Find products on Elevoni", detail: "Explore what buyers can discover" },
-  { icon: "▤", title: "Understand my sales records", detail: "Learn from sales you have recorded" },
+  { icon: "▤", title: "Record a sale", detail: "Add a sale by speaking naturally" },
+  { icon: "⌕", title: "Understand my sales records", detail: "Learn from sales you have recorded" },
 ];
 
 const requestErrorMessage = (error, fallback) => {
@@ -31,6 +31,11 @@ const requestErrorMessage = (error, fallback) => {
   return error?.response?.data?.message || error?.message || fallback;
 };
 
+const createSalesSubmissionReference = () => {
+  const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `sale-${id}`;
+};
+
 export default function NAtlas() {
   const [language, setLanguage] = useState(() => { const saved = localStorage.getItem("natlas-language"); return LANGUAGES.some((item) => item.code === saved) ? saved : "en-NG"; });
   const [input, setInput] = useState("");
@@ -38,6 +43,9 @@ export default function NAtlas() {
   const [listening, setListening] = useState(false);
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState(null);
+  const [salesDraft, setSalesDraft] = useState(null);
+  const [savingListing, setSavingListing] = useState(false);
+  const [savingSale, setSavingSale] = useState(false);
   const [notice, setNotice] = useState("");
   const [speakingMessage, setSpeakingMessage] = useState(null);
   const recorderRef = useRef(null);
@@ -285,14 +293,45 @@ export default function NAtlas() {
       if (!response.data?.success || !result?.reply) throw new Error("Elevoni Assistant returned an unexpected response.");
       if (!mountedRef.current) return;
       if (result.draft) {
+        setSalesDraft(null);
         setDraft((current) => ({
           name: result.draft.name || current?.name || "",
           category: result.draft.category || current?.category || "",
           subcategory: result.draft.subcategory || current?.subcategory || "",
           quantity: result.draft.quantity ?? current?.quantity ?? "",
-          unit: result.draft.unit || current?.unit || "kg",
+          unit: result.draft.unit || current?.unit || PRODUCT_UNITS[0],
           price: result.draft.price ?? current?.price ?? "",
+          description: result.draft.description || current?.description || "",
+          originState: result.draft.originState || current?.originState || "",
+          originLga: result.draft.originLga || current?.originLga || "",
+          species: result.draft.species || current?.species || "",
+          condition: result.draft.condition || current?.condition || "",
+          productionMethod: result.draft.productionMethod || current?.productionMethod || "",
+          weightRange: result.draft.weightRange || current?.weightRange || "",
           sourceText: result.draft.sourceText || text,
+        }));
+      }
+      if (result.salesDraft) {
+        setDraft(null);
+        setSalesDraft((current) => ({
+          submissionReference: current?.submissionReference || createSalesSubmissionReference(),
+          productName: result.salesDraft.productName || current?.productName || "",
+          unit: result.salesDraft.unit || current?.unit || "",
+          quantity: result.salesDraft.quantity ?? current?.quantity ?? "",
+          unitPrice: result.salesDraft.unitPrice ?? current?.unitPrice ?? "",
+          saleDate: result.salesDraft.saleDate || current?.saleDate || "",
+          salesChannel: result.salesDraft.salesChannel || current?.salesChannel || "",
+          paymentStatus: result.salesDraft.paymentStatus || current?.paymentStatus || "",
+          amountReceived: result.salesDraft.amountReceived ?? current?.amountReceived ?? "",
+          fulfilmentStatus: result.salesDraft.fulfilmentStatus || current?.fulfilmentStatus || "pending",
+          buyerIdentityStatus: result.salesDraft.buyerIdentityStatus || current?.buyerIdentityStatus || "unknown",
+          buyerName: result.salesDraft.buyerName || current?.buyerName || "",
+          buyerContact: result.salesDraft.buyerContact || current?.buyerContact || "",
+          buyerState: result.salesDraft.buyerState || current?.buyerState || "",
+          buyerArea: result.salesDraft.buyerArea || current?.buyerArea || "",
+          saleTime: result.salesDraft.saleTime || current?.saleTime || "",
+          notes: result.salesDraft.notes || current?.notes || "",
+          sourceText: result.salesDraft.sourceText || text,
         }));
       }
       setMessages((current) => [...current, { role: "assistant", text: result.reply }]);
@@ -311,38 +350,117 @@ export default function NAtlas() {
   };
 
   const updateDraft = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
-  const draftReady = draft && draft.name.trim() && draft.category && draft.subcategory && draft.quantity && Number(draft.quantity) > 0 && draft.price !== "" && Number(draft.price) > 0;
+  const updateSalesDraft = (key, value) => setSalesDraft((current) => ({ ...current, [key]: value }));
+  const draftReady = Boolean(draft && draft.name.trim() && draft.category && draft.subcategory && draft.unit && draft.quantity && Number(draft.quantity) > 0 && draft.price !== "" && Number(draft.price) > 0 && draft.originState?.trim());
+  const saleTotal = Number(salesDraft?.quantity || 0) * Number(salesDraft?.unitPrice || 0);
+  const resolvedAmountReceived = salesDraft?.paymentStatus === "paid" ? saleTotal : salesDraft?.paymentStatus === "unpaid" ? 0 : Number(salesDraft?.amountReceived || 0);
+  const salesDraftReady = Boolean(salesDraft && salesDraft.productName?.trim() && salesDraft.unit && Number(salesDraft.quantity) > 0 && Number(salesDraft.unitPrice) > 0 && /^\d{4}-\d{2}-\d{2}$/.test(salesDraft.saleDate || "") && salesDraft.salesChannel && salesDraft.paymentStatus && Number.isFinite(resolvedAmountReceived) && resolvedAmountReceived >= 0 && resolvedAmountReceived <= saleTotal && (salesDraft.paymentStatus !== "partial" || (resolvedAmountReceived > 0 && resolvedAmountReceived < saleTotal)) && (salesDraft.buyerIdentityStatus !== "identified" || Boolean(salesDraft.buyerName?.trim() || salesDraft.buyerContact?.trim())) && (salesDraft.buyerIdentityStatus !== "anonymous" || (!salesDraft.buyerName?.trim() && !salesDraft.buyerContact?.trim())));
+
+  const submitListing = async () => {
+    if (!draftReady || savingListing) return;
+    setSavingListing(true);
+    setNotice("");
+    try {
+      const payload = {
+        name: draft.name.trim(),
+        description: draft.description || "",
+        price: Number(draft.price),
+        category: draft.category,
+        subcategory: draft.subcategory,
+        unitOfMeasure: draft.unit,
+        stockQuantity: Number(draft.quantity),
+        originLocation: { state: draft.originState.trim(), lga: draft.originLga || "" },
+        species: draft.species || "",
+        condition: draft.condition || "",
+        productionMethod: draft.productionMethod || "",
+        weightRange: draft.weightRange || "",
+      };
+      const response = await natlasApi.post("/api/products/vendor", payload);
+      if (!response.data?.success) throw new Error(response.data?.message || "The listing could not be submitted.");
+      setDraft(null);
+      setMessages((current) => [...current, { role: "assistant", text: "Your product listing has been submitted to Elevoni for review. It is not live on the marketplace yet; it will become available to buyers only after approval." }]);
+      setNotice("Listing submitted for review.");
+    } catch (error) {
+      setNotice(error.response?.data?.message || error.message || "Unable to submit this listing. Please review the details and try again.");
+    } finally {
+      setSavingListing(false);
+    }
+  };
+
+  const submitSalesRecord = async () => {
+    if (!salesDraftReady || savingSale) return;
+    setSavingSale(true);
+    setNotice("");
+    try {
+      const payload = {
+        submissionReference: salesDraft.submissionReference || createSalesSubmissionReference(),
+        productName: salesDraft.productName.trim(),
+        unit: salesDraft.unit,
+        quantity: Number(salesDraft.quantity),
+        unitPrice: Number(salesDraft.unitPrice),
+        saleDate: salesDraft.saleDate,
+        salesChannel: salesDraft.salesChannel,
+        paymentStatus: salesDraft.paymentStatus,
+        amountReceived: resolvedAmountReceived,
+        fulfilmentStatus: salesDraft.fulfilmentStatus || "pending",
+        buyerIdentityStatus: salesDraft.buyerIdentityStatus || "unknown",
+        buyerName: salesDraft.buyerName || "",
+        buyerContact: salesDraft.buyerContact || "",
+        buyerState: salesDraft.buyerState || "",
+        buyerArea: salesDraft.buyerArea || "",
+        saleTime: salesDraft.saleTime || "",
+        notes: salesDraft.notes || "",
+      };
+      const response = await natlasApi.post("/api/vendor/sales", payload);
+      if (!response.data?.success) throw new Error(response.data?.message || "The sales record could not be saved.");
+      setSalesDraft(null);
+      setMessages((current) => [...current, { role: "assistant", text: "Your sales record has been saved. It is labelled farmer-reported and unverified; it has not been independently verified by Elevoni." }]);
+      setNotice("Sales record saved as farmer-reported and unverified.");
+    } catch (error) {
+      if (error.response?.status === 409 && error.response?.data?.duplicate) {
+        setSalesDraft(null);
+        setMessages((current) => [...current, { role: "assistant", text: "This sales record had already been submitted. I have closed the draft to avoid recording it twice." }]);
+        setNotice("This sales record was already submitted.");
+      } else {
+        setNotice(error.response?.data?.message || error.message || "Unable to save this sales record. Please review the details and try again.");
+      }
+    } finally {
+      setSavingSale(false);
+    }
+  };
 
   return (
-    <section className="natlas-shell">
-      <aside className="natlas-rail">
-        <div className="natlas-rail-brand"><span className="natlas-mark">E</span><span>Elevoni Assistant</span></div>
-        <button className="natlas-new-chat" onClick={() => { cancelActiveRequest(); stopVoicePlayback(); setMessages([]); setDraft(null); setNotice(""); }}>＋ <span>New conversation</span></button>
-        <div className="natlas-rail-label">YOUR WORKSPACE</div>
-        <Link to="/" className="natlas-rail-link">⌂ <span>Vendor dashboard</span></Link>
-        <Link to="/sales" className="natlas-rail-link">▤ <span>Sales records</span></Link>
-        <div className="natlas-rail-bottom"><span className="natlas-status-dot" /> Designed for farmers<br /><small>Powered by Elevoni</small><small className="natlas-model-attribution">N-ATLaS intelligence · ElevenLabs cloud voice</small>
-          <details className="natlas-attribution"><summary>About N-ATLaS</summary>
-            <p>N-ATLaS is an initiative of the Federal Ministry of Communications, Innovation and Digital Economy, and powered by Awarri Technologies.</p>
-            <p>Awarri Technologies and the Federal Government of Nigeria, developers of N-ATLaS (Hausa-ASR / Igbo-ASR / Yoruba-ASR / NigerianAccentedEnglish).</p>
-          </details>
-        </div>
-      </aside>
-
+    <section className="natlas-shell natlas-shell-simple">
       <div className="natlas-main">
         <header className="natlas-topbar">
-          <div><span className="natlas-top-kicker">ELEVONI INTELLIGENCE</span><h1>Elevoni Assistant <span>Intelligence</span></h1></div>
-          <label className="natlas-language"> <span>Language</span><select value={language} disabled={busy || listening} onChange={(event) => { setLanguage(event.target.value); setNotice(event.target.value === "pcm-NG" ? "Pidgin selected. Voice recognition may not capture every Pidgin word correctly. Please review the transcript before sending." : "Language selected. You can type or record a voice message. Some language recognition may need review."); }} aria-label="Choose assistant language">{LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}</select></label>
+          <div className="natlas-heading">
+            <h1>Elevoni Assistant</h1>
+            <p>Manage products and sales by voice or text.</p>
+          </div>
+          <div className="natlas-topbar-actions">
+            <label className="natlas-language">
+              <span>Language</span>
+              <select value={language} disabled={busy || listening} onChange={(event) => {
+                setLanguage(event.target.value);
+                setNotice(event.target.value === "pcm-NG" ? "Pidgin selected. Please review the voice transcript." : "Language updated.");
+              }} aria-label="Choose assistant language">
+                {LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
+              </select>
+            </label>
+            <button type="button" className="natlas-new-chat" onClick={() => {
+              cancelActiveRequest(); stopVoicePlayback(); setMessages([]); setDraft(null); setSalesDraft(null); setNotice("");
+            }}>New chat</button>
+          </div>
         </header>
 
         <div className="natlas-conversation">
           {messages.length === 0 ? (
             <div className="natlas-welcome">
-              <div className="natlas-orb"><span>E</span><i /><b /></div>
-              <p className="natlas-welcome-eyebrow">YOUR FARM BUSINESS ASSISTANT</p>
               <h2>{activeLanguage.greeting}</h2>
-              <p className="natlas-welcome-copy">A simple assistant for your farm business. Ask questions, prepare product listings and understand your recorded sales.</p>
-              <div className="natlas-suggestions">{suggestions.map((item) => <button key={item.title} onClick={() => send(item.title)}><span>{item.icon}</span><strong>{item.title}</strong><small>{item.detail}</small><b>↗</b></button>)}</div>
+              <p className="natlas-welcome-copy">What would you like to do?</p>
+              <div className="natlas-suggestions">{suggestions.map((item) => <button key={item.title} onClick={() => send(item.title)}>
+                <span aria-hidden="true">{item.icon}</span><strong>{item.title}</strong>
+              </button>)}</div>
             </div>
           ) : (
             <div className="natlas-thread">
@@ -354,26 +472,51 @@ export default function NAtlas() {
         </div>
 
         {draft && <section className="natlas-draft">
-          <div className="natlas-draft-head"><div><span className="natlas-draft-label">ASSISTED LISTING</span><h3>Review your product draft</h3></div><button onClick={() => setDraft(null)} aria-label="Close draft">×</button></div>
-          <p className="natlas-draft-note">AI-assisted draft only. Nothing has been published or saved. Review every field, then continue to the vendor listing form. Vendor approval still applies.</p>
+          <div className="natlas-draft-head"><div><span className="natlas-draft-label">ASSISTED PRODUCT LISTING</span><h3>Review your product details</h3></div><button onClick={() => setDraft(null)} aria-label="Close draft">×</button></div>
+          <p className="natlas-draft-note">Check every detail. When you confirm, Elevoni submits this listing for administrative review. It will not appear in the marketplace until approved.</p>
           <div className="natlas-draft-grid">
             <label>Product name<input value={draft.name} onChange={(e) => updateDraft("name", e.target.value)} placeholder="e.g. Maize" /></label>
             <label>Category<select value={draft.category} onChange={(e) => setDraft((current) => ({ ...current, category: e.target.value, subcategory: "" }))}><option value="">Choose category</option>{PRODUCT_CATEGORIES.map((v) => <option key={v}>{v}</option>)}</select></label>
             <label>Subcategory<select value={draft.subcategory} onChange={(e) => updateDraft("subcategory", e.target.value)} disabled={!draft.category}><option value="">Choose subcategory</option>{(SUBCATEGORIES_BY_CATEGORY[draft.category] || []).map((v) => <option key={v}>{v}</option>)}</select></label>
-            <label>Quantity<input type="number" min="0" step="any" value={draft.quantity} onChange={(e) => updateDraft("quantity", e.target.value)} placeholder="e.g. 50" /></label>
+            <label>Quantity available<input type="number" min="0" step="any" value={draft.quantity} onChange={(e) => updateDraft("quantity", e.target.value)} placeholder="e.g. 50" /></label>
             <label>Unit<select value={draft.unit} onChange={(e) => updateDraft("unit", e.target.value)}>{PRODUCT_UNITS.map((v) => <option key={v}>{v}</option>)}</select></label>
-            <label>Asking price (₦)<input type="number" min="0" value={draft.price} onChange={(e) => updateDraft("price", e.target.value)} placeholder="Your price" /></label>
+            <label>Price per unit (₦)<input type="number" min="0" value={draft.price} onChange={(e) => updateDraft("price", e.target.value)} placeholder="Your asking price" /></label>
+            <label>State of origin<input value={draft.originState} onChange={(e) => updateDraft("originState", e.target.value)} placeholder="e.g. Kaduna" /></label>
+            <label>LGA / area<input value={draft.originLga} onChange={(e) => updateDraft("originLga", e.target.value)} placeholder="Optional" /></label>
+            <label className="natlas-draft-wide">Description<textarea value={draft.description} onChange={(e) => updateDraft("description", e.target.value)} placeholder="Optional product details" rows={3} /></label>
           </div>
-          <div className="natlas-draft-actions"><span>{draftReady ? "Details look complete — continue in your dashboard to add description and media." : "Complete the required fields to prepare this draft."}</span><Link to="/" onClick={() => { if (draftReady) localStorage.setItem("natlas-product-draft", JSON.stringify({ name: draft.name, category: draft.category, subcategory: draft.subcategory, stockQuantity: draft.quantity, unitOfMeasure: draft.unit, price: draft.price, description: "" })); }} className={draftReady ? "ready" : ""}>Continue to listing form ↗</Link></div>
+          <div className="natlas-draft-actions"><span>{draftReady ? "Review complete? Confirm to submit for approval." : "Complete the product name, category, subcategory, quantity, price and state."}</span><button type="button" onClick={submitListing} disabled={!draftReady || savingListing} className={draftReady ? "ready" : ""}>{savingListing ? "Submitting…" : "Confirm & submit listing"}</button></div>
+        </section>}
+
+        {salesDraft && <section className="natlas-draft natlas-sales-draft">
+          <div className="natlas-draft-head"><div><span className="natlas-draft-label">VOICE SALES RECORD</span><h3>Review your sales details</h3></div><button onClick={() => setSalesDraft(null)} aria-label="Close sales draft">×</button></div>
+          <p className="natlas-draft-note">Check the quantities and money carefully. This will be saved as a farmer-reported, unverified record. Elevoni will not treat it as a platform-verified sale.</p>
+          <div className="natlas-draft-grid">
+            <label>Product sold<input value={salesDraft.productName} onChange={(e) => updateSalesDraft("productName", e.target.value)} placeholder="Product name" /></label>
+            <label>Quantity<input type="number" min="0" step="any" value={salesDraft.quantity} onChange={(e) => updateSalesDraft("quantity", e.target.value)} /></label>
+            <label>Unit<select value={salesDraft.unit} onChange={(e) => updateSalesDraft("unit", e.target.value)}><option value="">Choose unit</option>{PRODUCT_UNITS.map((v) => <option key={v}>{v}</option>)}</select></label>
+            <label>Price per unit (₦)<input type="number" min="0" value={salesDraft.unitPrice} onChange={(e) => updateSalesDraft("unitPrice", e.target.value)} /></label>
+            <label>Sale date<input type="date" value={salesDraft.saleDate} onChange={(e) => updateSalesDraft("saleDate", e.target.value)} /></label>
+            <label>Sales channel<select value={salesDraft.salesChannel} onChange={(e) => updateSalesDraft("salesChannel", e.target.value)}><option value="">Choose channel</option><option value="phone">Phone call</option><option value="whatsapp">WhatsApp</option><option value="in_person">In person</option><option value="other">Other</option></select></label>
+            <label>Payment status<select value={salesDraft.paymentStatus} onChange={(e) => updateSalesDraft("paymentStatus", e.target.value)}><option value="">Choose status</option><option value="paid">Paid in full</option><option value="partial">Part payment</option><option value="unpaid">Unpaid</option></select></label>
+            <label>Amount received (₦)<input type="number" min="0" value={salesDraft.paymentStatus === "paid" ? saleTotal : salesDraft.paymentStatus === "unpaid" ? 0 : salesDraft.amountReceived} onChange={(e) => updateSalesDraft("amountReceived", e.target.value)} disabled={salesDraft.paymentStatus !== "partial"} /></label>
+            <label>Fulfilment<select value={salesDraft.fulfilmentStatus || "pending"} onChange={(e) => updateSalesDraft("fulfilmentStatus", e.target.value)}><option value="pending">Not yet fulfilled</option><option value="fulfilled">Fulfilled</option><option value="cancelled">Cancelled</option></select></label>
+            <label>Buyer identity<select value={salesDraft.buyerIdentityStatus || "unknown"} onChange={(e) => updateSalesDraft("buyerIdentityStatus", e.target.value)}><option value="unknown">Not recorded</option><option value="anonymous">Anonymous</option><option value="identified">Identified</option></select></label>
+            <label>Buyer name<input value={salesDraft.buyerName} onChange={(e) => updateSalesDraft("buyerName", e.target.value)} placeholder="Optional" /></label>
+            <label>Buyer contact<input value={salesDraft.buyerContact} onChange={(e) => updateSalesDraft("buyerContact", e.target.value)} placeholder="Optional" /></label>
+            <label className="natlas-draft-wide">Notes<textarea rows={2} value={salesDraft.notes} onChange={(e) => updateSalesDraft("notes", e.target.value)} placeholder="Optional details" /></label>
+          </div>
+          <div className="natlas-sales-total"><span>Sale total</span><strong>₦{Number.isFinite(saleTotal) ? saleTotal.toLocaleString("en-NG") : "0"}</strong><span>Balance due</span><strong>₦{Math.max(0, saleTotal - resolvedAmountReceived).toLocaleString("en-NG")}</strong></div>
+          <div className="natlas-draft-actions"><span>{salesDraftReady ? "Review the record, then confirm to save." : "Complete product, quantity, unit, unit price, date, sales channel and payment details."}</span><button type="button" onClick={submitSalesRecord} disabled={!salesDraftReady || savingSale} className={salesDraftReady ? "ready" : ""}>{savingSale ? "Saving…" : "Confirm & save sales record"}</button></div>
         </section>}
 
         <div className="natlas-composer-wrap">
           {notice && <p className="natlas-notice" role="status">{notice}</p>}
           <form className="natlas-composer" onSubmit={(event) => { event.preventDefault(); send(); }}>
             <textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(); } }} placeholder={activeLanguage.placeholder} rows={1} aria-label="Type a message to Elevoni Assistant" />
-            <div className="natlas-composer-tools"><span className="natlas-input-hint">AI-assisted answers can be wrong. Review important details before acting.</span><div>{busy && <button type="button" className="natlas-cancel" onClick={cancelActiveRequest}>Cancel</button>}<button type="button" className={`natlas-mic ${listening ? "recording" : ""}`} disabled={busy} onClick={listening ? stopListening : startListening} aria-label={listening ? "Stop recording" : "Start voice input"}>{listening ? <StopIcon /> : <MicIcon />}</button><button type="submit" className="natlas-send" disabled={!input.trim() || busy} aria-label="Send message">↑</button></div></div>
+            <div className="natlas-composer-tools"><span className="natlas-input-hint">Review details before saving.</span><div>{busy && <button type="button" className="natlas-cancel" onClick={cancelActiveRequest}>Cancel</button>}<button type="button" className={`natlas-mic ${listening ? "recording" : ""}`} disabled={busy} onClick={listening ? stopListening : startListening} aria-label={listening ? "Stop recording" : "Start voice input"}>{listening ? <StopIcon /> : <MicIcon />}</button><button type="submit" className="natlas-send" disabled={!input.trim() || busy} aria-label="Send message">↑</button></div></div>
           </form>
-          <p className="natlas-disclaimer">Voice recordings are transcribed by ElevenLabs. N-ATLaS processes the text you send and remains subject to its rolling 30-day usage condition. Spoken replies use configured ElevenLabs cloud voices; language coverage varies.</p>
+          <p className="natlas-disclaimer">Sales records are farmer-reported until independently verified.</p>
         </div>
       </div>
     </section>

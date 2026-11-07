@@ -52,3 +52,12 @@
   .vendor-mobile-nav-icon { font-size:21px; line-height:1.1; }
   .vendor-mobile-nav-item:focus-visible { outline:2px solid #7c8760; outline-offset:-2px; }
 }
+
+.vendor-footer-brand { display:flex; flex-direction:column; gap:6px; }
+.vendor-powered-by { color:#626d48; font-size:12px; font-weight:600; }
+.vendor-powered-by strong { color:#465039; }
+@media(max-width:560px) {
+  .vendor-footer { display:block; }
+  .vendor-footer-inner { padding-bottom:calc(100px + env(safe-area-inset-bottom,0px)); }
+  .vendor-footer-note { text-align:left; }
+}

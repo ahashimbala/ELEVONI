@@ -333,24 +333,33 @@ export default function ElevoniAssistant() {
         <title>Elevoni Assistant | Elevoni Farms</title>
         <meta name="description" content="Use Elevoni Assistant to find agricultural products on Elevoni by voice or text." />
       </Helmet>
-      <header className="elevoni-assistant-header">
-        <Link to="/" className="elevoni-assistant-brand"><span className="elevoni-assistant-brand-mark">E</span><span><strong>Elevoni Assistant</strong><small>By Elevoni</small></span></Link>
-        <Link to="/marketplace" className="elevoni-assistant-marketplace-link">Marketplace</Link>
-        <label className="elevoni-assistant-language"><span>Choose language</span><select value={language} disabled={busy || listening} onChange={(event) => { const nextLanguage = event.target.value; setLanguage(nextLanguage); setNotice(nextLanguage === "ig-NG" ? "Igbo voice input and your configured Igbo cloud voice are enabled. Please help us validate pronunciation and report any unclear words." : nextLanguage === "pcm-NG" ? "Pidgin voice input uses Nigerian English recognition. Please review the transcript; spoken output is an English-voice approximation." : "Language selected. Voice input is processed in the cloud; cloud voice playback depends on the configured language voice."); }} aria-label="Choose Elevoni Assistant language">{LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}</select></label>
+      <header className="elevoni-assistant-toolbar">
+        <div className="elevoni-assistant-page-heading">
+          <h1>Elevoni Assistant</h1>
+          <p>Find products by speaking or typing.</p>
+        </div>
+        <label className="elevoni-assistant-language">
+          <span>Language</span>
+          <select value={language} disabled={busy || listening} onChange={(event) => {
+            const nextLanguage = event.target.value;
+            setLanguage(nextLanguage);
+            setNotice(nextLanguage === "pcm-NG" ? "Pidgin selected. Please review the voice transcript." : "Language updated.");
+          }} aria-label="Choose Elevoni Assistant language">
+            {LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
+          </select>
+        </label>
       </header>
 
       <section className="elevoni-assistant-content" aria-label="Elevoni Assistant customer assistant">
         {messages.length === 0 ? (
           <div className="elevoni-assistant-welcome">
-            <div className="elevoni-assistant-welcome-icon" aria-hidden="true">E</div>
-            <p className="elevoni-assistant-eyebrow">YOUR ELEVONI MARKETPLACE ASSISTANT</p>
-            <h1>{languageInfo.greeting}</h1>
-            <p className="elevoni-assistant-intro">You can speak or type. Tell me the product, quantity and where you need it. I’ll look for real listings on Elevoni.</p>
+            <h2>{languageInfo.greeting}</h2>
+            <p className="elevoni-assistant-intro">What do you need today?</p>
             <div className="elevoni-assistant-quick-prompts">{languageInfo.quickPrompts.map((prompt) => <button type="button" key={prompt} onClick={() => send(prompt)} disabled={busy}>{prompt}</button>)}</div>
           </div>
         ) : (
           <div className="elevoni-assistant-thread">
-            <div className="elevoni-assistant-thread-heading"><div><span>YOUR CONVERSATION</span><strong>Finding the right products</strong></div><button type="button" onClick={resetChat}>New chat</button></div>
+            <div className="elevoni-assistant-thread-heading"><strong>Conversation</strong><button type="button" onClick={resetChat}>New chat</button></div>
             {messages.map((message) => (
               <article className={`elevoni-assistant-message ${message.role}`} key={message.id}>
                 <div className="elevoni-assistant-message-mark">{message.role === "assistant" ? "E" : "You"}</div>
@@ -374,22 +383,16 @@ export default function ElevoniAssistant() {
         <form className="elevoni-assistant-composer" onSubmit={(event) => { event.preventDefault(); void send(); }}>
           <textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); } }} placeholder={languageInfo.placeholder} rows={2} aria-label="Type what you are looking for" disabled={busy || listening} />
           <div className="elevoni-assistant-composer-actions">
-            <span>{listening ? "Recording your voice" : "Speak or type — it’s your choice"}</span>
+            <span>{listening ? "Recording…" : "Speak or type"}</span>
             <div>
               <button type="button" className={`elevoni-assistant-record ${listening ? "recording" : ""}`} onClick={listening ? stopRecording : startRecording} disabled={busy} aria-label={listening ? "Stop recording" : "Record a voice message"}>{listening ? <FaStop aria-hidden="true" /> : <FaMicrophone aria-hidden="true" />}<span>{listening ? "Stop" : "Speak"}</span></button>
               <button type="submit" className="elevoni-assistant-send" disabled={!input.trim() || busy || listening} aria-label="Send message"><FaPaperPlane aria-hidden="true" /><span>Send</span></button>
             </div>
           </div>
         </form>
-        <p className="elevoni-assistant-disclaimer">Elevoni Assistant helps you discover listings. It does not confirm stock, place orders or take payments. Voice recordings are transcribed by ElevenLabs; Elevoni Assistant text responses are generated by N-ATLaS. Confirm quantity, final price and delivery before paying.</p>
-        <p className="elevoni-assistant-usage-note">To meet Awarri’s usage condition, N-ATLaS chat access is subject to a rolling 30-day user condition. If you are not signed in, a random browser ID is stored for this count; message content is not stored in the usage record.</p>
+        <p className="elevoni-assistant-disclaimer">Check availability, final price and delivery with the seller before paying.</p>
       </section>
-      <footer className="elevoni-assistant-footer"><span>Designed for simple access to agricultural markets</span><span>N-ATLaS intelligence · ElevenLabs cloud voice · Elevoni</span>
-        <details className="elevoni-assistant-attribution"><summary>About the technology</summary>
-          <p>N-ATLaS is an initiative of the Federal Ministry of Communications, Innovation and Digital Economy, and powered by Awarri Technologies.</p>
-          <p>Awarri Technologies and the Federal Government of Nigeria, developers of N-ATLaS (Hausa-ASR / Igbo-ASR / Yoruba-ASR / NigerianAccentedEnglish).</p>
-        </details>
-      </footer>
+
     </main>
   );
 }

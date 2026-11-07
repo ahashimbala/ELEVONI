@@ -2,8 +2,8 @@ import { createHmac } from "node:crypto";
 
 export const NATLAS_ROLLING_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 export const NATLAS_USER_LIMIT = 1000;
-// Awarri's condition is treated conservatively as strictly below 1,000 users.
-export const NATLAS_MAX_ACTIVE_USERS = NATLAS_USER_LIMIT - 1;
+// Awarri confirmed no more than 1,000 active end users in a rolling 30-day window.
+export const NATLAS_MAX_ACTIVE_USERS = NATLAS_USER_LIMIT;
 export const NATLAS_USAGE_COUNTER_ID = "natlas-rolling-30d";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function resolveNAtlasIdentity(req) {
@@ -50,17 +50,12 @@ export function buildNAtlasAdmissionFilter(userKey, cutoff, aliasKey = null) {
   const activeKeys = { $map: { input: activeUsers, as: "activeUser", in: "$$activeUser.userKey" } };
   const existingIdentity = [{ $in: [userKey, activeKeys] }];
   if (aliasKey) existingIdentity.push({ $in: [aliasKey, activeKeys] });
-  // New identities are admitted only while the resulting active count stays
-  // strictly below 1,000. Existing active users can continue below the hard cap.
+  // Existing active users remain admissible at the cap; new identities are
+  // admitted only while the resulting rolling set is below the inclusive limit.
   existingIdentity.push({ $lt: [{ $size: activeUsers }, NATLAS_MAX_ACTIVE_USERS] });
   return {
     _id: NATLAS_USAGE_COUNTER_ID,
-    $expr: {
-      $and: [
-        { $lt: [{ $size: activeUsers }, NATLAS_USER_LIMIT] },
-        { $or: existingIdentity },
-      ],
-    },
+    $expr: { $or: existingIdentity },
   };
 }
 

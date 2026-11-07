@@ -18,8 +18,8 @@ const upload = multer({
 // Approved vendor accounts use their stable vendor profile ID for the shared N-ATLaS cap.
 router.use(verifyToken, requireApprovedVendorProfile());
 router.post("/chat", prepareNAtlasIdentity, postNAtlasMessage);
-router.post("/speech", postNAtlasSpeech);
-router.post("/transcribe", (req, res, next) => {
+router.post("/speech", prepareNAtlasIdentity, postNAtlasSpeech);
+router.post("/transcribe", prepareNAtlasIdentity, (req, res, next) => {
   upload.single("file")(req, res, (error) => {
     if (error instanceof multer.MulterError) {
       const status = error.code === "LIMIT_FILE_SIZE" ? 413 : 400;

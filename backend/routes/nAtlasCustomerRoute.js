@@ -14,8 +14,8 @@ const upload = multer({
 // Public storefront access is enabled in production; the backend enforces the rolling 30-day user cap.
 router.use(optionalAuth);
 router.post("/chat", prepareNAtlasIdentity, postCustomerElevoniAssistantMessage);
-router.post("/speech", postCustomerElevoniAssistantSpeech);
-router.post("/transcribe", (req, res, next) => {
+router.post("/speech", prepareNAtlasIdentity, postCustomerElevoniAssistantSpeech);
+router.post("/transcribe", prepareNAtlasIdentity, (req, res, next) => {
   upload.single("file")(req, res, (error) => {
     if (error instanceof multer.MulterError) {
       const status = error.code === "LIMIT_FILE_SIZE" ? 413 : 400;

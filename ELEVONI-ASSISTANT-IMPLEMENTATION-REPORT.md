@@ -1,3 +1,5 @@
+> **Update:** This report documents the earlier implementation baseline. For the current voice-provider routing, farmer voice listing/sales actions, inclusive 1,000-user admission rule and MongoDB upsert correction, see `ELEVONI-ASSISTANT-VOICE-ACTIONS-UPDATE.md` and `N-ATLAS-IMPLEMENTATION-NOTES.md`.
+
 # Elevoni Assistant implementation and verification report
 
 Date: 7 November 2026
@@ -34,7 +36,7 @@ This update is based on `ELEVONI-KONEKTA-PRODUCTION-IMPLEMENTATION.zip` supplied
 
 ## N-ATLaS usage condition
 
-- The MongoDB rolling 30-day admission gate remains in place and admits at most 999 unique N-ATLaS users.
+- The MongoDB rolling 30-day admission gate remains in place and admits at most 1,000 unique N-ATLaS users.
 - The gate now runs on N-ATLaS language-model chat routes only.
 - ElevenLabs transcription and speech-generation calls are independently rate-limited and do not independently consume the N-ATLaS user allowance.
 - The existing hashed identity design, atomic counter, daily usage events, TTL retention and admin usage monitor are retained.

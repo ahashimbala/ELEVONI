@@ -3,6 +3,8 @@ import { createClientAbortContext } from "../utils/clientAbort.js";
 import {
   answerNAtlas,
   ALLOWED_LANGUAGES,
+  transcribeNAtlas,
+  speakNAtlas,
 } from "../services/nAtlasIntelligence.js";
 import { admitNAtlasRequest } from "../middleware/natlasUsage.js";
 import { transcribeElevenLabs, speakElevenLabs } from "../services/elevenLabsVoice.js";
@@ -113,13 +115,26 @@ export async function postNAtlasTranscription(req, res, next) {
       return res.status(429).json({ success: false, message: "You've sent several voice requests in a short time. Please wait a minute and try again." });
     }
 
-    const result = await transcribeElevenLabs({
-      audio: req.file.buffer,
-      filename: req.file.originalname || "elevoni-assistant-voice.webm",
-      mimeType: req.file.mimetype,
-      language,
-      abortSignal: clientAbort.signal,
-    });
+    const useNAtlasVoice = ["ha-NG", "ig-NG", "yo-NG"].includes(language);
+    let result;
+    if (useNAtlasVoice) {
+      req.natlasService = "vendor-transcription";
+      if (!await admitNAtlasRequest(req, res)) return;
+      result = await transcribeNAtlas({
+        audio: req.file.buffer,
+        filename: req.file.originalname || "elevoni-assistant-voice.webm",
+        language,
+        abortSignal: clientAbort.signal,
+      });
+    } else {
+      result = await transcribeElevenLabs({
+        audio: req.file.buffer,
+        filename: req.file.originalname || "elevoni-assistant-voice.webm",
+        mimeType: req.file.mimetype,
+        language,
+        abortSignal: clientAbort.signal,
+      });
+    }
     if (clientAbort.signal.aborted || res.destroyed) return;
     return res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -148,7 +163,15 @@ export async function postNAtlasSpeech(req, res, next) {
       return res.status(429).json({ success: false, message: "You've sent several voice requests in a short time. Please wait a minute and try again." });
     }
 
-    const result = await speakElevenLabs({ text, language, abortSignal: clientAbort.signal });
+    const useNAtlasVoice = ["ha-NG", "ig-NG", "yo-NG"].includes(language);
+    let result;
+    if (useNAtlasVoice) {
+      req.natlasService = "vendor-speech";
+      if (!await admitNAtlasRequest(req, res)) return;
+      result = await speakNAtlas({ text, language, abortSignal: clientAbort.signal });
+    } else {
+      result = await speakElevenLabs({ text, language, abortSignal: clientAbort.signal });
+    }
     if (clientAbort.signal.aborted || res.destroyed) return;
     res.setHeader("Content-Type", result.contentType || "audio/mpeg");
     res.setHeader("Cache-Control", "no-store");

@@ -40,8 +40,11 @@ const VendorLayout = () => {
       <main className="vendor-main"><Outlet /></main>
       <footer className="vendor-footer">
         <div className="vendor-footer-inner">
-          <p>Elevoni Farms <span aria-hidden="true">·</span> Vendor workspace</p>
-          <p className="vendor-footer-note">Vendor approval and product-listing approval are separate. A listing is not a completed order.</p>
+          <div className="vendor-footer-brand">
+            <p>Elevoni Farms <span aria-hidden="true">·</span> Vendor workspace</p>
+            <p className="vendor-powered-by">N-ATLaS voice technology powered by <strong>Awarri Technologies</strong></p>
+          </div>
+          <p className="vendor-footer-note">Vendor approval and listing approval are separate.</p>
         </div>
       </footer>
       <nav className="vendor-mobile-nav" aria-label="Vendor app navigation">

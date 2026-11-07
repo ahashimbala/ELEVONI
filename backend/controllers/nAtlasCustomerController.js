@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createClientAbortContext } from "../utils/clientAbort.js";
 import { ALLOWED_LANGUAGES } from "../services/nAtlasIntelligence.js";
 import { transcribeElevenLabs, speakElevenLabs } from "../services/elevenLabsVoice.js";
+import { transcribeNAtlas, speakNAtlas } from "../services/nAtlasIntelligence.js";
 import { admitNAtlasRequest } from "../middleware/natlasUsage.js";
 import { answerCustomerElevoniAssistant } from "../services/nAtlasCustomer.js";
 
@@ -72,7 +73,15 @@ export async function postCustomerElevoniAssistantTranscription(req, res, next) 
     const language = typeof req.body?.language === "string" ? req.body.language : "en-NG";
     if (!ALLOWED_LANGUAGES.has(language)) return res.status(400).json({ success: false, message: "Choose a supported language." });
     if (!req.file?.buffer?.length) return res.status(400).json({ success: false, message: "Record a voice message before sending." });
-    const result = await transcribeElevenLabs({ audio: req.file.buffer, filename: req.file.originalname || "elevoni-assistant-voice.webm", mimeType: req.file.mimetype, language, abortSignal: abort.signal });
+    const useNAtlasVoice = ["ha-NG", "ig-NG", "yo-NG"].includes(language);
+    let result;
+    if (useNAtlasVoice) {
+      req.natlasService = "customer-transcription";
+      if (!await admitNAtlasRequest(req, res)) return;
+      result = await transcribeNAtlas({ audio: req.file.buffer, filename: req.file.originalname || "elevoni-assistant-voice.webm", language, abortSignal: abort.signal });
+    } else {
+      result = await transcribeElevenLabs({ audio: req.file.buffer, filename: req.file.originalname || "elevoni-assistant-voice.webm", mimeType: req.file.mimetype, language, abortSignal: abort.signal });
+    }
     if (abort.signal.aborted || res.destroyed) return;
     return res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -91,7 +100,15 @@ export async function postCustomerElevoniAssistantSpeech(req, res, next) {
     if (!ALLOWED_LANGUAGES.has(language)) return res.status(400).json({ success: false, message: "Choose a supported language." });
     const key = `${clientKey(req)}:tts`;
     if (!allowRequest(key, MAX_CHAT)) return res.status(429).json({ success: false, message: "Please wait before requesting another voice message." });
-    const result = await speakElevenLabs({ text, language, abortSignal: abort.signal });
+    const useNAtlasVoice = ["ha-NG", "ig-NG", "yo-NG"].includes(language);
+    let result;
+    if (useNAtlasVoice) {
+      req.natlasService = "customer-speech";
+      if (!await admitNAtlasRequest(req, res)) return;
+      result = await speakNAtlas({ text, language, abortSignal: abort.signal });
+    } else {
+      result = await speakElevenLabs({ text, language, abortSignal: abort.signal });
+    }
     if (abort.signal.aborted || res.destroyed) return;
     res.setHeader("Content-Type", result.contentType || "audio/mpeg");
     res.setHeader("Cache-Control", "no-store");

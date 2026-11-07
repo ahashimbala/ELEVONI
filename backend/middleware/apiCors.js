@@ -17,7 +17,6 @@ const allowedOrigins = [
     "https://elevonifarms-n6e7yln4p-elevoni.vercel.app",
     "https://localhost",
     "https://elevonifarms-1jtaw8fbc-elevoni.vercel.app",
-    "https://elevonifarms-by17zjz10-elevoni.vercel.app",
     ...(process.env.FRONTEND_URL ?
         process.env.FRONTEND_URL.split(",").map((origin) => origin.trim()).filter(Boolean) : []),
     ...(process.env.ADMIN_URL ?

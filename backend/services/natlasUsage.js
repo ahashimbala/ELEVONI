@@ -41,41 +41,28 @@ export async function recordNAtlasUsage({ identity, identityType, aliasIdentity,
   const cutoff = new Date(now.getTime() - NATLAS_ROLLING_WINDOW_MS);
   await ensureEventIndexes();
   const counter = mongoose.connection.db.collection("natlasusagecounters");
-    let admitted = false;
+  let admitted = false;
 
-  // Step 1: Ensure the singleton counter exists.
-  // This upsert uses only an ordinary _id equality filter.
+  // Initialise the singleton separately. The admission filter contains $expr,
+  // which MongoDB does not permit in an upsert query predicate.
   try {
     await counter.updateOne(
       { _id: NATLAS_USAGE_COUNTER_ID },
-      {
-        $setOnInsert: {
-          users: [],
-          blockedRequests: 0,
-        },
-      },
+      { $setOnInsert: { users: [], blockedRequests: 0 } },
       { upsert: true },
     );
   } catch (error) {
-    // Another server instance may have created the singleton concurrently.
+    // Concurrent instances may race to create the same singleton.
     if (!isDuplicateKey(error)) throw error;
   }
 
-  // Step 2: Atomically admit the user.
-  // IMPORTANT: No upsert here because the filter contains $expr.
+  // The guarded update remains atomic across backend instances. Never upsert
+  // with the $expr admission filter.
   const result = await counter.updateOne(
     buildNAtlasAdmissionFilter(userKey, cutoff, aliasKey),
-    buildNAtlasAdmissionPipeline({
-      userKey,
-      identityType,
-      service,
-      now,
-      cutoff,
-      aliasKey,
-    }),
+    buildNAtlasAdmissionPipeline({ userKey, identityType, service, now, cutoff, aliasKey }),
     { upsert: false },
   );
-
   admitted = result.matchedCount === 1;
 
   if (!admitted) {
@@ -150,7 +137,7 @@ export async function getNAtlasUsageSnapshot({ now = new Date() } = {}) {
     remaining: Math.max(0, NATLAS_MAX_ACTIVE_USERS - activeUsers),
     expiringWithin24h,
     percentUsed: Number(((activeUsers / NATLAS_USER_LIMIT) * 100).toFixed(1)),
-    status: activeUsers >= NATLAS_USER_LIMIT ? "blocked" : activeUsers >= NATLAS_MAX_ACTIVE_USERS ? "new-user-admission-paused" : "enabled",
+    status: activeUsers > NATLAS_USER_LIMIT ? "blocked" : activeUsers >= NATLAS_MAX_ACTIVE_USERS ? "new-user-admission-paused" : "enabled",
     windowStart: cutoff.toISOString(),
     measuredAt: now.toISOString(),
     blockedRequests: Number(counter?.blockedRequests || 0),

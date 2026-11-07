@@ -86,7 +86,7 @@ const App = () => {
     <HelmetProvider>
       <ScrollToTop />
       {showLogin ? <LoginPopup setShowLogin={handleSetShowLogin} redirectOutcome={googleRedirectOutcome} /> : <></>}
-      {!isElevoniAssistantPage && <Navbar setShowLogin={setShowLogin} />}
+      <Navbar setShowLogin={setShowLogin} />
       <div className={`app${isElevoniAssistantPage ? " app-elevoni-assistant" : ""}`}>
         <ToastContainer position="top-right" autoClose={3000} theme="light" />
         <Routes>
@@ -109,7 +109,7 @@ const App = () => {
           <Route path="/privacy" element={<PrivacyPolicy />} />
         </Routes>
       </div>
-      {!isInstalledApp() && !isElevoniAssistantPage && <Footer />}
+      {!isInstalledApp() && <Footer />}
       <MobileBottomNav setShowLogin={handleSetShowLogin} />
     </HelmetProvider>
   );

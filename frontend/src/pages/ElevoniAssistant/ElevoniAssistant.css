@@ -12,3 +12,39 @@
 @media(max-width:390px){.elevoni-assistant-marketplace-link{display:none}}
 
 .elevoni-assistant-usage-note{text-align:center;font-size:10px;line-height:1.45;color:#9aa193;margin:5px auto 0;max-width:690px}
+
+
+/* Shared Elevoni storefront styling: use the global navbar, typography and sage actions. */
+.elevoni-assistant-page { width:min(100%,1120px); max-width:1120px; min-height:min(760px,calc(100dvh - 150px)); padding:clamp(18px,3vw,34px) clamp(14px,3vw,28px) 26px; --k-green:var(--elevoni-sage); --k-line:var(--elevoni-line); --k-ink:var(--elevoni-ink); --k-muted:var(--elevoni-muted); }
+.elevoni-assistant-toolbar { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:4px 0 18px; border-bottom:1px solid var(--elevoni-line); }
+.elevoni-assistant-page-heading h1 { margin:0; color:var(--elevoni-ink); font-size:clamp(21px,2.8vw,27px); font-weight:650; letter-spacing:-.04em; }
+.elevoni-assistant-page-heading p { margin:3px 0 0; color:var(--elevoni-muted); font-size:13px; }
+.elevoni-assistant-language { color:var(--elevoni-text); font-size:12px; }
+.elevoni-assistant-language select { min-height:42px; border:1px solid var(--elevoni-line); border-radius:var(--elevoni-radius); padding:0 12px; color:var(--elevoni-ink); }
+.elevoni-assistant-content { min-height:380px; }
+.elevoni-assistant-welcome { margin:clamp(48px,9vh,88px) auto 34px; }
+.elevoni-assistant-welcome h2 { margin:0; color:var(--elevoni-ink); font-size:clamp(24px,3.5vw,32px); font-weight:600; letter-spacing:-.045em; }
+.elevoni-assistant-intro { margin:8px auto 22px; font-size:14px; }
+.elevoni-assistant-quick-prompts button { border-radius:var(--elevoni-radius); color:var(--elevoni-text); min-height:44px; }
+.elevoni-assistant-quick-prompts button:hover { border-color:#cbd0c2; background:var(--elevoni-cream); }
+.elevoni-assistant-send,.elevoni-assistant-navigation { background:var(--elevoni-sage); border-color:var(--elevoni-sage); border-radius:var(--elevoni-radius); }
+.elevoni-assistant-send:hover,.elevoni-assistant-navigation:hover { background:var(--elevoni-sage-dark); border-color:var(--elevoni-sage-dark); }
+.elevoni-assistant-record { border-radius:var(--elevoni-radius); color:var(--elevoni-sage-dark); }
+.elevoni-assistant-composer { border-radius:var(--elevoni-radius-lg); box-shadow:0 8px 24px rgba(25,28,23,.06); }
+.elevoni-assistant-thread-heading { margin-bottom:20px; }
+.elevoni-assistant-thread-heading strong { color:var(--elevoni-ink); }
+.elevoni-assistant-thread-heading button { border-radius:var(--elevoni-radius); color:var(--elevoni-text); }
+.elevoni-assistant-message-mark { color:var(--elevoni-sage-dark); }
+.elevoni-assistant-disclaimer { font-size:11px; color:var(--elevoni-muted); }
+.elevoni-assistant-composer-area { background:linear-gradient(180deg,rgba(255,255,255,0) 0%,#fff 14%); }
+@media(max-width:750px) {
+  .elevoni-assistant-page { min-height:calc(100dvh - 170px); padding:16px 14px calc(96px + env(safe-area-inset-bottom,0px)); }
+  .elevoni-assistant-toolbar { align-items:flex-start; }
+  .elevoni-assistant-page-heading p { font-size:12px; }
+  .elevoni-assistant-language { display:grid; gap:3px; justify-items:end; }
+  .elevoni-assistant-language select { max-width:138px; }
+  .elevoni-assistant-welcome { margin:48px auto 24px; }
+  .elevoni-assistant-quick-prompts { display:grid; grid-template-columns:1fr; }
+  .elevoni-assistant-quick-prompts button { width:100%; text-align:left; }
+  .elevoni-assistant-composer-area { bottom:calc(62px + env(safe-area-inset-bottom,0px)); }
+}
