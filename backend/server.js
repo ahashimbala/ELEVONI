@@ -14,6 +14,7 @@ import vendorDirectoryRoutes from "./routes/vendorRoutes.js";
 import vendorSalesRouter from "./routes/vendorSalesRoute.js";
 import productRoutes from "./routes/productRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import nAtlasRouter from "./routes/nAtlasRoute.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -43,6 +44,7 @@ app.use("/api/vendor", vendorRouter);
 app.use("/api/vendors", vendorDirectoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/n-atlas", nAtlasRouter);
 
 app.use((req, res, next) => {
     const error = new Error(`Resource not found - ${req.originalUrl}`);
