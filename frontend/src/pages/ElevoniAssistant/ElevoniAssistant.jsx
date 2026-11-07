@@ -166,16 +166,16 @@ export default function ElevoniAssistant() {
     if (!mountedRef.current || signal?.aborted) return;
     const languagePrefix = language === "pcm-NG" ? "en" : language.slice(0, 2);
     const voice = voices.find((item) => item.lang?.toLowerCase().startsWith(languagePrefix));
-    const fallback = voices.find((item) => item.default) || voices[0];
     const utterance = new window.SpeechSynthesisUtterance(text);
     utterance.lang = language === "pcm-NG" ? "en-NG" : language;
-    utterance.voice = voice || fallback || null;
+    // Do not force an unrelated default voice for a different selected language.
+    utterance.voice = voice || null;
     utterance.rate = 0.96;
     utterance.onend = () => { if (mountedRef.current) setSpeakingId(null); };
     utterance.onerror = () => { if (mountedRef.current) { setSpeakingId(null); setNotice("Your device could not play this voice message. Please try again or read the text."); } };
     setSpeakingId(id);
-    if (!voice && fallback) setNotice(`This device has no dedicated ${languageInfo.label} voice. Its default voice will be used, so pronunciation may vary.`);
-    else setNotice(voice ? `Playing with your device's ${languageInfo.label} voice.` : "No speech voice is installed on this device.");
+    if (!voice) setNotice(`No dedicated ${languageInfo.label} voice is installed. Your browser will try the selected language; pronunciation may vary.`);
+    else setNotice(`Playing with your device's ${languageInfo.label} voice.`);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -213,11 +213,11 @@ export default function ElevoniAssistant() {
       if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
       audioUrlRef.current = "";
       audioRef.current = null;
-      if (import.meta.env.VITE_ALLOW_DEVICE_TTS_FALLBACK === "true") {
+      if ("speechSynthesis" in window && typeof window.SpeechSynthesisUtterance !== "undefined") {
         await speakWithDevice(text, id, controller.signal);
       } else {
         setSpeakingId(null);
-        setNotice(error?.response?.data?.message || "Cloud voice is unavailable for this language right now. You can still read the response.");
+        setNotice("Cloud voice could not play this response. Trying your device voice instead; pronunciation may vary.");
       }
     } finally {
       if (voiceRequestRef.current === controller) voiceRequestRef.current = null;
@@ -342,8 +342,11 @@ export default function ElevoniAssistant() {
           <span>Language</span>
           <select value={language} disabled={busy || listening} onChange={(event) => {
             const nextLanguage = event.target.value;
+            stopVoicePlayback();
             setLanguage(nextLanguage);
-            setNotice(nextLanguage === "pcm-NG" ? "Pidgin selected. Please review the voice transcript." : "Language updated.");
+            setMessages([]);
+            setInput("");
+            setNotice(nextLanguage === "pcm-NG" ? "Nigerian Pidgin selected. A new conversation will use this language." : `Language changed to ${LANGUAGES.find((item) => item.code === nextLanguage)?.label || "the selected language"}. A new conversation has started.`);
           }} aria-label="Choose Elevoni Assistant language">
             {LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
           </select>
