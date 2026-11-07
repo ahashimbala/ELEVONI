@@ -41,28 +41,42 @@ export async function recordNAtlasUsage({ identity, identityType, aliasIdentity,
   const cutoff = new Date(now.getTime() - NATLAS_ROLLING_WINDOW_MS);
   await ensureEventIndexes();
   const counter = mongoose.connection.db.collection("natlasusagecounters");
-  let admitted = false;
+    let admitted = false;
+
+  // Step 1: Ensure the singleton counter exists.
+  // This upsert uses only an ordinary _id equality filter.
   try {
-    const result = await counter.updateOne(
-      buildNAtlasAdmissionFilter(userKey, cutoff, aliasKey),
-      buildNAtlasAdmissionPipeline({ userKey, identityType, service, now, cutoff, aliasKey }),
+    await counter.updateOne(
+      { _id: NATLAS_USAGE_COUNTER_ID },
+      {
+        $setOnInsert: {
+          users: [],
+          blockedRequests: 0,
+        },
+      },
       { upsert: true },
     );
-    admitted = result.matchedCount === 1 || result.upsertedCount === 1;
   } catch (error) {
-    // At capacity, upsert cannot match the guarded singleton and the fixed _id
-    // causes a duplicate-key result. Treat that as a normal cap rejection.
+    // Another server instance may have created the singleton concurrently.
     if (!isDuplicateKey(error)) throw error;
-    // Another request may have created the singleton or registered this same
-    // user between our read and upsert. Retry once without upsert so the same
-    // active user is not mistaken for a new user at capacity.
-    const retry = await counter.updateOne(
-      buildNAtlasAdmissionFilter(userKey, cutoff, aliasKey),
-      buildNAtlasAdmissionPipeline({ userKey, identityType, service, now, cutoff, aliasKey }),
-      { upsert: false },
-    );
-    admitted = retry.matchedCount === 1;
   }
+
+  // Step 2: Atomically admit the user.
+  // IMPORTANT: No upsert here because the filter contains $expr.
+  const result = await counter.updateOne(
+    buildNAtlasAdmissionFilter(userKey, cutoff, aliasKey),
+    buildNAtlasAdmissionPipeline({
+      userKey,
+      identityType,
+      service,
+      now,
+      cutoff,
+      aliasKey,
+    }),
+    { upsert: false },
+  );
+
+  admitted = result.matchedCount === 1;
 
   if (!admitted) {
     await counter.updateOne({ _id: NATLAS_USAGE_COUNTER_ID }, { $inc: { blockedRequests: 1 }, $set: { lastBlockedAt: now } }, { upsert: true });
