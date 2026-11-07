@@ -100,6 +100,26 @@ const authMiddleware = (req, res, next) => {
 
 export const verifyToken = authMiddleware;
 
+export const optionalAuth = (req, res, next) => {
+    const token = readToken(req);
+    if (!token) return next();
+    if (!process.env.JWT_SECRET) {
+        return res.status(500).json({ success: false, message: "Authentication is not configured" });
+    }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS256"] });
+        const allowedRoles = ["customer", "vendor", "admin"];
+        if (typeof decoded.id !== "string" || !decoded.id || !allowedRoles.includes(decoded.role)) {
+            return res.status(401).json({ success: false, message: "Invalid authentication token" });
+        }
+        req.auth = Object.freeze({ id: decoded.id, userId: decoded.id, email: typeof decoded.email === "string" ? decoded.email : undefined, role: decoded.role });
+        return next();
+    } catch (error) {
+        const expired = error && error.name === "TokenExpiredError";
+        return res.status(401).json({ success: false, message: expired ? "Session expired. Please log in again." : "Invalid or expired authentication token" });
+    }
+};
+
 export const requireAuth = [authMiddleware];
 
 export const requireRole = (...roles) => (req, res, next) => {

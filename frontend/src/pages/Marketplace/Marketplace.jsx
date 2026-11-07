@@ -4,45 +4,16 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useContext } from "react";
 import { StoreContext } from "../../context/StoreContext";
 import MarketplaceProductCard from "../../components/MarketplaceProductCard/MarketplaceProductCard";
+import { PRODUCT_CATEGORIES, SUBCATEGORIES_BY_CATEGORY } from "../../../../shared/categoryConstants.mjs";
 import { fetchPublicProducts } from "../../utils/marketplace.js";
 import "./Marketplace.css";
 import marketplace from "../../assets/Farm-to-Market Animal Delivery.png"
 
-const CATEGORIES = [
-  "All sectors",
-  "Catfish & Aquaculture",
-  "Fishery Products & Equipment",
-  "Poultry & Eggs",
-  "Livestock & Meat",
-  "Food Crops",
-];
-
 const ALL_TYPES = "All types";
-
+const CATEGORIES = ["All sectors", ...PRODUCT_CATEGORIES];
 const SUBCATEGORIES = {
-  "All sectors": [
-    ALL_TYPES,
-    "Catfish",
-    "Tilapia",
-    "Other Fish",
-    "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting", "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services",
-    "Poultry",
-    "Cattle",
-    "Sheep",
-    "Goats",
-    "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch",
-  ],
-  "Catfish & Aquaculture": [
-    ALL_TYPES,
-    "Catfish",
-    "Tilapia",
-    "Other Fish",
-    "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting",
-  ],
-  "Fishery Products & Equipment": [ALL_TYPES, "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
-  "Poultry & Eggs": [ALL_TYPES, "Poultry"],
-  "Livestock & Meat": [ALL_TYPES, "Cattle", "Sheep", "Goats"],
-  "Food Crops": [ALL_TYPES, "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"],
+  "All sectors": [ALL_TYPES, ...Object.values(SUBCATEGORIES_BY_CATEGORY).flat()],
+  ...Object.fromEntries(Object.entries(SUBCATEGORIES_BY_CATEGORY).map(([category, values]) => [category, [ALL_TYPES, ...values]])),
 };
 
 const CONDITIONS = [

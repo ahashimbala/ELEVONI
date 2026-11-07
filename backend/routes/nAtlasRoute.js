@@ -3,6 +3,7 @@ import multer from "multer";
 import { verifyToken } from "../middleware/auth.js";
 import requireApprovedVendorProfile from "../middleware/vendor.js";
 import { postNAtlasMessage, postNAtlasTranscription, postNAtlasSpeech } from "../controllers/nAtlasController.js";
+import { prepareNAtlasIdentity } from "../middleware/natlasUsage.js";
 
 const router = express.Router();
 const upload = multer({
@@ -14,15 +15,9 @@ const upload = multer({
   },
 });
 
-// Explicit opt-in keeps this private demo integration disabled by default.
-router.use((req, res, next) => {
-  if (process.env.NATLAS_DEMO_ENABLED !== "true") {
-    return res.status(503).json({ success: false, message: "N-ATLaS demo access is disabled. Enable it only in the private development environment." });
-  }
-  return next();
-});
+// Approved vendor accounts use their stable vendor profile ID for the shared N-ATLaS cap.
 router.use(verifyToken, requireApprovedVendorProfile());
-router.post("/chat", postNAtlasMessage);
+router.post("/chat", prepareNAtlasIdentity, postNAtlasMessage);
 router.post("/speech", postNAtlasSpeech);
 router.post("/transcribe", (req, res, next) => {
   upload.single("file")(req, res, (error) => {

@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import VendorLayout from "./components/Layout/VendorLayout";
@@ -16,7 +16,11 @@ const App = () => {
         <Route element={<VendorLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/sales" element={<SalesLog />} />
-          <Route path="/n-atlas" element={<NAtlas />} />
+          <Route path="/assistant" element={<NAtlas />} />
+          <Route path="/elevoni-assistant" element={<Navigate to="/assistant" replace />} />
+          <Route path="/tinka" element={<Navigate to="/assistant" replace />} />
+          <Route path="/konekta" element={<Navigate to="/assistant" replace />} />
+          <Route path="/n-atlas" element={<Navigate to="/assistant" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/apply" element={<Apply />} />
           <Route path="*" element={<NotFound />} />

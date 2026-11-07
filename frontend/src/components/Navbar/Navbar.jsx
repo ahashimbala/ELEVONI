@@ -115,6 +115,7 @@ const Navbar = ({ setShowLogin }) => {
         <li><Link to="/" onClick={handleNavClick} className={location.pathname === "/" ? "active" : ""}>Home</Link></li>
         <li><Link to="/#categories" onClick={handleNavClick} className={location.pathname.startsWith("/category/") ? "active" : ""}>Categories</Link></li>
         <li><Link to="/marketplace" onClick={handleNavClick} className={location.pathname === "/marketplace" ? "active" : ""}>Marketplace</Link></li>
+        {(import.meta.env.VITE_ELEVONI_ASSISTANT_ENABLED === "true" || import.meta.env.VITE_TINKA_ENABLED === "true" || import.meta.env.VITE_KONEKTA_ENABLED === "true") && <li><Link to="/assistant" onClick={handleNavClick} className={location.pathname === "/assistant" ? "active" : ""}>Elevoni Assistant</Link></li>}
         <li><Link to="/#fish-display" onClick={handleNavClick}>Smoked catfish</Link></li>
         <li><Link to="/sell-with-elevoni" onClick={handleNavClick} className={`navbar-sell-link ${location.pathname === "/sell-with-elevoni" ? "active" : ""}`}>Sell with Elevoni <span aria-hidden="true">→</span></Link></li>
         <li><Link to="/about" onClick={handleNavClick} className={location.pathname === "/about" ? "active" : ""}>About</Link></li>

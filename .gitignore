@@ -1,3 +1,38 @@
-node_modules
+# Dependencies and generated builds
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+coverage/
+**/coverage/
+.vercel/
+**/.vercel/
+.gradle/
+**/.gradle/
+.venv/
+**/.venv/
+venv/
+**/venv/
+__pycache__/
+**/__pycache__/
+.cache/
+**/.cache/
 
+# Environment secrets (keep example templates)
+.env
+.env.*
+!.env.example
+!.env.*.example
 *.env
+
+# Private keys, certificates and local logs
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.log
+logs/
+**/logs/

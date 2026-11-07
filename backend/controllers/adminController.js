@@ -1,3 +1,4 @@
+import { getNAtlasUsageSnapshot } from "../services/natlasUsage.js";
 import mongoose from "mongoose";
 import userModel from "../models/userModel.js";
 import vendorProfileModel from "../models/vendorProfileModel.js";
@@ -62,5 +63,13 @@ export const getSystemStats = async (req, res, next) => {
       Product.countDocuments()
     ]);
     return res.status(200).json({ success: true, data: { totalUsers, totalVendors, pendingVendors, approvedVendors, totalProducts, timestamp: new Date().toISOString() } });
+  } catch (error) { return next(error); }
+};
+
+
+export const getNAtlasUsageStats = async (req, res, next) => {
+  try {
+    const data = await getNAtlasUsageSnapshot();
+    return res.status(200).json({ success: true, data });
   } catch (error) { return next(error); }
 };

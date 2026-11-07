@@ -7,7 +7,7 @@ import "./VendorLayout.css";
 const navigation = [
   { to: "/", label: "Home", shortLabel: "Home", icon: "⌂", end: true },
   { to: "/sales", label: "Sales log", shortLabel: "Sales", icon: "▤" },
-  { to: "/n-atlas", label: "N-ATLAS", shortLabel: "N-ATLAS", icon: "✧" },
+  { to: "/assistant", label: "Elevoni Assistant", shortLabel: "Assistant", icon: "✧" },
   { to: "/apply", label: "Application", shortLabel: "Apply", icon: "＋" },
   { to: "/login", label: "Account", shortLabel: "Account", icon: "◎" },
 ];

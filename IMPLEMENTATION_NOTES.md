@@ -2,9 +2,10 @@
 
 ## Included
 
-- The active marketplace is limited to Aquaculture & Fishery and Livestock. Crop and agricultural-produce categories have been removed from the shared taxonomy, storefront, vendor portal, admin filters and backend product permissions. Legacy database records are retained for audit/history but are excluded from active marketplace and vendor-facing responses.
+- The active marketplace supports aquaculture and fisheries, livestock, and Food Crops. Food Crops includes Grains & Cereals, Vegetables & Fruits, and Tubers & Starch. The shared category contract uses the persisted Product.category values and is consumed by backend validation, vendor listings, customer marketplace filters, admin moderation and N-ATLaS listing drafts.
 - Smoked catfish remains connected to the existing catalogue and cart/checkout flow.
-- Livestock subcategories (poultry, cattle, sheep, goats) are filterable in the marketplace. Empty inventory is represented honestly; no sample listings were added.
+- Livestock subcategories (poultry, cattle, sheep, goats) and Food Crops subcategories are filterable in the marketplace. Empty inventory is represented honestly; no sample listings were added.
+- Historical `Smoked Catfish` subcategory records remain schema-valid and editable, but that legacy value is not offered as a new marketplace subcategory.
 - Vendor product records support ordered image/video media entries while retaining the legacy `images` array for compatibility.
 - Approved vendors can upload multiple product images/videos through the vendor portal, preview them, choose a primary image, reorder and remove media, and see upload progress/errors.
 - Marketplace product details can display media galleries, swipe on touch screens, vendor business name/location/description, and the approved vendor application status. Public vendor responses omit contact names and contact channels.
@@ -22,14 +23,19 @@ Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` i
 
 Set `RESEND_API_KEY`, `PASSWORD_RESET_FROM` (verified sender), and `FRONTEND_URL` in the backend hosting environment. Without these values, the recovery endpoint returns a service-unavailable response rather than pretending an email was sent. See `PASSWORD_RECOVERY_SETUP.md`.
 
-## Verification performed in this environment
+## Verification performed in this repair environment
 
-- Shared taxonomy/adapter tests: passed (26 tests).
-- Storefront category configuration/view-model tests: passed (13 tests).
-- JavaScript/ES module syntax checks for backend/shared files: passed.
-- TypeScript parser syntax check for 57 JSX/TSX files: passed.
-- Full frontend rendering tests and production builds could not be run because npm dependencies could not be installed in the environment (the offline npm cache lacks at least one required package). These must be run after installing dependencies locally or in CI.
-- Cloudinary uploads, Resend delivery, MongoDB integration, Paystack payments, and deployed mobile-browser behaviour require live environment configuration and have not been claimed as tested here.
+- Shared taxonomy, category adapter, shared product-category contract, N-ATLaS draft validation, timing logger, timeout hierarchy, client-abort, malformed-JSON and sales-summary tests: passed.
+- Storefront pure JavaScript tests: passed (55 tests).
+- Admin pure JavaScript tests: passed (27 tests).
+- Combined dependency-free backend, shared, storefront and admin tests: passed (156 tests, 0 failures).
+- Backend JavaScript/ES module syntax checks: passed.
+- JSX/TSX syntax parsing: passed (60 files).
+- Relative local import resolution: passed (446 imports checked).
+- Full backend test suite could not be completed because dependencies such as Mongoose, Express, Cloudinary and the N-ATLaS SDK were absent. `npm ci` could not complete because this environment cannot resolve `registry.npmjs.org`.
+- Vendor portal and storefront production builds could not be run because Vite is not installed in this environment. The vendor portal package currently has no `test` script or checked-in vendor-portal test suite.
+- Admin full test suite is blocked by the missing Axios dependency; its dependency-free test files passed.
+- Live MongoDB, private Modal inference, audio transcription and browser recording require the user's configured local environment and authorized private gateway. They have not been claimed as tested here.
 
 ## Operational follow-up
 

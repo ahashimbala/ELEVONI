@@ -13,13 +13,7 @@ import {
 // Marketplace Product.category still stores these display-name values. Keep
 // this list authoritative for product writes until a schema migration is
 // explicitly approved.
-const PRODUCT_CATEGORIES = Object.freeze([
-    "Catfish & Aquaculture",
-    "Poultry & Eggs",
-    "Livestock & Meat",
-    "Fishery Products & Equipment",
-    "Food Crops",
-]);
+import { PRODUCT_CATEGORIES } from "../../shared/categoryConstants.mjs";
 
 const PRODUCT_CATEGORY_SET = new Set(PRODUCT_CATEGORIES);
 

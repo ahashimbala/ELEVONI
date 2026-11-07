@@ -1,19 +1,31 @@
 import axios from "axios";
 import { resolveApiBaseUrl } from "./utils/apiBase";
+import { NATLAS_CLIENT_TIMEOUT_MS } from "../../shared/natlasConfig.mjs";
+
+const baseURL = resolveApiBaseUrl();
 
 const api = axios.create({
-  baseURL: resolveApiBaseUrl(),
+  baseURL,
+  timeout: 120_000,
 });
 
-// Attach the stored vendor-portal token (same key as existing apps) to requests.
-// Browser storage is isolated per origin; this app manages its own session.
-api.interceptors.request.use((config) => {
+// N-ATLaS can legitimately take longer during a private GPU cold start.
+// Keep its longer deadline isolated from ordinary vendor-portal requests.
+export const natlasApi = axios.create({
+  baseURL,
+  timeout: NATLAS_CLIENT_TIMEOUT_MS,
+});
+
+const attachVendorToken = (config) => {
   const token = localStorage.getItem("token");
   if (token) {
     config.headers = config.headers || {};
-    config.headers.token = token;
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-});
+};
+
+api.interceptors.request.use(attachVendorToken);
+natlasApi.interceptors.request.use(attachVendorToken);
 
 export default api;

@@ -27,7 +27,11 @@ const requireApprovedVendor = ({ ProfileModel = vendorProfileModel } = {}) => as
         });
         return next();
     } catch (error) {
-        console.error("Vendor authorization error:", error);
+        // Do not log raw ODM errors: connection details can contain secrets.
+        console.error("Vendor authorization lookup failed", {
+            name: error?.name || "Error",
+            code: error?.code || null,
+        });
         return res.status(500).json({ success: false, message: "Unable to verify vendor access" });
     }
 };

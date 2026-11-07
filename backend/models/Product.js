@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+import { LEGACY_PRODUCT_SUBCATEGORIES, PRODUCT_CATEGORIES, PRODUCT_UNITS, SUBCATEGORIES_BY_CATEGORY } from '../../shared/categoryConstants.mjs';
+
+const PRODUCT_SUBCATEGORIES = Object.freeze([...new Set(Object.values(SUBCATEGORIES_BY_CATEGORY).flat())]);
 
 /**
  * Elevoni Farms Enhanced Product Model Schema
@@ -22,23 +25,17 @@ const productSchema = new mongoose.Schema(
       required: [true, 'Product price is required'],
       min: [0, 'Price must be greater than or equal to 0']
     },
-    subcategory: { type: String, enum: ["", "Poultry", "Cattle", "Sheep", "Goats", "Catfish", "Tilapia", "Other Fish", "Smoked Catfish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services", "Hatchery Services", "Aquaculture Consulting", "Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"], default: "", trim: true },
+    subcategory: { type: String, enum: ["", ...PRODUCT_SUBCATEGORIES, ...LEGACY_PRODUCT_SUBCATEGORIES], default: "", trim: true },
     category: {
       type: String,
       required: [true, 'Category is required'],
-      enum: [
-        'Catfish & Aquaculture',
-        'Poultry & Eggs',
-        'Livestock & Meat',
-        'Fishery Products & Equipment',
-        'Food Crops'
-      ],
+      enum: PRODUCT_CATEGORIES,
       default: 'Catfish & Aquaculture'
     },
     unitOfMeasure: {
       type: String,
       default: 'kg',
-      enum: ['kg', 'gram', 'piece', 'crate', 'ton', 'bag', 'carton', 'litre', 'service', 'hour'],
+      enum: PRODUCT_UNITS,
       trim: true
     },
     species: {

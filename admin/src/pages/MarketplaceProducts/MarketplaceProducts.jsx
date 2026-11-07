@@ -2,17 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import api from "../../api";
 import Pagination from "../../components/Pagination/Pagination";
+import { PRODUCT_CATEGORIES as CATEGORY_FILTERS, SUBCATEGORIES_BY_CATEGORY as SUBCATEGORY_FILTERS } from "../../../../shared/categoryConstants.mjs";
 import "./MarketplaceProducts.css";
 
 const FILTERS = ["pending", "approved", "rejected", "all"];
-const CATEGORY_FILTERS = ["Catfish & Aquaculture", "Fishery Products & Equipment", "Poultry & Eggs", "Livestock & Meat", "Food Crops"];
-const SUBCATEGORY_FILTERS = {
-  "Catfish & Aquaculture": ["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"],
-  "Fishery Products & Equipment": ["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
-  "Poultry & Eggs": ["Poultry"],
-  "Livestock & Meat": ["Cattle", "Sheep", "Goats"],
-  "Food Crops": ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"],
-};
 const label = (status) => ({ pending: "Pending review", approved: "Approved", rejected: "Rejected", all: "All listings" }[status] || status);
 const formatMoney = (value) => `₦${Number(value || 0).toLocaleString("en-NG")}`;
 const vendorLocation = (vendor) => {

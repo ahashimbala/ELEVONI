@@ -27,3 +27,8 @@ test("listing draft validation does not invent missing quantity or price", () =>
   assert.equal(draft.quantity, "");
   assert.equal(draft.price, "");
 });
+
+test("listing draft validation rejects a zero price because product creation requires a positive price", () => {
+  const draft = safeDraft({ name: "Maize", category: "Food Crops", subcategory: "Grains & Cereals", quantity: 10, unit: "kg", price: 0 });
+  assert.equal(draft.price, "");
+});

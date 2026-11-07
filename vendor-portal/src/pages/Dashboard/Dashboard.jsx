@@ -3,18 +3,9 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import api from "../../api";
+import { LEGACY_PRODUCT_SUBCATEGORIES, PRODUCT_CATEGORIES as CATEGORIES, SUBCATEGORIES_BY_CATEGORY } from "../../constants/categoryExport";
 import { AuthContext } from "../../context/auth-context";
 import "./Dashboard.css";
-
-const CATEGORIES = ["Catfish & Aquaculture", "Fishery Products & Equipment", "Poultry & Eggs", "Livestock & Meat", "Food Crops"];
-
-const SUBCATEGORIES_BY_CATEGORY = {
-    "Catfish & Aquaculture": ["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"],
-    "Fishery Products & Equipment": ["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
-    "Poultry & Eggs": ["Poultry"],
-    "Livestock & Meat": ["Cattle", "Sheep", "Goats"],
-    "Food Crops": ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"],
-};
 
 const CONDITIONS = ["Live", "Fresh", "Frozen", "Smoked", "Dried", "Processed"];
 
@@ -40,11 +31,20 @@ const FOCUS_FOR_SUBCATEGORY = {
     "Other Aquaculture": "aquaculture", Fingerlings: "aquaculture", Juveniles: "aquaculture", Broodstock: "aquaculture", "Fish Feed": "aquaculture", "Pond & Tank Equipment": "aquaculture", "Pumps & Aeration": "aquaculture", "Water Testing": "aquaculture", Filtration: "aquaculture", "Hatchery Services": "aquaculture", "Aquaculture Consulting": "aquaculture", "Fresh Fish": "fisheries", "Smoked Fish": "fisheries", "Dried Fish": "fisheries", "Frozen Fish": "fisheries", "Fishing Nets": "fisheries", "Fishing Equipment": "fisheries", "Fish Processing": "fisheries", "Packaging & Storage": "fisheries", "Cold-chain Services": "fisheries",
 };
 
-const subcategoryOptionsFor = (category, focus = []) =>
-    (SUBCATEGORIES_BY_CATEGORY[category] || []).filter((item) => {
+const subcategoryOptionsFor = (category, focus = [], currentSubcategory = "") => {
+    const options = (SUBCATEGORIES_BY_CATEGORY[category] || []).filter((item) => {
         const requiredFocus = FOCUS_FOR_SUBCATEGORY[item];
         return !requiredFocus || focus.includes(requiredFocus);
     });
+    // Keep an existing historical value visible while editing; do not offer it
+    // as a new subcategory on a fresh listing.
+    if (
+        category === "Catfish & Aquaculture"
+        && LEGACY_PRODUCT_SUBCATEGORIES.includes(currentSubcategory)
+        && !options.includes(currentSubcategory)
+    ) options.push(currentSubcategory);
+    return options;
+};
 
 const conditionsForCategory = (category) =>
     category === "Food Crops" ? CROP_CONDITIONS : CONDITIONS;
@@ -171,7 +171,8 @@ const Dashboard = () => {
     useEffect(() => {
         const options = subcategoryOptionsFor(
             form.category,
-            application?.productFocus
+            application?.productFocus,
+            form.subcategory
         );
 
         if (options.includes(form.subcategory)) {
@@ -857,7 +858,8 @@ const Dashboard = () => {
                                             >
                                                 {subcategoryOptionsFor(
                                                     form.category,
-                                                    application?.productFocus
+                                                    application?.productFocus,
+                                                    form.subcategory
                                                 ).map((item) => (
                                                     <option key={item}>
                                                         {item}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import Navbar from "./components/Navbar/Navbar";
 import Home from "./pages/Home/Home";
@@ -19,6 +19,7 @@ import ItemDetails from "./pages/ItemDetails/ItemDetails";
 import CategoryPage from "./pages/Category/CategoryPage";
 import SellWithElevoni from "./pages/Vendor/SellWithElevoni";
 import Marketplace from "./pages/Marketplace/Marketplace";
+import ElevoniAssistant from "./pages/ElevoniAssistant/ElevoniAssistant";
 import Success from "./components/SuccessPage/Success";
 import ReactGA from "./analytics";
 import MobileBottomNav from "./components/MobileBottomNav";
@@ -49,9 +50,13 @@ const isInstalledApp = () => {
   return isNative || isStandalonePwa;
 };
 
+const elevoniAssistantEnabled = import.meta.env.VITE_ELEVONI_ASSISTANT_ENABLED === "true" || import.meta.env.VITE_TINKA_ENABLED === "true" || import.meta.env.VITE_KONEKTA_ENABLED === "true";
+
 const App = () => {
   const [googleRedirectOutcome, setGoogleRedirectOutcome] = useState(readGoogleRedirectOutcome);
   const [showLogin, setShowLogin] = useState(() => Boolean(readGoogleRedirectOutcome()));
+  const location = useLocation();
+  const isElevoniAssistantPage = ["/assistant", "/elevoni-assistant", "/tinka", "/konekta"].includes(location.pathname);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -81,8 +86,8 @@ const App = () => {
     <HelmetProvider>
       <ScrollToTop />
       {showLogin ? <LoginPopup setShowLogin={handleSetShowLogin} redirectOutcome={googleRedirectOutcome} /> : <></>}
-      <Navbar setShowLogin={setShowLogin} />
-      <div className="app">
+      {!isElevoniAssistantPage && <Navbar setShowLogin={setShowLogin} />}
+      <div className={`app${isElevoniAssistantPage ? " app-elevoni-assistant" : ""}`}>
         <ToastContainer position="top-right" autoClose={3000} theme="light" />
         <Routes>
           <Route path="/" element={<Home />} />
@@ -95,12 +100,16 @@ const App = () => {
           <Route path="/category/:slug/:childSlug" element={<CategoryPage />} />
           <Route path="/sell-with-elevoni" element={<SellWithElevoni />} />
           <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/assistant" element={elevoniAssistantEnabled ? <ElevoniAssistant /> : <Navigate to="/marketplace" replace />} />
+          <Route path="/elevoni-assistant" element={<Navigate to="/assistant" replace />} />
+          <Route path="/tinka" element={<Navigate to="/assistant" replace />} />
+          <Route path="/konekta" element={<Navigate to="/assistant" replace />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/delivery" element={<Delivery />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
         </Routes>
       </div>
-      {!isInstalledApp() && <Footer />}
+      {!isInstalledApp() && !isElevoniAssistantPage && <Footer />}
       <MobileBottomNav setShowLogin={handleSetShowLogin} />
     </HelmetProvider>
   );

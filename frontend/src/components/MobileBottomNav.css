@@ -53,3 +53,5 @@
         outline-offset: -2px;
     }
 }
+
+@media (max-width: 750px) { .mobile-bottom-nav.has-elevoni-assistant { grid-template-columns: repeat(5, minmax(0, 1fr)); } .mobile-bottom-nav.has-elevoni-assistant .mobile-bottom-nav__item { font-size: 9px; } }

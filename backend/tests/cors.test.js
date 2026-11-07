@@ -50,6 +50,22 @@ test("normal API POSTs still reject arbitrary origins", async (t) => {
         body: "{}"
     });
 
-    assert.equal(response.status, 500);
-    assert.match(await response.text(), /Not allowed by CORS/);
+    assert.equal(response.status, 403);
+    assert.match(await response.text(), /Origin not allowed by CORS/);
+});
+
+test("storefront visitor identity header is allowed by the production CORS policy", async (t) => {
+    const server = await createServer();
+    t.after(() => closeServer(server));
+    const { port } = server.address();
+    const response = await fetch(`http://127.0.0.1:${port}/api/cart/get`, {
+        method: "OPTIONS",
+        headers: {
+            Origin: "https://elevonifarms.vercel.app",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type,x-elevoni-visitor-id,token"
+        }
+    });
+    assert.equal(response.status, 204);
+    assert.match(response.headers.get("access-control-allow-headers") || "", /x-elevoni-visitor-id/i);
 });

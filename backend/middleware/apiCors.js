@@ -17,6 +17,7 @@ const allowedOrigins = [
     "https://elevonifarms-n6e7yln4p-elevoni.vercel.app",
     "https://localhost",
     "https://elevonifarms-1jtaw8fbc-elevoni.vercel.app",
+    "https://elevonifarms-by17zjz10-elevoni.vercel.app",
     ...(process.env.FRONTEND_URL ?
         process.env.FRONTEND_URL.split(",").map((origin) => origin.trim()).filter(Boolean) : []),
     ...(process.env.ADMIN_URL ?
@@ -40,7 +41,8 @@ const corsOptions = {
     },
     credentials: true,
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "token"]
+    allowedHeaders: ["Content-Type", "Authorization", "token", "X-Elevoni-Visitor-ID"],
+    exposedHeaders: ["X-Request-ID", "X-NATLAS-USAGE-LIMIT", "X-NATLAS-USERS-30D", "X-Natlas-Voice", "X-Natlas-Voice-Note"]
 };
 
 const apiCors = cors(corsOptions);

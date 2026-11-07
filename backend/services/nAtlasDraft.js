@@ -1,14 +1,8 @@
-import { PRODUCT_CATEGORIES } from "./categoryNormalization.js";
+import { PRODUCT_CATEGORIES, PRODUCT_UNITS, SUBCATEGORIES_BY_CATEGORY } from "../../shared/categoryConstants.mjs";
 
-export const SUBCATEGORIES_BY_CATEGORY = Object.freeze({
-  "Catfish & Aquaculture": ["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"],
-  "Fishery Products & Equipment": ["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"],
-  "Poultry & Eggs": ["Poultry"],
-  "Livestock & Meat": ["Cattle", "Sheep", "Goats"],
-  "Food Crops": ["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"],
-});
+export { SUBCATEGORIES_BY_CATEGORY };
 
-const UNITS = new Set(["kg", "gram", "piece", "crate", "ton", "bag", "carton", "litre", "service", "hour"]);
+const UNITS = new Set(PRODUCT_UNITS);
 const cleanString = (value, max = 300) => typeof value === "string" ? value.trim().slice(0, max) : "";
 
 /** Validate model-generated listing suggestions against every active form category. */
@@ -27,6 +21,6 @@ export function safeDraft(value) {
   if (draft.subcategory && !(SUBCATEGORIES_BY_CATEGORY[draft.category] || []).includes(draft.subcategory)) draft.subcategory = "";
   if (draft.unit && !UNITS.has(draft.unit)) draft.unit = "";
   if (draft.quantity && (!Number.isFinite(Number(draft.quantity)) || Number(draft.quantity) <= 0)) draft.quantity = "";
-  if (draft.price && (!Number.isFinite(Number(draft.price)) || Number(draft.price) < 0)) draft.price = "";
+  if (draft.price && (!Number.isFinite(Number(draft.price)) || Number(draft.price) <= 0)) draft.price = "";
   return draft;
 }

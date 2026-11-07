@@ -37,7 +37,7 @@
   .vendor-footer { display:none; }
   .vendor-mobile-nav {
     position:fixed; z-index:50; right:0; bottom:0; left:0;
-    display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+    display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
     padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px));
     border-top:1px solid #e5e7df; background:rgba(255,255,255,.97);
     backdrop-filter:blur(16px); box-shadow:0 -5px 22px rgba(28,36,22,.07);
@@ -45,7 +45,7 @@
   .vendor-mobile-nav-item {
     min-width:0; min-height:56px; display:flex; flex-direction:column;
     align-items:center; justify-content:center; gap:3px; border-radius:10px;
-    color:#687060; font-size:10px; font-weight:650; text-decoration:none;
+    color:#687060; font-size:9px; font-weight:650; text-decoration:none;
     -webkit-tap-highlight-color:transparent;
   }
   .vendor-mobile-nav-item.active { color:#53643d; background:#f1f4eb; }

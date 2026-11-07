@@ -8,19 +8,12 @@ import {
     isProductCategory,
     resolveProductCategoryFilter,
 } from "../services/categoryNormalization.js";
+import { PRODUCT_CATEGORIES as ACTIVE_MARKETPLACE_CATEGORIES, PRODUCT_UNITS, SUBCATEGORIES_BY_CATEGORY } from "../../shared/categoryConstants.mjs";
+import { isValidProductSubcategory } from "../services/productCategoryValidation.js";
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const validObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 const currentUserId = (req) => req.auth && (req.auth.userId || req.auth.id);
-const PRODUCT_UNITS = ["kg", "gram", "piece", "crate", "ton", "bag", "carton", "litre", "service", "hour"];
-const ACTIVE_MARKETPLACE_CATEGORIES = ["Catfish & Aquaculture", "Poultry & Eggs", "Livestock & Meat", "Fishery Products & Equipment", "Food Crops"];
-const SUBCATEGORIES_BY_CATEGORY = Object.freeze({
-    "Catfish & Aquaculture": Object.freeze(["Catfish", "Tilapia", "Other Fish", "Other Aquaculture", "Fingerlings", "Juveniles", "Broodstock", "Fish Feed", "Pond & Tank Equipment", "Pumps & Aeration", "Water Testing", "Filtration", "Hatchery Services", "Aquaculture Consulting"]),
-    "Fishery Products & Equipment": Object.freeze(["Fresh Fish", "Smoked Fish", "Dried Fish", "Frozen Fish", "Fishing Nets", "Fishing Equipment", "Fish Processing", "Packaging & Storage", "Cold-chain Services"]),
-    "Poultry & Eggs": Object.freeze(["Poultry"]),
-    "Livestock & Meat": Object.freeze(["Cattle", "Sheep", "Goats"]),
-    "Food Crops": Object.freeze(["Grains & Cereals", "Vegetables & Fruits", "Tubers & Starch"])
-});
 const ALL_SUBCATEGORIES = Object.freeze([...new Set(Object.values(SUBCATEGORIES_BY_CATEGORY).flat())]);
 const PRODUCT_CONDITIONS = Object.freeze(["Live", "Fresh", "Frozen", "Smoked", "Dried", "Processed"]);
 const PRODUCTION_METHODS = Object.freeze(["Farm-raised", "Wild-caught", "Free-range", "Caged", "Irrigated", "Rain-fed", "Organic", "Greenhouse", "Other"]);
@@ -38,8 +31,6 @@ const FOCUS_FOR_SUBCATEGORY = Object.freeze({
     "Other Fish": "aquaculture",
     "Other Aquaculture": "aquaculture", Fingerlings: "aquaculture", Juveniles: "aquaculture", Broodstock: "aquaculture", "Fish Feed": "aquaculture", "Pond & Tank Equipment": "aquaculture", "Pumps & Aeration": "aquaculture", "Water Testing": "aquaculture", Filtration: "aquaculture", "Hatchery Services": "aquaculture", "Aquaculture Consulting": "aquaculture"
 });
-const validSubcategoryForCategory = (category, subcategory) =>
-    !subcategory || (SUBCATEGORIES_BY_CATEGORY[category] || []).includes(subcategory);
 const requiredFocusForSubcategory = (subcategory) => FOCUS_FOR_SUBCATEGORY[subcategory] || null;
 const profileForUser = (userId) => vendorProfileModel.findOne({ userId });
 
@@ -248,7 +239,7 @@ export const createVendorProduct = async(req, res, next) => {
             Number(price) <= 0 ||
             !isProductCategory(category) ||
             !ACTIVE_MARKETPLACE_CATEGORIES.includes(category) ||
-            !validSubcategoryForCategory(category, subcategory)
+            !isValidProductSubcategory(category, subcategory)
         ) {
             return res.status(400).json({
                 success: false,
@@ -402,7 +393,9 @@ export const updateVendorProduct = async(req, res, next) => {
                 ? req.body.subcategory
                 : product.subcategory;
 
-            if (req.body.subcategory !== undefined && !validSubcategoryForCategory(nextCategory, req.body.subcategory)) {
+            if (req.body.subcategory !== undefined && !isValidProductSubcategory(nextCategory, req.body.subcategory, {
+                allowUnchangedLegacy: req.body.subcategory === product.subcategory && nextCategory === product.category,
+            })) {
                 return res.status(400).json({
                     success: false,
                     message: "Choose a valid product type for the selected category"
@@ -477,7 +470,9 @@ export const updateVendorProduct = async(req, res, next) => {
         const resolvedCategory = req.body.category !== undefined ? req.body.category : product.category;
         const resolvedSubcategory = req.body.subcategory !== undefined ? req.body.subcategory : product.subcategory;
 
-        if (!validSubcategoryForCategory(resolvedCategory, resolvedSubcategory)) {
+        if (!isValidProductSubcategory(resolvedCategory, resolvedSubcategory, {
+            allowUnchangedLegacy: resolvedSubcategory === product.subcategory && resolvedCategory === product.category,
+        })) {
             return res.status(400).json({ success: false, message: "Choose a product type that belongs to the selected category" });
         }
 
