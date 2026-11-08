@@ -164,7 +164,10 @@ const CATEGORIES = Object.freeze([
         eyebrow: "Category 03",
         summary: "Explore grains, cereals, vegetables, fruits and tubers offered by food-crop vendors. Listings and availability depend on approved vendors.",
         status: CATEGORY_STATUS.CATALOGUE,
-        media: null,
+        media: {
+            key: "other",
+            alt: "Food Crops displayed in a market",
+        },
         children: Object.freeze([
             Object.freeze({ slug: "grains-cereals", name: "Grains & Cereals", summary: "Grains and cereal crops offered by approved vendors.", status: CATEGORY_STATUS.CATALOGUE, marketplace: Object.freeze({ category: "Food Crops", subcategory: "Grains & Cereals" }), media: null }),
             Object.freeze({ slug: "vegetables-fruits", name: "Vegetables & Fruits", summary: "Fresh vegetables and fruits offered by approved vendors.", status: CATEGORY_STATUS.CATALOGUE, marketplace: Object.freeze({ category: "Food Crops", subcategory: "Vegetables & Fruits" }), media: null }),
