@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createClientAbortContext } from "../utils/clientAbort.js";
 import { ALLOWED_LANGUAGES } from "../services/nAtlasIntelligence.js";
 import { speakElevenLabs } from "../services/elevenLabsVoice.js";
-import { transcribeOpenAI } from "../services/openaiApi.js";
+import { transcribeAssistantAudio } from "../services/assistantTranscription.js";
 import { answerCustomerElevoniAssistant } from "../services/nAtlasCustomer.js";
 import { checkAssistantDailyQuota, consumeAssistantPrompt, sendAssistantDailyLimit } from "../services/assistantDailyLimit.js";
 
@@ -75,7 +75,7 @@ export async function postCustomerElevoniAssistantTranscription(req, res, next) 
     if (!req.file?.buffer?.length) return res.status(400).json({ success: false, message: "Record a voice message before sending." });
     const dailyQuota = await checkAssistantDailyQuota(req);
     if (!dailyQuota.allowed) return sendAssistantDailyLimit(res, dailyQuota);
-    const result = await transcribeOpenAI({
+    const result = await transcribeAssistantAudio({
       audio: req.file.buffer,
       filename: req.file.originalname || "elevoni-assistant-voice.webm",
       mimeType: req.file.mimetype,

@@ -5,7 +5,7 @@ import {
   ALLOWED_LANGUAGES,
 } from "../services/nAtlasIntelligence.js";
 import { speakElevenLabs } from "../services/elevenLabsVoice.js";
-import { transcribeOpenAI } from "../services/openaiApi.js";
+import { transcribeAssistantAudio } from "../services/assistantTranscription.js";
 import { checkAssistantDailyQuota, consumeAssistantPrompt, sendAssistantDailyLimit } from "../services/assistantDailyLimit.js";
 
 const requestBuckets = new Map();
@@ -116,7 +116,7 @@ export async function postNAtlasTranscription(req, res, next) {
       return res.status(429).json({ success: false, message: "You've sent several voice requests in a short time. Please wait a minute and try again." });
     }
 
-    const result = await transcribeOpenAI({
+    const result = await transcribeAssistantAudio({
       audio: req.file.buffer,
       filename: req.file.originalname || "elevoni-assistant-voice.webm",
       mimeType: req.file.mimetype,
