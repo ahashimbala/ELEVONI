@@ -127,6 +127,16 @@ export async function speakElevenLabs({ text, language = "en-NG", abortSignal, e
     throw providerError("A dedicated cloud voice is not currently configured for this language. You can read the text response.", 422, "ELEVENLABS_VOICE_LANGUAGE_UNAVAILABLE");
   }
   const voiceId = String(env[config.env] || "").trim();
+  // Temporary production diagnostic: log presence only, never the secret Voice ID.
+  // This runs only for the real process.env, not for injected test environments.
+  if (env === process.env) {
+    console.info("[Elevoni ElevenLabs] TTS configuration check", {
+      language,
+      envKey: config.env,
+      voiceIdConfigured: Boolean(voiceId),
+      vercelEnv: process.env.VERCEL_ENV || "unknown",
+    });
+  }
   if (!voiceId) {
     throw providerError(`The ${config.label} cloud voice has not been configured. Add ${config.env} to the backend environment.`, 503, "ELEVENLABS_VOICE_NOT_CONFIGURED");
   }
