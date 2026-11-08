@@ -108,12 +108,18 @@ export default function NAtlas() {
       });
     }
     if (!mountedRef.current || signal?.aborted) return;
-    const requestedCode = LANGUAGE_TTS_CODES[language] || "en";
-    const matchingVoice = voices.find((voice) => voice.lang?.toLowerCase().startsWith(requestedCode));
+    const requestedCode = LANGUAGE_TTS_CODES[language] || language.slice(0, 2);
+    const matchingVoice = voices.find((voice) => voice.lang?.toLowerCase() === language.toLowerCase()
+      || voice.lang?.toLowerCase().startsWith(`${requestedCode.toLowerCase()}-`)
+      || voice.lang?.toLowerCase() === requestedCode.toLowerCase());
+    if (!matchingVoice) {
+      setSpeakingMessage(null);
+      setNotice(`No matching ${activeLanguage.label} voice is available on this device, and the cloud voice could not generate audio. The response is still available as text.`);
+      return;
+    }
     const utterance = new window.SpeechSynthesisUtterance(text);
-    utterance.lang = language === "pcm-NG" ? "en-NG" : language;
-    // Let the browser resolve the selected locale; never substitute an unrelated default voice.
-    utterance.voice = matchingVoice || null;
+    utterance.lang = matchingVoice.lang;
+    utterance.voice = matchingVoice;
     utterance.onend = () => { if (mountedRef.current) setSpeakingMessage(null); };
     utterance.onerror = () => {
       if (mountedRef.current) {
@@ -122,11 +128,7 @@ export default function NAtlas() {
       }
     };
     setSpeakingMessage(messageIndex);
-    if (!matchingVoice) {
-      setNotice(`No dedicated ${activeLanguage.label} voice is installed. Your browser will try the selected language; pronunciation may vary.`);
-    } else {
-      setNotice(`Playing with your device's ${activeLanguage.label} voice.`);
-    }
+    setNotice(`Playing with your device's ${activeLanguage.label} voice.`);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -181,7 +183,7 @@ export default function NAtlas() {
         await speakWithDevice(text, messageIndex, controller.signal);
       } else {
         setSpeakingMessage(null);
-        setNotice("Cloud voice could not play this response. Trying your device voice instead; pronunciation may vary.");
+        setNotice(`Cloud voice could not generate ${activeLanguage.label} audio, and this browser does not support spoken playback. The text response is still available.`);
       }
     } finally {
       if (speechRequestRef.current === controller) speechRequestRef.current = null;

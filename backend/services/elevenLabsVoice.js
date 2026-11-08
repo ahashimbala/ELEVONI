@@ -12,7 +12,7 @@ const STT_LANGUAGE_CODES = Object.freeze({
 
 const TTS_LANGUAGE_CONFIG = Object.freeze({
   "en-NG": { languageCode: "en", env: "ELEVENLABS_ENGLISH_VOICE_ID", label: "Nigerian English" },
-  "pcm-NG": { languageCode: "en", env: "ELEVENLABS_PIDGIN_VOICE_ID", fallbackEnv: "ELEVENLABS_ENGLISH_VOICE_ID", label: "Nigerian Pidgin" },
+  "pcm-NG": { languageCode: "en", env: "ELEVENLABS_PIDGIN_VOICE_ID", label: "Nigerian Pidgin" },
   "ha-NG": { languageCode: "ha", env: "ELEVENLABS_HAUSA_VOICE_ID", label: "Hausa" },
   "yo-NG": { languageCode: "yo", env: "ELEVENLABS_YORUBA_VOICE_ID", label: "Yoruba" },
   "ig-NG": { languageCode: "ig", env: "ELEVENLABS_IGBO_VOICE_ID", label: "Igbo" },
@@ -120,7 +120,7 @@ export async function speakElevenLabs({ text, language = "en-NG", abortSignal, e
   if (!config) {
     throw providerError("A dedicated cloud voice is not currently configured for this language. You can read the text response.", 422, "ELEVENLABS_VOICE_LANGUAGE_UNAVAILABLE");
   }
-  const voiceId = String(env[config.env] || (config.fallbackEnv ? env[config.fallbackEnv] : "") || "").trim();
+  const voiceId = String(env[config.env] || "").trim();
   if (!voiceId) {
     throw providerError(`The ${config.label} cloud voice has not been configured. Add ${config.env} to the backend environment.`, 503, "ELEVENLABS_VOICE_NOT_CONFIGURED");
   }
@@ -160,6 +160,5 @@ export async function speakElevenLabs({ text, language = "en-NG", abortSignal, e
 
 export const ELEVENLABS_LANGUAGE_SUPPORT = Object.freeze({
   speechToText: ["en-NG", "pcm-NG (Nigerian English approximation)", "ha-NG", "ig-NG", "yo-NG"],
-  textToSpeech: ["en-NG", "ha-NG (voice ID required)", "yo-NG (voice ID required)", "ig-NG (voice ID required; validate native-speaker quality)", "pcm-NG (English voice approximation)"],
-  textToSpeechExperimental: ["ig-NG (availability and pronunciation must be verified with the configured ElevenLabs model and cloned voice)"],
+  textToSpeech: ["en-NG (dedicated voice ID required)", "ha-NG (dedicated voice ID required)", "yo-NG (dedicated voice ID required)", "ig-NG (dedicated voice ID required; validate native-speaker quality)", "pcm-NG (dedicated Pidgin voice ID required; no English-voice substitution)"],
 });

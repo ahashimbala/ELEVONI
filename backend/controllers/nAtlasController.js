@@ -168,7 +168,13 @@ export async function postNAtlasSpeech(req, res, next) {
     if (useNAtlasVoice) {
       req.natlasService = "vendor-speech";
       if (!await admitNAtlasRequest(req, res)) return;
-      result = await speakNAtlas({ text, language, abortSignal: clientAbort.signal });
+      try {
+        result = await speakNAtlas({ text, language, abortSignal: clientAbort.signal });
+      } catch (natlasError) {
+        const fallbackVoiceEnv = ({ "ha-NG": "ELEVENLABS_HAUSA_VOICE_ID", "ig-NG": "ELEVENLABS_IGBO_VOICE_ID", "yo-NG": "ELEVENLABS_YORUBA_VOICE_ID" })[language];
+        if (!fallbackVoiceEnv || !process.env[fallbackVoiceEnv]) throw natlasError;
+        result = await speakElevenLabs({ text, language, abortSignal: clientAbort.signal });
+      }
     } else {
       result = await speakElevenLabs({ text, language, abortSignal: clientAbort.signal });
     }

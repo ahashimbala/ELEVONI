@@ -105,7 +105,13 @@ export async function postCustomerElevoniAssistantSpeech(req, res, next) {
     if (useNAtlasVoice) {
       req.natlasService = "customer-speech";
       if (!await admitNAtlasRequest(req, res)) return;
-      result = await speakNAtlas({ text, language, abortSignal: abort.signal });
+      try {
+        result = await speakNAtlas({ text, language, abortSignal: abort.signal });
+      } catch (natlasError) {
+        const fallbackVoiceEnv = ({ "ha-NG": "ELEVENLABS_HAUSA_VOICE_ID", "ig-NG": "ELEVENLABS_IGBO_VOICE_ID", "yo-NG": "ELEVENLABS_YORUBA_VOICE_ID" })[language];
+        if (!fallbackVoiceEnv || !process.env[fallbackVoiceEnv]) throw natlasError;
+        result = await speakElevenLabs({ text, language, abortSignal: abort.signal });
+      }
     } else {
       result = await speakElevenLabs({ text, language, abortSignal: abort.signal });
     }

@@ -164,18 +164,23 @@ export default function ElevoniAssistant() {
       });
     }
     if (!mountedRef.current || signal?.aborted) return;
-    const languagePrefix = language === "pcm-NG" ? "en" : language.slice(0, 2);
-    const voice = voices.find((item) => item.lang?.toLowerCase().startsWith(languagePrefix));
+    const languagePrefix = language === "pcm-NG" ? "pcm" : language.slice(0, 2);
+    const voice = voices.find((item) => item.lang?.toLowerCase() === language.toLowerCase()
+      || item.lang?.toLowerCase().startsWith(`${languagePrefix.toLowerCase()}-`)
+      || item.lang?.toLowerCase() === languagePrefix.toLowerCase());
+    if (!voice) {
+      setSpeakingId(null);
+      setNotice(`No matching ${languageInfo.label} voice is available on this device, and the cloud voice could not generate audio. The response is still available as text.`);
+      return;
+    }
     const utterance = new window.SpeechSynthesisUtterance(text);
-    utterance.lang = language === "pcm-NG" ? "en-NG" : language;
-    // Do not force an unrelated default voice for a different selected language.
-    utterance.voice = voice || null;
+    utterance.lang = voice.lang;
+    utterance.voice = voice;
     utterance.rate = 0.96;
     utterance.onend = () => { if (mountedRef.current) setSpeakingId(null); };
     utterance.onerror = () => { if (mountedRef.current) { setSpeakingId(null); setNotice("Your device could not play this voice message. Please try again or read the text."); } };
     setSpeakingId(id);
-    if (!voice) setNotice(`No dedicated ${languageInfo.label} voice is installed. Your browser will try the selected language; pronunciation may vary.`);
-    else setNotice(`Playing with your device's ${languageInfo.label} voice.`);
+    setNotice(`Playing with your device's ${languageInfo.label} voice.`);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -217,7 +222,7 @@ export default function ElevoniAssistant() {
         await speakWithDevice(text, id, controller.signal);
       } else {
         setSpeakingId(null);
-        setNotice("Cloud voice could not play this response. Trying your device voice instead; pronunciation may vary.");
+        setNotice(`Cloud voice could not generate ${languageInfo.label} audio, and this browser does not support spoken playback. The text response is still available.`);
       }
     } finally {
       if (voiceRequestRef.current === controller) voiceRequestRef.current = null;
@@ -394,6 +399,7 @@ export default function ElevoniAssistant() {
           </div>
         </form>
         <p className="elevoni-assistant-disclaimer">Check availability, final price and delivery with the seller before paying.</p>
+        <p className="elevoni-assistant-attribution">N-ATLaS voice technology powered by <strong>Awarri Technologies</strong></p>
       </section>
 
     </main>

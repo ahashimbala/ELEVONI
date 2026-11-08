@@ -104,3 +104,10 @@ test("ElevenLabs provider rate limits are returned as HTTP 429", async () => {
     (error) => error.code === "ELEVENLABS_RATE_LIMITED" && error.status === 429,
   );
 });
+
+test("Pidgin speech does not silently fall back to an English voice", async () => {
+  await assert.rejects(
+    speakElevenLabs({ text: "How far?", language: "pcm-NG", env: { ...baseEnv, ELEVENLABS_PIDGIN_VOICE_ID: "" } }),
+    (error) => error.code === "ELEVENLABS_VOICE_NOT_CONFIGURED" && error.status === 503,
+  );
+});

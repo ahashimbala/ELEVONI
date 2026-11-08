@@ -53,10 +53,20 @@ async function localizeCustomerReply({ language, fallback, abortSignal, timer })
       stream: false, signal: abortSignal, timeout: NATLAS_SDK_TIMEOUT_MS, maxRetries: 0,
     });
     const translated = clean(typeof result?.content === "string" ? result.content : "", 700).replace(/^['"“”]+|['"“”]+$/g, "");
-    return translated || fallback;
+    if (!translated) {
+      const error = new Error(`Could not prepare the response in ${languageName}. Please try again.`);
+      error.status = 502;
+      error.code = "NATLAS_CUSTOMER_LANGUAGE_ENFORCEMENT_FAILED";
+      throw error;
+    }
+    return translated;
   } catch (error) {
-    timer?.log("customer-localization-fallback", getNAtlasProviderErrorDetails(error));
-    return fallback;
+    timer?.log("customer-localization-failed", { language, ...getNAtlasProviderErrorDetails(error) });
+    if (language === "en-NG") return fallback;
+    const languageError = new Error(`Could not prepare the response in ${languageName}. Please try again.`);
+    languageError.status = 502;
+    languageError.code = "NATLAS_CUSTOMER_LANGUAGE_ENFORCEMENT_FAILED";
+    throw languageError;
   }
 }
 

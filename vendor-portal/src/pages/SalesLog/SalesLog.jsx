@@ -363,6 +363,16 @@ const SalesLog = () => {
 
     const handleProductChange = (event) => {
         const productId = event.target.value;
+        if (productId === "__unlisted__") {
+            setForm((current) => ({
+                ...current,
+                productType: "unlisted",
+                productId: "",
+            }));
+            setFieldErrors({});
+            setFormError("");
+            return;
+        }
         const product =
             products.find(
                 (item) => String(item._id) === String(productId),
@@ -809,6 +819,9 @@ const SalesLog = () => {
                                     >
                                         <option value="">
                                             Choose a product
+                                        </option>
+                                        <option value="__unlisted__">
+                                            No, it is not listed — enter product manually
                                         </option>
                                         {products.map((product) => (
                                             <option

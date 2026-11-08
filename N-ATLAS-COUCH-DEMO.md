@@ -8,7 +8,7 @@ This document began as a private COUCH demonstration runbook. The implementation
 - Customer Elevoni Assistant: buyers can use text or voice to discover real approved listings and navigate Elevoni's marketplace.
 - Five language options are present: Nigerian English, Nigerian Pidgin, Hausa, Igbo and Yoruba. Language selection is not a claim that ASR/TTS quality is equally validated in all five languages.
 - Buyer matching is deterministic after intent extraction and uses actual approved/available listing records. It does not invent suppliers, stock or prices.
-- Hausa, Igbo and Yoruba voice recordings are transcribed and spoken through N-ATLaS; English and Pidgin retain the configured speech provider. Transcripts are returned for user review. Browser/device SpeechSynthesis fallback is disabled by default.
+- Hausa, Igbo and Yoruba voice recordings are transcribed through N-ATLaS; their speech generation attempts the authorized N-ATLaS gateway and may use a dedicated language-specific ElevenLabs voice if configured. English and Pidgin require their own configured ElevenLabs voices. Browser SpeechSynthesis fallback is used only when an exact matching language voice is installed. Transcripts are returned for user review. Live voice availability must be verified per language before claiming it is production-ready.
 
 ## Current usage controls
 

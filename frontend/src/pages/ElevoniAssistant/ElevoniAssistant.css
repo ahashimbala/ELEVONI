@@ -48,3 +48,5 @@
   .elevoni-assistant-quick-prompts button { width:100%; text-align:left; }
   .elevoni-assistant-composer-area { bottom:calc(62px + env(safe-area-inset-bottom,0px)); }
 }
+
+.elevoni-assistant-attribution{margin:9px 0 0;text-align:center;color:#7e8975;font-size:10px;line-height:1.5}.elevoni-assistant-attribution strong{color:#536144;font-weight:700}

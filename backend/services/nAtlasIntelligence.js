@@ -108,6 +108,41 @@ async function getGrounding(vendorId) {
   };
 }
 
+async function enforceSelectedLanguageReply({ reply, language, abortSignal, timer, provider }) {
+  if (language === "en-NG") return reply;
+  const languageName = LANGUAGE_NAMES[language];
+  const natlas = new NAtlas({
+    baseURL: provider.baseURL,
+    apiKey: provider.apiKey,
+    model: provider.model,
+    timeout: NATLAS_SDK_TIMEOUT_MS,
+    maxRetries: 0,
+  });
+  try {
+    timer?.log("reply-language-enforcement-start", { language });
+    const result = await natlas.chat({
+      messages: [
+        { role: "system", content: `You are a professional ${languageName} language editor. Rewrite the supplied assistant reply in natural, clear ${languageName} only, using the appropriate Nigerian variety and standard local script. Do not answer the user, add facts, change numbers, change names, or add explanations. Preserve meaning exactly. Output only the rewritten reply in ${languageName}. Do not use English except for proper names, product names, units, and technical terms that cannot be naturally translated.` },
+        { role: "user", content: reply },
+      ],
+      language: LANGUAGE_HINTS[language],
+      temperature: 0,
+      maxTokens: 500,
+      stream: false,
+      signal: abortSignal,
+      timeout: NATLAS_SDK_TIMEOUT_MS,
+      maxRetries: 0,
+    });
+    const localized = cleanString(result?.content, 4000).replace(/^['"“”]+|['"“”]+$/g, "");
+    if (!localized) throw createProviderError(`Could not prepare a ${languageName} response. Please try again.`, 502, "NATLAS_LANGUAGE_ENFORCEMENT_FAILED");
+    timer?.log("reply-language-enforcement-end", { language });
+    return localized;
+  } catch (error) {
+    if (error?.code === "NATLAS_LANGUAGE_ENFORCEMENT_FAILED") throw error;
+    throwForProviderFailure(error, abortSignal, timer, "reply-language-enforcement");
+  }
+}
+
 export async function answerNAtlas({
   vendorId,
   message,
@@ -202,10 +237,11 @@ export async function answerNAtlas({
 
   timer.log("response-parse-start");
   const parsed = parseNAtlasModelOutput(result?.content);
-  const reply = cleanString(parsed.reply, 4000) || "I couldn't form a clear answer. Could you rephrase that?";
+  const rawReply = cleanString(parsed.reply, 4000) || "I couldn't form a clear answer. Could you rephrase that?";
+  const reply = await enforceSelectedLanguageReply({ reply: rawReply, language, abortSignal, timer, provider });
   const draft = safeDraft(parsed.draft);
   const salesDraft = safeSalesDraft(parsed.salesDraft);
-  timer.log("response-parse-end", { hasDraft: Boolean(draft), hasSalesDraft: Boolean(salesDraft) });
+  timer.log("response-parse-end", { hasDraft: Boolean(draft), hasSalesDraft: Boolean(salesDraft), language });
   return { reply, draft, salesDraft, model: result?.model || provider.model };
 }
 
