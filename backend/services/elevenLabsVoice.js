@@ -127,12 +127,18 @@ export async function speakElevenLabs({ text, language = "en-NG", abortSignal, e
   const apiKey = getApiKey(env);
   const modelId = String(env.ELEVENLABS_TTS_MODEL || "eleven_v3").trim();
   const url = `${ELEVENLABS_API_BASE}/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`;
+  const ttsPayload = { text: spokenText, model_id: modelId };
+  // Eleven Multilingual v2 does not accept language_code. Other configured
+  // models use it to guide text normalization where that language is supported.
+  if (modelId !== "eleven_multilingual_v2") {
+    ttsPayload.language_code = config.languageCode;
+  }
   let response;
   try {
     response = await fetchImpl(url, {
       method: "POST",
       headers: { "xi-api-key": apiKey, "Content-Type": "application/json", Accept: "audio/mpeg" },
-      body: JSON.stringify({ text: spokenText, model_id: modelId, language_code: config.languageCode }),
+      body: JSON.stringify(ttsPayload),
       signal: requestSignal(abortSignal),
     });
   } catch (error) {
@@ -160,5 +166,11 @@ export async function speakElevenLabs({ text, language = "en-NG", abortSignal, e
 
 export const ELEVENLABS_LANGUAGE_SUPPORT = Object.freeze({
   speechToText: [],
-  textToSpeech: ["en-NG (dedicated voice ID required)", "ha-NG (dedicated voice ID required)", "yo-NG (dedicated voice ID required)", "ig-NG (dedicated voice ID required; validate native-speaker quality)", "pcm-NG (dedicated Pidgin voice ID required; no English-voice substitution)"],
+  textToSpeech: [
+    "en-NG: dedicated Nigerian English voice ID required",
+    "ha-NG: dedicated Hausa voice ID required",
+    "yo-NG: dedicated Yoruba voice ID required; Eleven v3 documents Yoruba support",
+    "ig-NG: dedicated Igbo voice ID required; verify the API model/endpoint supports Igbo (the v3 published list omits it, while ElevenLabs' Igbo TTS product page advertises it)",
+    "pcm-NG: dedicated Pidgin-trained voice ID required; sent with English normalization because Pidgin has no separate ElevenLabs language code",
+  ],
 });

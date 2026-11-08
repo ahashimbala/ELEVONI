@@ -24,6 +24,21 @@ function getErrorMessage(error) {
   return error?.response?.data?.message || "Elevoni Assistant could not complete that request. Please try again.";
 }
 
+async function getCloudVoiceErrorMessage(error) {
+  const data = error?.response?.data;
+  if (data && typeof data.text === "function") {
+    try {
+      const body = await data.text();
+      const parsed = JSON.parse(body);
+      if (typeof parsed?.message === "string" && parsed.message.trim()) return parsed.message.trim();
+    } catch { /* non-JSON provider response */ }
+  }
+  const message = error?.response?.data?.message || error?.message;
+  return typeof message === "string" && message.trim()
+    ? message.trim().slice(0, 240)
+    : "ElevenLabs could not generate the selected language's cloud voice.";
+}
+
 function ListingCard({ listing }) {
   const [imageFailed, setImageFailed] = useState(false);
   const imageSrc = !listing.image ? "" : /^https?:\/\//i.test(listing.image)
@@ -35,6 +50,7 @@ function ListingCard({ listing }) {
       <div className="elevoni-assistant-listing-content">
         <strong>{listing.name}</strong>
         <span className="elevoni-assistant-listing-price">{listing.pricePrefix ? `${listing.pricePrefix} ` : ""}{formatNaira(listing.price)} / {listing.unit || "unit"}</span>
+        <span className={`elevoni-assistant-source-tag ${listing.sourceType === "direct" ? "is-direct" : "is-marketplace"}`}>{listing.sourceLabel || (listing.sourceType === "direct" ? "Elevoni Direct" : "Marketplace listing")}</span>
         <span className="elevoni-assistant-listing-vendor">{listing.vendorName || "Approved Elevoni vendor"}</span>
         <span className="elevoni-assistant-listing-location">{[listing.lga, listing.state].filter(Boolean).join(", ") || "Location not provided"}</span>
         {listing.availability && <span className="elevoni-assistant-listing-location">{listing.availability}</span>}
@@ -114,7 +130,7 @@ export default function ElevoniAssistant() {
     setSpeakingId(null);
   };
 
-  const speakWithDevice = async (text, id, signal) => {
+  const speakWithDevice = async (text, id, signal, cloudFailureMessage = "") => {
     if (!("speechSynthesis" in window) || typeof window.SpeechSynthesisUtterance === "undefined") {
       setSpeakingId(null);
       setNotice("Voice playback is not available on this device. You can still read the answer.");
@@ -142,7 +158,8 @@ export default function ElevoniAssistant() {
       || item.lang?.toLowerCase() === languagePrefix.toLowerCase());
     if (!voice) {
       setSpeakingId(null);
-      setNotice(`No matching ${languageInfo.label} voice is available on this device, and the cloud voice could not generate audio. The response is still available as text.`);
+      const cloudDetail = cloudFailureMessage ? `Cloud voice: ${cloudFailureMessage} ` : "Cloud voice is unavailable. ";
+      setNotice(`${cloudDetail}No matching ${languageInfo.label} voice is installed on this device. The response is still available as text.`);
       return;
     }
     const utterance = new window.SpeechSynthesisUtterance(text);
@@ -152,7 +169,9 @@ export default function ElevoniAssistant() {
     utterance.onend = () => { if (mountedRef.current) setSpeakingId(null); };
     utterance.onerror = () => { if (mountedRef.current) { setSpeakingId(null); setNotice("Your device could not play this voice message. Please try again or read the text."); } };
     setSpeakingId(id);
-    setNotice(`Playing with your device's ${languageInfo.label} voice.`);
+    setNotice(cloudFailureMessage
+      ? `Cloud voice unavailable (${cloudFailureMessage}). Playing with your device's ${languageInfo.label} voice instead.`
+      : `Playing with your device's ${languageInfo.label} voice.`);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -190,11 +209,12 @@ export default function ElevoniAssistant() {
       if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
       audioUrlRef.current = "";
       audioRef.current = null;
+      const cloudFailureMessage = await getCloudVoiceErrorMessage(error);
       if ("speechSynthesis" in window && typeof window.SpeechSynthesisUtterance !== "undefined") {
-        await speakWithDevice(text, id, controller.signal);
+        await speakWithDevice(text, id, controller.signal, cloudFailureMessage);
       } else {
         setSpeakingId(null);
-        setNotice(`Cloud voice could not generate ${languageInfo.label} audio, and this browser does not support spoken playback. The text response is still available.`);
+        setNotice(`Cloud voice failed: ${cloudFailureMessage} This browser also does not support spoken playback. The text response is still available.`);
       }
     } finally {
       if (voiceRequestRef.current === controller) voiceRequestRef.current = null;
@@ -348,7 +368,7 @@ export default function ElevoniAssistant() {
                   <p>{message.text}</p>
                   {message.role === "assistant" && !message.error && <button type="button" className={`elevoni-assistant-play ${speakingId === message.id ? "playing" : ""}`} onClick={() => speak(message.text, message.id)}><FaVolumeUp aria-hidden="true" /> {speakingId === message.id ? "Stop voice message" : "Play voice message"}</button>}
                   {message.navigation?.path && <button type="button" className="elevoni-assistant-navigation" onClick={() => navigate(message.navigation.path)}>{message.navigation.label} <FaArrowRight aria-hidden="true" /></button>}
-                  {message.listings?.length > 0 && <div className="elevoni-assistant-listings"><h3>Listings found</h3>{message.listings.map((listing) => <ListingCard key={listing.id} listing={listing} />)}</div>}
+                  {message.listings?.length > 0 && <div className="elevoni-assistant-listings"><h3>Products and listings found</h3>{message.listings.map((listing) => <ListingCard key={listing.id} listing={listing} />)}</div>}
                 </div>
               </article>
             ))}

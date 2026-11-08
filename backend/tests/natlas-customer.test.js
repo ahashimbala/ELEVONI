@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildListingFilter, normalizeCustomerCriteria, normalizeLgaName, normalizeStateName, rankCustomerListings } from "../services/nAtlasCustomerMatching.js";
+import { buildListingFilter, isCatalogueOverviewRequest, normalizeCustomerCriteria, normalizeLgaName, normalizeStateName, rankCustomerListings } from "../services/nAtlasCustomerMatching.js";
 
 test("customer criteria only accepts active category and matching subcategory", () => {
   const criteria = normalizeCustomerCriteria({
@@ -94,4 +94,44 @@ test("per-unit price filters are applied only when the unit is a known Elevoni l
   const unclearUnit = normalizeCustomerCriteria({ intent: "search", keywords: ["chicken"], maxPrice: 20000, unit: "birds" }, "Find chickens below ₦20,000 per bird");
   assert.equal(unclearUnit.unit, "");
   assert.equal(unclearUnit.maxPrice, null);
+});
+
+
+test("broad product availability questions are classified as catalogue overviews", () => {
+  assert.equal(isCatalogueOverviewRequest("What products are available on Elevoni?"), true);
+  assert.equal(isCatalogueOverviewRequest("What does Elevoni sell?"), true);
+  assert.equal(isCatalogueOverviewRequest("What products do you have?"), true);
+  assert.equal(isCatalogueOverviewRequest("What do you have available?"), true);
+  assert.equal(isCatalogueOverviewRequest("Show me all products on Elevoni"), true);
+  assert.equal(isCatalogueOverviewRequest("Wetin una get?"), true);
+  assert.equal(isCatalogueOverviewRequest("How does Elevoni work?"), false);
+
+  const criteria = normalizeCustomerCriteria(
+    { intent: "general", keywords: [] },
+    "What products are available on Elevoni?"
+  );
+  assert.equal(criteria.intent, "overview");
+  assert.deepEqual(criteria.keywords, []);
+});
+
+test("catalogue overview intent is preserved from model classification", () => {
+  const criteria = normalizeCustomerCriteria(
+    { intent: "overview", keywords: [], state: "Kano" },
+    "Show me what is available"
+  );
+  assert.equal(criteria.intent, "overview");
+  assert.equal(criteria.state, "Kano");
+});
+
+test("ranking can return more than the default eight listings for a catalogue overview", () => {
+  const products = Array.from({ length: 15 }, (_, index) => ({
+    _id: `item-${index}`,
+    name: `Product ${index}`,
+    unitOfMeasure: "kg",
+    stockQuantity: 10,
+  }));
+  const ranked = rankCustomerListings(products, {
+    quantity: null, unit: "", keywords: [], state: "", lga: "",
+  }, 12);
+  assert.equal(ranked.length, 12);
 });

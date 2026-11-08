@@ -111,3 +111,22 @@ test("Pidgin speech does not silently fall back to an English voice", async () =
     (error) => error.code === "ELEVENLABS_VOICE_NOT_CONFIGURED" && error.status === 503,
   );
 });
+
+
+test("Eleven Multilingual v2 speech request omits the unsupported language_code parameter", async () => {
+  let captured;
+  await speakElevenLabs({
+    text: "Sannu",
+    language: "ha-NG",
+    env: { ...baseEnv, ELEVENLABS_TTS_MODEL: "eleven_multilingual_v2" },
+    fetchImpl: async (_url, options) => {
+      captured = JSON.parse(options.body);
+      return new Response(Buffer.from("mp3-audio"), {
+        status: 200,
+        headers: { "content-type": "audio/mpeg" },
+      });
+    },
+  });
+  assert.equal(captured.model_id, "eleven_multilingual_v2");
+  assert.equal("language_code" in captured, false);
+});

@@ -3,6 +3,23 @@ import { PRODUCT_CATEGORIES, PRODUCT_UNITS, SUBCATEGORIES_BY_CATEGORY } from "..
 const clean = (value, max = 160) => typeof value === "string" ? value.trim().slice(0, max) : "";
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const safeNumber = (value) => value === null || value === undefined || value === "" ? null : Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : null;
+
+const CATALOGUE_OVERVIEW_PATTERNS = Object.freeze([
+  /\b(?:what|which)\s+(?:products?|items?|produce)\s+(?:are\s+)?(?:available|on\s+offer)\b/i,
+  /\bwhat\s+(?:does|do)\s+elevoni\s+(?:sell|offer|have)\b/i,
+  /\bwhat\s+(?:products?|items?|produce)\s+(?:do\s+you\s+have|do\s+you\s+sell|can\s+you\s+offer)\b/i,
+  /\bwhat\s+do\s+you\s+have(?:\s+available)?\b/i,
+  /\bwhat\s+can\s+i\s+(?:buy|get|find)\s+(?:on|from)\s+elevoni\b/i,
+  /\bwhat(?:'s| is)\s+available\s+(?:on|at)\s+elevoni\b/i,
+  /\b(?:show|list)\s+(?:me\s+)?(?:all\s+)?(?:the\s+)?(?:products?|items?|produce)\s+(?:on|at|from)\s+elevoni\b/i,
+  /\b(?:wetin|what)\s+(?:una|you)\s+(?:get|dey\s+sell|have)\b/i,
+]);
+
+export function isCatalogueOverviewRequest(message = "") {
+  const value = clean(message, 1200);
+  return CATALOGUE_OVERVIEW_PATTERNS.some((pattern) => pattern.test(value));
+}
+
 const normalizeUnit = (value) => {
   const unit = clean(value, 24).toLowerCase().replace(/s$/, "").replace(/\s+/g, " ");
   return ({ kilogram: "kg", kilo: "kg", tonne: "ton" })[unit] || unit;
@@ -34,6 +51,14 @@ export function normalizeCustomerCriteria(raw = {}, originalMessage = "") {
   const minPrice = unit ? safeNumber(raw.minPrice) : null;
   const maxPrice = unit ? safeNumber(raw.maxPrice) : null;
   const message = clean(originalMessage, 1200).toLowerCase();
+  if (raw.intent !== "navigate" && (raw.intent === "overview" || isCatalogueOverviewRequest(message))) {
+    return {
+      intent: "overview", category: "", subcategory: "", keywords: [],
+      state: clean(raw.state, 80), lga: clean(raw.lga, 80),
+      minPrice: null, maxPrice: null,
+      quantity: null, unit: "", destination: "",
+    };
+  }
   if (raw.intent !== "navigate" && (!category || !subcategory) && (raw.intent === "search" || /\b(find|buy|need|looking for|show me|get me|where can i get|i want)\b/.test(message))) {
     const alias = CATEGORY_ALIASES.find((item) => item.words.some((word) => message.includes(word)));
     if (alias) {
@@ -46,7 +71,7 @@ export function normalizeCustomerCriteria(raw = {}, originalMessage = "") {
       };
     }
   }
-  const intent = ["search", "navigate", "general"].includes(raw.intent) ? raw.intent : "general";
+  const intent = ["search", "navigate", "overview", "general"].includes(raw.intent) ? raw.intent : "general";
   const keywords = Array.isArray(raw.keywords)
     ? raw.keywords.filter((item) => typeof item === "string").map((item) => clean(item, 50)).filter(Boolean).slice(0, 5)
     : [];
@@ -80,7 +105,7 @@ export function buildListingFilter(criteria, approvedVendorIds) {
   return filter;
 }
 
-export function rankCustomerListings(products, criteria) {
+export function rankCustomerListings(products, criteria, limit = 8) {
   return [...products].map((product) => {
     const stockQuantity = Number(product.stockQuantity);
     const stockKnown = Number.isFinite(stockQuantity) && stockQuantity > 0;
@@ -100,5 +125,5 @@ export function rankCustomerListings(products, criteria) {
     return { product, stockMatch, score };
   }).filter((item) => item.stockMatch !== "insufficient")
     .sort((a, b) => b.score - a.score || new Date(b.product.updatedAt || 0) - new Date(a.product.updatedAt || 0))
-    .slice(0, 8);
+    .slice(0, Math.max(1, Number(limit) || 8));
 }

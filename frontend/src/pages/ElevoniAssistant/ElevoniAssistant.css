@@ -50,3 +50,8 @@
 }
 
 .elevoni-assistant-attribution{margin:9px 0 0;text-align:center;color:#7e8975;font-size:10px;line-height:1.5}.elevoni-assistant-attribution strong{color:#536144;font-weight:700}
+
+/* Clearly distinguish Elevoni Direct products from independent Marketplace listings. */
+.elevoni-assistant-source-tag{display:inline-flex;align-self:flex-start;width:max-content;max-width:100%;margin-top:3px;padding:3px 7px;border:1px solid #e3e8df;border-radius:5px;background:#f8faf6;color:#626d48;font-size:10px;font-weight:700;line-height:1.3}
+.elevoni-assistant-source-tag.is-direct{border-color:#dce5d4;background:#f0f4ec;color:#46583d}
+.elevoni-assistant-source-tag.is-marketplace{color:#687166}
