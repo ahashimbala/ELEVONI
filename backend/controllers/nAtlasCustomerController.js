@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { createClientAbortContext } from "../utils/clientAbort.js";
 import { ALLOWED_LANGUAGES } from "../services/nAtlasIntelligence.js";
-import { transcribeElevenLabs, speakElevenLabs } from "../services/elevenLabsVoice.js";
-import { transcribeNAtlas, speakNAtlas } from "../services/nAtlasIntelligence.js";
-import { admitNAtlasRequest } from "../middleware/natlasUsage.js";
+import { speakElevenLabs } from "../services/elevenLabsVoice.js";
+import { transcribeOpenAI } from "../services/openaiApi.js";
 import { answerCustomerElevoniAssistant } from "../services/nAtlasCustomer.js";
+import { checkAssistantDailyQuota, consumeAssistantPrompt, sendAssistantDailyLimit } from "../services/assistantDailyLimit.js";
 
 const buckets = new Map();
 const WINDOW_MS = 60_000;
@@ -45,7 +45,6 @@ export async function postCustomerElevoniAssistantMessage(req, res, next) {
   const abort = createClientAbortContext(req, res);
   try {
     const key = `${clientKey(req)}:chat`;
-    if (!allowRequest(key, MAX_CHAT)) return res.status(429).json({ success: false, message: "Please wait a little before sending another message." });
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
     const language = typeof req.body?.language === "string" ? req.body.language : "en-NG";
     const history = Array.isArray(req.body?.history) ? req.body.history : [];
@@ -54,8 +53,9 @@ export async function postCustomerElevoniAssistantMessage(req, res, next) {
     if (history.length > 8 || history.some((item) => !item || !["user", "assistant"].includes(item.role) || typeof item.text !== "string" || item.text.length > 700)) {
       return res.status(400).json({ success: false, message: "Conversation history is too long. Start a new chat and try again." });
     }
-    req.natlasService = "customer-chat";
-    if (!await admitNAtlasRequest(req, res)) return;
+    if (!allowRequest(key, MAX_CHAT)) return res.status(429).json({ success: false, message: "Please wait a little before sending another message." });
+    const dailyQuota = await consumeAssistantPrompt(req, "customer");
+    if (!dailyQuota.allowed) return sendAssistantDailyLimit(res, dailyQuota);
     const result = await answerCustomerElevoniAssistant({ message, language, history, abortSignal: abort.signal, requestId: res.getHeader("X-Request-ID") });
     if (abort.signal.aborted || res.destroyed) return;
     return res.status(200).json({ success: true, data: result });
@@ -73,15 +73,15 @@ export async function postCustomerElevoniAssistantTranscription(req, res, next) 
     const language = typeof req.body?.language === "string" ? req.body.language : "en-NG";
     if (!ALLOWED_LANGUAGES.has(language)) return res.status(400).json({ success: false, message: "Choose a supported language." });
     if (!req.file?.buffer?.length) return res.status(400).json({ success: false, message: "Record a voice message before sending." });
-    const useNAtlasVoice = ["ha-NG", "ig-NG", "yo-NG"].includes(language);
-    let result;
-    if (useNAtlasVoice) {
-      req.natlasService = "customer-transcription";
-      if (!await admitNAtlasRequest(req, res)) return;
-      result = await transcribeNAtlas({ audio: req.file.buffer, filename: req.file.originalname || "elevoni-assistant-voice.webm", language, abortSignal: abort.signal });
-    } else {
-      result = await transcribeElevenLabs({ audio: req.file.buffer, filename: req.file.originalname || "elevoni-assistant-voice.webm", mimeType: req.file.mimetype, language, abortSignal: abort.signal });
-    }
+    const dailyQuota = await checkAssistantDailyQuota(req);
+    if (!dailyQuota.allowed) return sendAssistantDailyLimit(res, dailyQuota);
+    const result = await transcribeOpenAI({
+      audio: req.file.buffer,
+      filename: req.file.originalname || "elevoni-assistant-voice.webm",
+      mimeType: req.file.mimetype,
+      language,
+      abortSignal: abort.signal,
+    });
     if (abort.signal.aborted || res.destroyed) return;
     return res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -100,25 +100,12 @@ export async function postCustomerElevoniAssistantSpeech(req, res, next) {
     if (!ALLOWED_LANGUAGES.has(language)) return res.status(400).json({ success: false, message: "Choose a supported language." });
     const key = `${clientKey(req)}:tts`;
     if (!allowRequest(key, MAX_CHAT)) return res.status(429).json({ success: false, message: "Please wait before requesting another voice message." });
-    const useNAtlasVoice = ["ha-NG", "ig-NG", "yo-NG"].includes(language);
-    let result;
-    if (useNAtlasVoice) {
-      req.natlasService = "customer-speech";
-      if (!await admitNAtlasRequest(req, res)) return;
-      try {
-        result = await speakNAtlas({ text, language, abortSignal: abort.signal });
-      } catch (natlasError) {
-        const fallbackVoiceEnv = ({ "ha-NG": "ELEVENLABS_HAUSA_VOICE_ID", "ig-NG": "ELEVENLABS_IGBO_VOICE_ID", "yo-NG": "ELEVENLABS_YORUBA_VOICE_ID" })[language];
-        if (!fallbackVoiceEnv || !process.env[fallbackVoiceEnv]) throw natlasError;
-        result = await speakElevenLabs({ text, language, abortSignal: abort.signal });
-      }
-    } else {
-      result = await speakElevenLabs({ text, language, abortSignal: abort.signal });
-    }
+    const result = await speakElevenLabs({ text, language, abortSignal: abort.signal });
     if (abort.signal.aborted || res.destroyed) return;
     res.setHeader("Content-Type", result.contentType || "audio/mpeg");
     res.setHeader("Cache-Control", "no-store");
     if (result.voice) res.setHeader("X-Elevoni-Voice", result.voice);
+    if (result.provider) res.setHeader("X-Elevoni-Voice-Provider", result.provider);
     if (result.note) res.setHeader("X-Elevoni-Voice-Note", result.note);
     return res.status(200).send(result.audio);
   } catch (error) {

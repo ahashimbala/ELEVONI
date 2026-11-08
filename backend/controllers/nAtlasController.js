@@ -3,11 +3,10 @@ import { createClientAbortContext } from "../utils/clientAbort.js";
 import {
   answerNAtlas,
   ALLOWED_LANGUAGES,
-  transcribeNAtlas,
-  speakNAtlas,
 } from "../services/nAtlasIntelligence.js";
-import { admitNAtlasRequest } from "../middleware/natlasUsage.js";
-import { transcribeElevenLabs, speakElevenLabs } from "../services/elevenLabsVoice.js";
+import { speakElevenLabs } from "../services/elevenLabsVoice.js";
+import { transcribeOpenAI } from "../services/openaiApi.js";
+import { checkAssistantDailyQuota, consumeAssistantPrompt, sendAssistantDailyLimit } from "../services/assistantDailyLimit.js";
 
 const requestBuckets = new Map();
 const WINDOW_MS = 60_000;
@@ -54,7 +53,7 @@ export async function postNAtlasMessage(req, res, next) {
   try {
     const vendorId = req.vendor?.profileId;
     if (!vendorId) {
-      return res.status(403).json({ success: false, message: "An approved vendor profile is required to use N-ATLaS." });
+      return res.status(403).json({ success: false, message: "An approved vendor profile is required to use Elevoni Assistant." });
     }
 
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
@@ -65,7 +64,7 @@ export async function postNAtlasMessage(req, res, next) {
       return res.status(400).json({ success: false, message: "Enter a message of 1–1500 characters." });
     }
     if (!ALLOWED_LANGUAGES.has(language)) {
-      return res.status(400).json({ success: false, message: "Choose one of N-ATLaS's supported languages." });
+      return res.status(400).json({ success: false, message: "Choose one of Elevoni Assistant's supported languages." });
     }
     if (history.length > 10 || history.some((item) => (
       !item || !["user", "assistant"].includes(item.role)
@@ -76,9 +75,9 @@ export async function postNAtlasMessage(req, res, next) {
     if (!allowRequest(String(vendorId))) {
       return res.status(429).json({ success: false, message: "You've sent several requests in a short time. Please wait a minute and try again." });
     }
+    const dailyQuota = await consumeAssistantPrompt(req, "vendor");
+    if (!dailyQuota.allowed) return sendAssistantDailyLimit(res, dailyQuota);
 
-    req.natlasService = "vendor-chat";
-    if (!await admitNAtlasRequest(req, res)) return;
     const result = await answerNAtlas({
       vendorId,
       message,
@@ -101,40 +100,29 @@ export async function postNAtlasTranscription(req, res, next) {
   try {
     const vendorId = req.vendor?.profileId;
     if (!vendorId) {
-      return res.status(403).json({ success: false, message: "An approved vendor profile is required to use N-ATLaS." });
+      return res.status(403).json({ success: false, message: "An approved vendor profile is required to use Elevoni Assistant." });
     }
 
     const language = typeof req.body?.language === "string" ? req.body.language : "en-NG";
     if (!ALLOWED_LANGUAGES.has(language)) {
-      return res.status(400).json({ success: false, message: "Choose one of N-ATLaS's supported languages." });
+      return res.status(400).json({ success: false, message: "Choose one of Elevoni Assistant's supported languages." });
     }
     if (!req.file?.buffer?.length) {
       return res.status(400).json({ success: false, message: "Record a voice message before transcribing." });
     }
+    const dailyQuota = await checkAssistantDailyQuota(req);
+    if (!dailyQuota.allowed) return sendAssistantDailyLimit(res, dailyQuota);
     if (!allowRequest(`${vendorId}:asr`)) {
       return res.status(429).json({ success: false, message: "You've sent several voice requests in a short time. Please wait a minute and try again." });
     }
 
-    const useNAtlasVoice = ["ha-NG", "ig-NG", "yo-NG"].includes(language);
-    let result;
-    if (useNAtlasVoice) {
-      req.natlasService = "vendor-transcription";
-      if (!await admitNAtlasRequest(req, res)) return;
-      result = await transcribeNAtlas({
-        audio: req.file.buffer,
-        filename: req.file.originalname || "elevoni-assistant-voice.webm",
-        language,
-        abortSignal: clientAbort.signal,
-      });
-    } else {
-      result = await transcribeElevenLabs({
-        audio: req.file.buffer,
-        filename: req.file.originalname || "elevoni-assistant-voice.webm",
-        mimeType: req.file.mimetype,
-        language,
-        abortSignal: clientAbort.signal,
-      });
-    }
+    const result = await transcribeOpenAI({
+      audio: req.file.buffer,
+      filename: req.file.originalname || "elevoni-assistant-voice.webm",
+      mimeType: req.file.mimetype,
+      language,
+      abortSignal: clientAbort.signal,
+    });
     if (clientAbort.signal.aborted || res.destroyed) return;
     return res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -149,7 +137,7 @@ export async function postNAtlasSpeech(req, res, next) {
   try {
     const vendorId = req.vendor?.profileId;
     if (!vendorId) {
-      return res.status(403).json({ success: false, message: "An approved vendor profile is required to use N-ATLaS." });
+      return res.status(403).json({ success: false, message: "An approved vendor profile is required to use Elevoni Assistant." });
     }
     const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
     const language = typeof req.body?.language === "string" ? req.body.language : "en-NG";
@@ -157,31 +145,18 @@ export async function postNAtlasSpeech(req, res, next) {
       return res.status(400).json({ success: false, message: "Speech text must contain 1–800 characters." });
     }
     if (!ALLOWED_LANGUAGES.has(language)) {
-      return res.status(400).json({ success: false, message: "Choose one of N-ATLaS's supported languages." });
+      return res.status(400).json({ success: false, message: "Choose one of Elevoni Assistant's supported languages." });
     }
     if (!allowRequest(`${vendorId}:tts`)) {
       return res.status(429).json({ success: false, message: "You've sent several voice requests in a short time. Please wait a minute and try again." });
     }
 
-    const useNAtlasVoice = ["ha-NG", "ig-NG", "yo-NG"].includes(language);
-    let result;
-    if (useNAtlasVoice) {
-      req.natlasService = "vendor-speech";
-      if (!await admitNAtlasRequest(req, res)) return;
-      try {
-        result = await speakNAtlas({ text, language, abortSignal: clientAbort.signal });
-      } catch (natlasError) {
-        const fallbackVoiceEnv = ({ "ha-NG": "ELEVENLABS_HAUSA_VOICE_ID", "ig-NG": "ELEVENLABS_IGBO_VOICE_ID", "yo-NG": "ELEVENLABS_YORUBA_VOICE_ID" })[language];
-        if (!fallbackVoiceEnv || !process.env[fallbackVoiceEnv]) throw natlasError;
-        result = await speakElevenLabs({ text, language, abortSignal: clientAbort.signal });
-      }
-    } else {
-      result = await speakElevenLabs({ text, language, abortSignal: clientAbort.signal });
-    }
+    const result = await speakElevenLabs({ text, language, abortSignal: clientAbort.signal });
     if (clientAbort.signal.aborted || res.destroyed) return;
     res.setHeader("Content-Type", result.contentType || "audio/mpeg");
     res.setHeader("Cache-Control", "no-store");
     if (result.voice) res.setHeader("X-Elevoni-Voice", result.voice);
+    if (result.provider) res.setHeader("X-Elevoni-Voice-Provider", result.provider);
     if (result.note) res.setHeader("X-Elevoni-Voice-Note", result.note);
     return res.status(200).send(result.audio);
   } catch (error) {

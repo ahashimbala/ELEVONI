@@ -5,38 +5,11 @@ import axios from "axios";
 import { FaMicrophone, FaStop, FaVolumeUp, FaPaperPlane, FaArrowRight } from "react-icons/fa";
 import { resolveApiBaseUrl } from "../../utils/apiBase";
 import { formatNaira, marketplaceEnquiryUrl } from "../../utils/marketplace";
-import { NATLAS_CLIENT_TIMEOUT_MS } from "../../../../shared/natlasConfig.mjs";
+import { ASSISTANT_CLIENT_TIMEOUT_MS } from "../../../../shared/assistantConfig.mjs";
+import { getAssistantVisitorId } from "../../../../shared/assistantVisitor.mjs";
 import "./ElevoniAssistant.css";
 
 const API = resolveApiBaseUrl();
-function createVisitorUuid() {
-  return window.crypto?.randomUUID?.() || "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (char) => {
-    const random = Math.floor(Math.random() * 16);
-    return (char === "x" ? random : (random & 0x3) | 0x8).toString(16);
-  });
-}
-
-function getOrCreateVisitorId() {
-  const key = "elevoni-natlas-visitor-id";
-  const valid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value || "");
-  try {
-    const existing = window.localStorage.getItem(key);
-    if (valid(existing)) return existing;
-    const id = createVisitorUuid();
-    window.localStorage.setItem(key, id);
-    return id;
-  } catch {
-    try {
-      const sessionId = window.sessionStorage.getItem(key);
-      if (valid(sessionId)) return sessionId;
-      const id = createVisitorUuid();
-      window.sessionStorage.setItem(key, id);
-      return id;
-    } catch {
-      return createVisitorUuid();
-    }
-  }
-}
 const LANGUAGES = [
   { code: "en-NG", label: "English", greeting: "Hello! What are you looking for today?", placeholder: "Tell me what you need…", quickPrompts: ["I want to buy chickens", "Find rice sellers", "Show me the marketplace"] },
   { code: "pcm-NG", label: "Pidgin", greeting: "How far! Wetin you dey find today?", placeholder: "Tell me wetin you need…", quickPrompts: ["I wan buy chicken", "Find people wey dey sell rice", "Show me market"] },
@@ -89,7 +62,6 @@ export default function ElevoniAssistant() {
   const [listening, setListening] = useState(false);
   const [notice, setNotice] = useState("");
   const [speakingId, setSpeakingId] = useState(null);
-  const visitorIdRef = useRef(getOrCreateVisitorId());
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
@@ -122,12 +94,12 @@ export default function ElevoniAssistant() {
     };
   }, []);
 
-  const visitorHeaders = () => {
-    const headers = { "X-Elevoni-Visitor-ID": visitorIdRef.current };
+  const authHeaders = () => {
+    const headers = { "X-Elevoni-Visitor-ID": getAssistantVisitorId() };
     try {
       const token = window.localStorage.getItem("token");
       if (token) headers.token = token;
-    } catch { /* anonymous browser identity remains available */ }
+    } catch { /* public storefront requests can remain anonymous */ }
     return headers;
   };
 
@@ -191,8 +163,8 @@ export default function ElevoniAssistant() {
     const controller = new AbortController();
     voiceRequestRef.current = controller;
     try {
-      const response = await axios.post(`${API}/api/n-atlas/customer/speech`, { text, language }, {
-        responseType: "blob", timeout: NATLAS_CLIENT_TIMEOUT_MS, signal: controller.signal, headers: visitorHeaders(),
+      const response = await axios.post(`${API}/api/assistant/customer/speech`, { text, language }, {
+        responseType: "blob", timeout: ASSISTANT_CLIENT_TIMEOUT_MS, signal: controller.signal, headers: authHeaders(),
       });
       const contentType = response.headers?.["content-type"] || response.data?.type || "";
       if (!contentType.toLowerCase().includes("audio/") || !response.data?.size) throw new Error("Server speech is not available.");
@@ -240,7 +212,7 @@ export default function ElevoniAssistant() {
     const controller = new AbortController();
     requestRef.current = controller;
     try {
-      const response = await axios.post(`${API}/api/n-atlas/customer/chat`, { message: text, language, history }, { signal: controller.signal, timeout: NATLAS_CLIENT_TIMEOUT_MS, headers: visitorHeaders() });
+      const response = await axios.post(`${API}/api/assistant/customer/chat`, { message: text, language, history }, { signal: controller.signal, timeout: ASSISTANT_CLIENT_TIMEOUT_MS, headers: authHeaders() });
       const result = response.data?.data;
       if (response.data?.success !== true || !result?.reply) throw new Error("Unexpected response from Elevoni Assistant.");
       if (!mountedRef.current) return;
@@ -268,7 +240,7 @@ export default function ElevoniAssistant() {
     const controller = new AbortController();
     requestRef.current = controller;
     try {
-      const response = await axios.post(`${API}/api/n-atlas/customer/transcribe`, form, { timeout: NATLAS_CLIENT_TIMEOUT_MS, signal: controller.signal, headers: visitorHeaders() });
+      const response = await axios.post(`${API}/api/assistant/customer/transcribe`, form, { timeout: ASSISTANT_CLIENT_TIMEOUT_MS, signal: controller.signal, headers: authHeaders() });
       const transcript = response.data?.data?.text;
       if (!response.data?.success || typeof transcript !== "string" || !transcript.trim()) throw new Error("No clear words were detected. Try again or type your request.");
       setInput(transcript.trim());
@@ -399,7 +371,7 @@ export default function ElevoniAssistant() {
           </div>
         </form>
         <p className="elevoni-assistant-disclaimer">Check availability, final price and delivery with the seller before paying.</p>
-        <p className="elevoni-assistant-attribution">N-ATLaS voice technology powered by <strong>Awarri Technologies</strong></p>
+        <p className="elevoni-assistant-attribution">AI by <strong>OpenAI</strong> <span aria-hidden="true">·</span> Voice by <strong>ElevenLabs</strong></p>
       </section>
 
     </main>

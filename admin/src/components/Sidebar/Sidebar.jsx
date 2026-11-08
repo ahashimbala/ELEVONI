@@ -6,7 +6,7 @@ const NAV_ITEMS = [
   { to: "/list", label: "Direct catalogue", icon: "▦" },
   { to: "/orders", label: "Orders", icon: "↗" },
   { to: "/house-sales", label: "Elevoni Sales Log", icon: "₦" },
-  { to: "/natlas-usage", label: "N-ATLaS Usage", icon: "◉" },
+  { to: "/natlas-usage", label: "Legacy N-ATLaS Usage", icon: "◉" },
   { to: "/reviews", label: "Reviews", icon: "☆" },
   { to: "/marketplace-products", label: "Marketplace listings", icon: "◈" },
   { to: "/vendors", label: "Vendor applications", icon: "♙" },

@@ -61,9 +61,9 @@ const Footer = () => {
         </div>
       </div>
       <hr />
-      <div className="footer-attribution" aria-label="N-ATLaS technology attribution">
-        <span className="footer-attribution-label">Voice technology</span>
-        <strong>N-ATLaS powered by Awarri Technologies</strong>
+      <div className="footer-attribution" aria-label="AI and voice technology attribution">
+        <span className="footer-attribution-label">Assistant technology</span>
+        <strong>AI by OpenAI · Voice by ElevenLabs</strong>
       </div>
       <p className="footer-copyright">
         Copyright 2026 &copy; ELEVONI - All Rights Reserved.

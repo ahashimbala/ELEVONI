@@ -1,139 +1,116 @@
-# Elevoni Assistant — production implementation and operations guide
+# Elevoni Assistant — OpenAI + ElevenLabs implementation guide
 
-## Overview
+## Provider architecture
 
-Elevoni Assistant is Elevoni's farmer- and buyer-facing assistant. N-ATLaS provides language-model intelligence and Hausa, Igbo and Yoruba speech recognition/voice generation. The existing configured speech provider remains in use for English and Nigerian Pidgin. It has two experiences:
+The live Elevoni Assistant uses:
 
-1. **Customer storefront** (`frontend`, `/assistant`): multilingual text/voice product discovery, navigation and buyer-to-listing matching.
-2. **Vendor assistant** (`vendor-portal`): vendor questions, voice-assisted product listing submission, voice-based sales recording and summaries grounded in that vendor's own Elevoni records.
+- **OpenAI Responses API** for customer and vendor assistant intelligence.
+- **OpenAI GPT-Transcribe** for speech-to-text in the selected language.
+- **ElevenLabs** for speech generation, using a dedicated server-side voice ID for each language.
+- **Elevoni's backend and MongoDB** for authentication, vendor/customer context, listing validation, sales calculations, permissions and persistence.
 
-The customer assistant does not create orders, initiate payments, confirm stock or promise delivery. The `/elevoni-assistant`, `/tinka` and `/konekta` customer URLs redirect to `/assistant` for existing bookmarks; `VITE_TINKA_ENABLED` and `VITE_KONEKTA_ENABLED` are accepted temporarily as legacy aliases for `VITE_ELEVONI_ASSISTANT_ENABLED`. It searches approved, available listings and directs the customer to existing product/enquiry flows. The assistant does not invent suppliers, stock or prices.
+The previous N-ATLaS model, ASR/TTS gateway and rolling 30-day 1,000-user admission middleware are no longer attached to the live assistant routes. Historical N-ATLaS usage records and the admin history screen remain for audit purposes only. They do not limit OpenAI-powered assistant access.
 
-## Farmer-first interface and voice
+The existing API paths `/api/n-atlas/...` are retained as compatibility aliases for old clients. The current frontends use provider-neutral paths:
 
-- Plain-language prompts, large touch targets and a prominent circular microphone control.
-- Nigerian English, Nigerian Pidgin, Hausa, Igbo and Yoruba language choices.
-- Voice input uses the device microphone through MediaRecorder, then uploads the recording to the Elevoni backend. Hausa, Igbo and Yoruba are routed to N-ATLaS ASR; English and Nigerian Pidgin use the existing configured provider. The transcript is placed in the composer for the user to review before sending.
-- Each assistant response has a Play/Stop voice-message control immediately below it.
-- Playback routes Hausa, Igbo and Yoruba through N-ATLaS TTS and English/Pidgin through the existing configured provider. Browser/device SpeechSynthesis fallback is disabled by default; it can be explicitly enabled for a build with `VITE_ALLOW_DEVICE_TTS_FALLBACK=true`.
-- Pidgin transcription uses Nigerian English recognition and may miss Pidgin expressions. Pidgin speech uses an explicitly configured voice ID or an English-voice approximation; do not claim dedicated Pidgin support without native-speaker validation.
-- The authorized N-ATLaS gateway must expose `/v1/audio/transcriptions` and `/v1/audio/speech` for Hausa, Igbo and Yoruba. Retain Awarri's written confirmation covering these speech services and their rolling 30-day user condition.
-- Farmers can describe a product listing by voice. The assistant extracts the details, asks for missing required information, and shows an editable draft. Only after explicit confirmation does the vendor portal call the existing product-creation endpoint; the product enters `pending` administrative review and is not immediately public.
-- Farmers can describe a sale by voice. The assistant extracts product, quantity, unit price, date, channel and payment details, asks for missing required information, calculates the total and balance, and shows an editable draft. Only after explicit confirmation does the portal call the existing vendor-sales endpoint. The record remains farmer-reported and unverified.
-- Existing backend validation and vendor authorization remain authoritative. The model cannot publish products, create sales records, set verification status, or bypass admin approval.
+- Customer: `/api/assistant/customer/chat`, `/transcribe`, `/speech`.
+- Vendor: `/api/assistant/vendor/chat`, `/transcribe`, `/speech`.
 
-## Matching and data safeguards
+## Assistant behaviour
 
-N-ATLaS interprets the buyer's words into structured criteria. Database filtering and ranking determine the results.
+### Customer storefront
 
-Marketplace results must be approved products, marked available, not marked out of stock, and owned by approved vendor profiles. Category, subcategory, location and explicit comparable per-unit price limits are applied when supplied. Quantity is only treated as sufficient when a positive recorded stock quantity and the requested unit are comparable. Otherwise the UI says stock is unconfirmed. The customer's location is not inferred; ask them to state their town/state where location matters.
+The customer assistant helps with product discovery, marketplace navigation and buyer-to-listing matching. It searches only real approved marketplace listings and the existing direct smoked-catfish catalogue. It does not create orders, initiate payments, confirm stock or promise delivery. It does not invent suppliers, stock, prices or delivery coverage.
 
-Elevoni's direct smoked-catfish catalogue is searched separately. Tiered prices are shown as starting prices where appropriate and must be confirmed for the customer's quantity.
+### Vendor portal
 
-Elevoni has confirmed with Awarri that the relevant threshold is **no more than 1,000 active end users within a rolling 30-day period**. The implementation admits up to 1,000 unique active users. Retain the original written confirmation with Elevoni's licensing/partnership records and follow any more specific definition in that correspondence.
+The vendor assistant answers questions using the authenticated vendor's own products and recent sales records, plus approved marketplace context where relevant. It can help prepare product listings and record sales, but it cannot save or publish them directly.
 
+- Product listings are collected one missing detail at a time. The farmer reviews the draft and explicitly confirms submission. The existing backend creates a `pending` listing for admin review.
+- Sales are collected one missing detail at a time. The farmer reviews and explicitly confirms saving. Existing backend validation remains authoritative for totals, amounts and payment rules. Sales remain farmer-reported and unverified unless independently verified by Elevoni.
+- The model must not invent product, price, quantity, stock, buyer, date, payment or delivery details.
 
-The backend now enforces the threshold using MongoDB as the source of truth:
+## Selected language behaviour
 
-- A unique person is counted on their first valid N-ATLaS chat, ASR or TTS request while active in the rolling 30-day window. N-ATLaS voice requests for Hausa, Igbo and Yoruba count toward the same allowance. English and Pidgin speech retain their configured provider. A valid request counts at admission even if the upstream model subsequently fails; malformed and rate-limited requests do not count.
-- Authenticated Elevoni users are identified by their account ID across the customer and vendor assistant routes.
-- Visitors who are not signed in receive a random first-party browser UUID stored in local storage. The backend HMAC-hashes it before storing it. No message text, phone number, email or raw identifier is stored in the usage ledger.
-- Anonymous visitors who clear site storage, use another browser or change devices may be counted again. People sharing one browser without separate accounts may be counted as one anonymous identity. This is an explicit limitation; there is no invasive device fingerprinting.
-- The rolling counter is a single MongoDB document updated atomically. Concurrent requests cannot admit more than 1,000 active unique users. At 1,000, existing active users can continue but new users are blocked; the 1,001st active identity is not admitted. Elevoni's normal marketplace, enquiries and checkout remain available. New-user admission resumes when the rolling count drops below 1,000.
-- Daily unique-user events support the admin report and expire after 90 days. The backend does not depend on GA4, manual counts or frontend-only checks for enforcement.
+The supported selections are Nigerian English (`en-NG`), Nigerian Pidgin (`pcm-NG`), Hausa (`ha-NG`), Igbo (`ig-NG`) and Yoruba (`yo-NG`). The selected language is passed to the model instructions and transcription route. Customer-facing navigation labels and assistant messages are localized before being returned. Vendor responses receive a language-conformance pass for non-English selections.
 
-The admin dashboard exposes **N-ATLaS Usage Monitor** at `/natlas-usage`, with the current rolling count, remaining new-user admission slots (maximum 1,000), daily active and new users, peak daily active users, users expiring within 24 hours, blocked requests and measurement timestamps. At 1,000, the dashboard shows that new-user admission is paused while existing users remain active. It is protected by the existing admin authentication.
+Language instructions are not proof of native-level accuracy. In particular, Pidgin transcription currently uses English as the transcription language hint with an explicit Nigerian Pidgin prompt. Test real recordings and model responses with native speakers before making a public accuracy claim.
 
-### Backend environment variables
+## Voice architecture
 
-Set these in the backend's production environment (Vercel project settings or the hosting provider), not in the frontend:
+1. The browser records a short audio clip using MediaRecorder.
+2. The clip is sent to the Elevoni backend.
+3. The backend calls OpenAI GPT-Transcribe with the selected language hint and a language-specific prompt.
+4. The transcript is shown in the composer for the user to review before sending.
+5. The final assistant response is sent to ElevenLabs for speech generation using the voice ID configured for the selected language.
+6. If that language's ElevenLabs voice ID is missing or the provider rejects it, the text remains available and the UI should show a clear voice-unavailable message. Never silently substitute a voice from another language.
 
-```env
-NATLAS_ENABLED=true
-NATLAS_USAGE_HMAC_SECRET=<random secret of at least 32 characters>
-NATLAS_BASE_URL=https://<authorized-n-atlas-gateway>
-NATLAS_API_KEY=<server-side gateway key>
-NATLAS_MODEL=NCAIR1/N-ATLaS
-MONGO_URI=<production MongoDB connection string>
-JWT_SECRET=<existing Elevoni JWT secret>
-```
-
-Generate it with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. `NATLAS_BASE_URL` must be the gateway origin without a `/v1` suffix. `NATLAS_USAGE_HMAC_SECRET` must be a dedicated, random secret and should remain stable. Rotating it changes the hashes used for visitor identity and can cause previously active users to be counted again during the next 30 days. Keep it private and back it up securely. Never expose `NATLAS_API_KEY` or `NATLAS_USAGE_HMAC_SECRET` in a `VITE_` variable.
-
-`NATLAS_ENABLED` is enabled by default unless explicitly set to `false`; set it explicitly to `true` in production. The gate fails closed if the MongoDB connection or production HMAC secret is unavailable.
-
-### Frontend environment variables
-
-Set in the storefront's production build environment:
-
-```env
-VITE_ELEVONI_ASSISTANT_ENABLED=true
-VITE_API_BASE_URL=https://<your-elevoni-backend-domain>
-```
-
-`VITE_ELEVONI_ASSISTANT_ENABLED` controls whether the public route and navigation links are included in the frontend build. Rebuild/redeploy the frontend after changing it.
-
-### API routes
-
-Customer storefront:
-
-- `POST /api/n-atlas/customer/chat`
-- `POST /api/n-atlas/customer/transcribe`
-- `POST /api/n-atlas/customer/speech`
-
-Approved vendor assistant:
-
-- `POST /api/n-atlas/chat`
-- `POST /api/n-atlas/transcribe`
-- `POST /api/n-atlas/speech`
-
-Admin reporting:
-
-- `GET /api/admin/natlas-usage` (admin authentication required)
-
-Customer requests include `X-Elevoni-Visitor-ID`. N-ATLaS chat, ASR and TTS requests for Hausa, Igbo and Yoruba pass through the same rolling usage-admission gate. When an Elevoni login token is available, the storefront also sends the existing `token` header so authenticated customers are counted by account ID instead of browser UUID. CORS explicitly allows the visitor-ID header.
-
-## Deployment checklist
-
-1. Confirm the written Awarri condition and retain the original correspondence. The production implementation assumes the agreed cap is 1,000 unique N-ATLaS users in any rolling 30-day period. The first production ledger starts empty; it does not import usage from the earlier private preview. Reconcile any people who already used N-ATLaS during the same rolling window before go-live, and confirm with Awarri whether those earlier tests count.
-2. Confirm the production MongoDB database is a supported MongoDB deployment and that the backend can create/use the `natlasusagecounters` and `natlasusageevents` collections and indexes.
-3. Configure `NATLAS_ENABLED=true`, `NATLAS_USAGE_HMAC_SECRET`, `NATLAS_BASE_URL`, `NATLAS_API_KEY`, `NATLAS_MODEL`, `MONGO_URI` and the existing `JWT_SECRET` in backend production settings.
-4. Configure `VITE_ELEVONI_ASSISTANT_ENABLED=true` and the production `VITE_API_BASE_URL` in the storefront project, then rebuild/redeploy.
-5. Confirm backend `/api/health` and admin login. Open Admin → N-ATLaS Usage and confirm an empty/low starting count.
-6. Send an Elevoni Assistant text request as an anonymous browser visitor. Confirm one active N-ATLaS user is added. Repeat messages, transcribe speech and play spoken replies in Hausa, Igbo and Yoruba; the same identity must remain one active user. English and Pidgin use their configured speech provider.
-7. Sign in as a customer in the same browser and repeat. Confirm the anonymous UUID is merged into the authenticated account identity so the user is not counted twice. Test a separate browser/device to understand the documented anonymous-identity limitation.
-8. Test the vendor assistant. Confirm the same account is not double-counted between storefront and vendor assistant.
-9. Test voice recording, N-ATLaS ASR transcript review and N-ATLaS TTS Play/Stop for Hausa, Igbo and Yoruba, plus the configured English/Pidgin provider, unavailable-language messaging and microphone permission denial on actual Android/iOS browsers.
-10. In a non-production test database, seed 999 active identities, verify one new identity is admitted (bringing the count to 1,000), verify the next new identity is blocked, and verify an existing active identity remains allowed. Then age one identity beyond 30 days and verify a new identity can be admitted.
-11. Confirm the admin dashboard reports the same count and blocked request totals. Test concurrent requests from separate backend instances against the same MongoDB deployment.
-12. Monitor Modal cold starts, GPU costs, N-ATLaS chat latency, N-ATLaS ASR/TTS latency for Hausa, Igbo and Yoruba; configured-provider latency for English and Pidgin, provider costs and error rates after deployment.
-
-## Known limits and validation
-
-- The usage gate counts authenticated account IDs and anonymous browser UUIDs on N-ATLaS chat, ASR and TTS requests. Anonymous visitors can be counted more than once if they clear storage or change browsers/devices; multiple people sharing one browser without separate accounts can be counted as one. The code intentionally avoids fingerprinting.
-- Anonymous-to-account merging works when the same Elevoni Assistant browser UUID accompanies an authenticated N-ATLaS chat request. It cannot link anonymous activity from a different browser/device, or anonymous use on the separate vendor portal origin, unless the account identity was already present.
-- The MongoDB single-document admission gate is atomic. It requires the backend's MongoDB deployment to support the update-pipeline operators used by the gate; verify this against the production cluster before launch. The inclusive threshold allows up to 1,000 unique active users; the 1,001st unique user is blocked.
-- Daily activity is UTC-based. The 30-day gate uses an exact 30 × 24-hour rolling window from the current request time.
-- N-ATLaS voice availability depends on the authorized gateway exposing ASR and TTS for Hausa, Igbo and Yoruba. English and Pidgin voice availability depends on the configured existing speech provider. Native-speaker pronunciation validation is required for all supported languages.
-- Browser/device SpeechSynthesis fallback is disabled by default and is only enabled with an explicit frontend build flag.
-- Full end-to-end validation requires the live MongoDB, production backend, authorized Modal endpoint and real Android/iOS microphone/playback tests. Do not treat syntax checks or unit tests as a substitute for that deployment validation.
-
-
-## Existing English and Pidgin cloud voice configuration
-
-Set these values in the backend environment only. Never expose `ELEVENLABS_API_KEY` or voice-provider credentials in frontend `VITE_` variables.
+ElevenLabs environment variables are server-side only:
 
 ```env
 ELEVENLABS_API_KEY=<server-side API key>
-ELEVENLABS_STT_MODEL=scribe_v2
 ELEVENLABS_TTS_MODEL=eleven_v3
 ELEVENLABS_ENGLISH_VOICE_ID=<voice ID>
-ELEVENLABS_PIDGIN_VOICE_ID=<optional Pidgin voice ID; otherwise English voice is used with a notice>
-
+ELEVENLABS_PIDGIN_VOICE_ID=<voice ID>
+ELEVENLABS_HAUSA_VOICE_ID=<voice ID>
+ELEVENLABS_IGBO_VOICE_ID=<voice ID>
+ELEVENLABS_YORUBA_VOICE_ID=<voice ID>
 ```
 
-ElevenLabs is retained for English and Nigerian Pidgin only. Pidgin transcription uses Nigerian English recognition and may miss Pidgin expressions. The three indigenous-language speech routes use the authorized N-ATLaS gateway.
+The voice IDs must be selected and tested in Elevoni's ElevenLabs account. Do not invent voice IDs or claim local-language pronunciation quality without native-speaker validation. Confirm the account plan, voice rights and commercial-use permissions before production use.
 
-The voice IDs must be selected and tested in the user's ElevenLabs account. Do not invent voice IDs or claim local-language pronunciation quality without native-speaker validation. Commercial use must comply with the applicable ElevenLabs paid-plan and API terms; the Free plan does not grant commercial usage rights. Check the account plan, voice rights and data-retention terms before production use.
+## Backend environment
 
-Hausa, Igbo and Yoruba voice audio is sent to the authorized N-ATLaS gateway; English and Pidgin audio is sent to the configured existing speech provider. Update Elevoni's privacy disclosures to reflect the actual provider and retention settings for each language.
+Configure these in the backend hosting environment, not in either frontend:
+
+```env
+OPENAI_API_KEY=<OpenAI project API key>
+OPENAI_MODEL=gpt-6.1-sol
+OPENAI_REASONING_EFFORT=low
+OPENAI_TRANSCRIPTION_MODEL=gpt-transcribe
+OPENAI_TIMEOUT_MS=45000
+OPENAI_TRANSCRIPTION_TIMEOUT_MS=90000
+
+ELEVENLABS_API_KEY=<ElevenLabs API key>
+ELEVENLABS_TTS_MODEL=eleven_v3
+ELEVENLABS_ENGLISH_VOICE_ID=<voice ID>
+ELEVENLABS_PIDGIN_VOICE_ID=<voice ID>
+ELEVENLABS_HAUSA_VOICE_ID=<voice ID>
+ELEVENLABS_IGBO_VOICE_ID=<voice ID>
+ELEVENLABS_YORUBA_VOICE_ID=<voice ID>
+
+MONGO_URI=<existing production MongoDB connection string>
+JWT_SECRET=<existing Elevoni JWT secret>
+```
+
+Keep `OPENAI_API_KEY` and `ELEVENLABS_API_KEY` in backend environment variables only. Never prefix either key with `VITE_`, expose it to the browser, commit it, or place it in source code.
+
+## Rate limits and cost controls
+
+There is no fixed 1,000-user N-ATLaS gate on the live assistant routes. OpenAI project rate limits, account usage limits and billing apply. Elevoni still has short-window per-IP/per-vendor throttling to protect the service from abuse. Configure an OpenAI project budget/spend alert and monitor token usage, transcription minutes, error rates and latency. ElevenLabs usage and plan limits apply separately.
+
+The former N-ATLaS usage dashboard is historical audit data only. It is not a live OpenAI usage or cost dashboard.
+
+## Privacy and data handling
+
+Text messages and relevant conversation history are sent to OpenAI for assistant processing. Voice recordings are sent to OpenAI for transcription. Assistant response text may be sent to ElevenLabs for audio generation. Vendor assistant requests include relevant records from that authenticated vendor's own Elevoni products and sales. The application does not intentionally save raw audio recordings or assistant conversation text as account records. Review OpenAI and ElevenLabs current data-processing, retention and commercial terms and ensure Elevoni's privacy policy matches the production configuration.
+
+## Deployment and validation checklist
+
+1. Create an OpenAI API project and key. Add billing/usage controls. Put the key in backend environment settings only.
+2. Configure `OPENAI_MODEL=gpt-6.1-sol`, `OPENAI_TRANSCRIPTION_MODEL=gpt-transcribe` and the timeouts shown above.
+3. Configure ElevenLabs API access and the dedicated voice IDs for each language offered in production.
+4. Deploy the backend before deploying the frontends. The current frontend uses `/api/assistant/customer/...`; the vendor portal uses `/api/assistant/vendor/...`.
+5. Test customer and vendor text chat in English, Pidgin, Hausa, Igbo and Yoruba. Check that the selected language is respected and that the customer assistant searches only real approved listings.
+6. Test voice transcription separately in all five languages. Include Nigerian accents, code-switching, background noise, product names, place names, numbers, dates and prices. Have native speakers review the transcripts.
+7. Test ElevenLabs speech generation separately in all five languages. Verify each voice ID and pronunciation. A configured ID is not proof of good pronunciation.
+8. Test vendor listing and sales flows end-to-end. Verify one question at a time, correct draft extraction, no invented fields, explicit confirmation before submission, pending admin review for listings, and farmer-reported/unverified status for sales.
+9. Verify missing OpenAI keys, invalid credentials, rate limits, timeouts and missing ElevenLabs voice IDs produce clear errors without losing the readable text response.
+10. Monitor OpenAI spend, model/token usage, transcription minutes, API rate limits, ElevenLabs character usage, latency and provider errors.
+
+## Known limitations
+
+- OpenAI language support does not guarantee equal recognition quality for Nigerian English, Pidgin, Hausa, Igbo and Yoruba. Native-speaker evaluation is required.
+- Nigerian Pidgin currently uses an English transcription language hint and an explicit Pidgin prompt. Code-switching and local expressions may still be transcribed incorrectly.
+- ElevenLabs playback requires a working dedicated voice ID and support for the target language in the selected TTS model. If a voice is unavailable, do not silently use another language's voice.
+- Syntax checks and mocked tests do not replace production API calls, real audio tests or native-speaker evaluation.

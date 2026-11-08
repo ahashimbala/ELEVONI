@@ -17,3 +17,12 @@ This note supersedes earlier private-evaluation-only deployment instructions.
 - Customer product matching remains deterministic after model intent extraction: only approved, available marketplace listings and the visible Elevoni direct smoked-catfish catalogue are considered. The customer assistant does not place orders or initiate payments.
 
 See `ELEVONI-ASSISTANT-IMPLEMENTATION.md`, `N-ATLAS-NOTICE.md` and `ELEVONI-ASSISTANT-VOICE-ACTIONS-UPDATE.md` for the operational design and deployment checklist.
+
+
+## Provider migration note — 2026-11-08
+
+The live Elevoni Assistant routes have been migrated in source to OpenAI for text intelligence and speech transcription. ElevenLabs remains the speech-generation provider. The former N-ATLaS 1,000-user middleware is no longer attached to the customer or vendor assistant routes. Historical N-ATLaS usage records and the admin history page are retained for audit only. Awarri/N-ATLaS is no longer credited as the live assistant provider.
+
+OpenAI credentials are configured with `OPENAI_API_KEY` in the backend environment only. The default model is `gpt-6.1-sol`; the transcription model is `gpt-transcribe`. These defaults are configurable through backend environment variables. Pidgin transcription uses an English language hint with an explicit Nigerian Pidgin prompt and must be validated with native speakers. Do not claim language quality without testing.
+
+ElevenLabs voice generation requires a separate voice ID for each selected language. No language may silently borrow another language's voice. Missing voice IDs should produce an explicit unavailable-voice response while leaving the text response readable.

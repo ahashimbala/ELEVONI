@@ -3,7 +3,6 @@ import multer from "multer";
 import { verifyToken } from "../middleware/auth.js";
 import requireApprovedVendorProfile from "../middleware/vendor.js";
 import { postNAtlasMessage, postNAtlasTranscription, postNAtlasSpeech } from "../controllers/nAtlasController.js";
-import { prepareNAtlasIdentity } from "../middleware/natlasUsage.js";
 
 const router = express.Router();
 const upload = multer({
@@ -15,11 +14,11 @@ const upload = multer({
   },
 });
 
-// Approved vendor accounts use their stable vendor profile ID for the shared N-ATLaS cap.
+// Approved vendor accounts are authenticated and scoped to their own vendor profile.
 router.use(verifyToken, requireApprovedVendorProfile());
-router.post("/chat", prepareNAtlasIdentity, postNAtlasMessage);
-router.post("/speech", prepareNAtlasIdentity, postNAtlasSpeech);
-router.post("/transcribe", prepareNAtlasIdentity, (req, res, next) => {
+router.post("/chat", postNAtlasMessage);
+router.post("/speech", postNAtlasSpeech);
+router.post("/transcribe", (req, res, next) => {
   upload.single("file")(req, res, (error) => {
     if (error instanceof multer.MulterError) {
       const status = error.code === "LIMIT_FILE_SIZE" ? 413 : 400;

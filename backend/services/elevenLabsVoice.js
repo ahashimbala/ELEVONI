@@ -66,7 +66,7 @@ async function readProviderError(response, operation) {
   return providerError(`ElevenLabs ${operation} failed (${response.status}).${safeDetail ? ` ${safeDetail}` : ""}`, status, "ELEVENLABS_PROVIDER_ERROR");
 }
 
-/** Cloud transcription. Audio is processed by ElevenLabs; N-ATLaS is not called here. */
+/** Legacy direct ElevenLabs transcription helper. Live assistant transcription now uses OpenAI. */
 export async function transcribeElevenLabs({ audio, filename = "voice.webm", mimeType = "audio/webm", language = "en-NG", abortSignal, env = process.env, fetchImpl = fetch }) {
   if (!Buffer.isBuffer(audio) || audio.length === 0) {
     throw providerError("The audio recording is empty or invalid.", 400, "VOICE_AUDIO_INVALID");
@@ -159,6 +159,6 @@ export async function speakElevenLabs({ text, language = "en-NG", abortSignal, e
 }
 
 export const ELEVENLABS_LANGUAGE_SUPPORT = Object.freeze({
-  speechToText: ["en-NG", "pcm-NG (Nigerian English approximation)", "ha-NG", "ig-NG", "yo-NG"],
+  speechToText: [],
   textToSpeech: ["en-NG (dedicated voice ID required)", "ha-NG (dedicated voice ID required)", "yo-NG (dedicated voice ID required)", "ig-NG (dedicated voice ID required; validate native-speaker quality)", "pcm-NG (dedicated Pidgin voice ID required; no English-voice substitution)"],
 });

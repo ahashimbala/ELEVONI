@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { natlasApi } from "../../api";
+import { assistantApi } from "../../api";
 import { PRODUCT_CATEGORIES, PRODUCT_UNITS, SUBCATEGORIES_BY_CATEGORY } from "../../constants/categoryExport";
 import "./NAtlas.css";
 
@@ -154,7 +154,7 @@ export default function NAtlas() {
     const controller = new AbortController();
     speechRequestRef.current = controller;
     try {
-      const response = await natlasApi.post("/api/n-atlas/speech", { text, language }, { responseType: "blob", signal: controller.signal });
+      const response = await assistantApi.post("/api/assistant/vendor/speech", { text, language }, { responseType: "blob", signal: controller.signal });
       const contentType = response.headers?.["content-type"] || response.data?.type || "";
       if (!contentType.toLowerCase().includes("audio/") || !response.data?.size) throw new Error("Server speech is not available.");
       const url = URL.createObjectURL(response.data);
@@ -208,7 +208,7 @@ export default function NAtlas() {
       const form = new FormData();
       form.append("file", blob, `elevoni-assistant-voice.${extension}`);
       form.append("language", language);
-      const response = await natlasApi.post("/api/n-atlas/transcribe", form, { signal: controller.signal });
+      const response = await assistantApi.post("/api/assistant/vendor/transcribe", form, { signal: controller.signal });
       const result = response.data?.data;
       if (!response.data?.success || !result?.text) throw new Error("Elevoni Assistant did not return a transcript. Please try again.");
       if (mountedRef.current) {
@@ -287,7 +287,7 @@ export default function NAtlas() {
     setBusy(true);
     setNotice("");
     try {
-      const response = await natlasApi.post("/api/n-atlas/chat", {
+      const response = await assistantApi.post("/api/assistant/vendor/chat", {
         message: text,
         language,
         history: priorMessages,
@@ -378,7 +378,7 @@ export default function NAtlas() {
         productionMethod: draft.productionMethod || "",
         weightRange: draft.weightRange || "",
       };
-      const response = await natlasApi.post("/api/products/vendor", payload);
+      const response = await assistantApi.post("/api/products/vendor", payload);
       if (!response.data?.success) throw new Error(response.data?.message || "The listing could not be submitted.");
       setDraft(null);
       setMessages((current) => [...current, { role: "assistant", text: "Your product listing has been submitted to Elevoni for review. It is not live on the marketplace yet; it will become available to buyers only after approval." }]);
@@ -414,7 +414,7 @@ export default function NAtlas() {
         saleTime: salesDraft.saleTime || "",
         notes: salesDraft.notes || "",
       };
-      const response = await natlasApi.post("/api/vendor/sales", payload);
+      const response = await assistantApi.post("/api/vendor/sales", payload);
       if (!response.data?.success) throw new Error(response.data?.message || "The sales record could not be saved.");
       setSalesDraft(null);
       setMessages((current) => [...current, { role: "assistant", text: "Your sales record has been saved. It is labelled farmer-reported and unverified; it has not been independently verified by Elevoni." }]);

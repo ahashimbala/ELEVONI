@@ -41,7 +41,7 @@ const corsOptions = {
     credentials: true,
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "token", "X-Elevoni-Visitor-ID"],
-    exposedHeaders: ["X-Request-ID", "X-NATLAS-USAGE-LIMIT", "X-NATLAS-USERS-30D", "X-Natlas-Voice", "X-Natlas-Voice-Note"]
+    exposedHeaders: ["X-Request-ID", "X-Elevoni-Voice", "X-Elevoni-Voice-Provider", "X-Elevoni-Voice-Note"]
 };
 
 const apiCors = cors(corsOptions);

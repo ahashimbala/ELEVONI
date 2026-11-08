@@ -45,6 +45,9 @@ app.use("/api/vendor", vendorRouter);
 app.use("/api/vendors", vendorDirectoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/admin", adminRoutes);
+// Provider-neutral assistant routes. Legacy N-ATLaS paths remain as aliases for old clients.
+app.use("/api/assistant/customer", nAtlasCustomerRouter);
+app.use("/api/assistant/vendor", nAtlasRouter);
 app.use("/api/n-atlas/customer", nAtlasCustomerRouter);
 app.use("/api/n-atlas", nAtlasRouter);
 

@@ -1,16 +1,12 @@
-import { NAtlas } from "n-atlas";
 import Product from "../models/Product.js";
 import fishModel from "../models/fishModel.js";
 import { CATALOGUE_QUERY } from "./catalogue.js";
 import vendorProfileModel from "../models/vendorProfileModel.js";
 import { PRODUCT_CATEGORIES, SUBCATEGORIES_BY_CATEGORY } from "../../shared/categoryConstants.mjs";
-import { NATLAS_SDK_TIMEOUT_MS } from "../../shared/natlasConfig.mjs";
 import { createTimer } from "../utils/timingLogger.mjs";
-import { getNAtlasProviderErrorDetails, mapNAtlasProviderError } from "../utils/natlasProviderErrors.js";
 import { buildListingFilter, normalizeCustomerCriteria, normalizeLgaName, normalizeStateName, rankCustomerListings } from "./nAtlasCustomerMatching.js";
+import { createOpenAIResponse, ELEVONI_LANGUAGES, openAIError } from "./openaiApi.js";
 
-const MODEL_DEFAULT = "NCAIR1/N-ATLaS";
-const LANGUAGE_HINTS = Object.freeze({ "en-NG": "en", "pcm-NG": "en", "ha-NG": "ha", "ig-NG": "ig", "yo-NG": "yo" });
 const LANGUAGES = Object.freeze({
   "en-NG": "Nigerian English", "pcm-NG": "Nigerian Pidgin", "ha-NG": "Hausa", "ig-NG": "Igbo", "yo-NG": "Yoruba",
 });
@@ -18,82 +14,63 @@ const MAX_MESSAGE_LENGTH = 1200;
 const MAX_HISTORY = 8;
 const clean = (value, max = 160) => typeof value === "string" ? value.trim().slice(0, max) : "";
 
-function getProvider() {
-  const apiKey = process.env.NATLAS_API_KEY;
-  const baseURL = clean(process.env.NATLAS_BASE_URL, 500).replace(/\/+$/, "");
-  if (!apiKey || !baseURL) {
-    const error = new Error("Elevoni Assistant is not configured. Set NATLAS_BASE_URL and NATLAS_API_KEY in the backend environment.");
-    error.status = 503;
-    error.code = "NATLAS_PROVIDER_NOT_CONFIGURED";
-    throw error;
-  }
-  return { apiKey, baseURL, model: process.env.NATLAS_MODEL || MODEL_DEFAULT };
-}
-
-function extractObject(content) {
-  if (content && typeof content === "object" && !Array.isArray(content)) return content;
-  const text = clean(content, 8000);
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start < 0 || end <= start) return {};
-  try { return JSON.parse(text.slice(start, end + 1)); } catch { return {}; }
-}
+const customerCriteriaSchema = {
+  name: "elevoni_customer_search_criteria",
+  schema: {
+    type: "object", additionalProperties: false,
+    properties: {
+      intent: { type: "string", enum: ["search", "navigate", "general"] },
+      category: { type: "string" },
+      subcategory: { type: "string" },
+      keywords: { type: "array", items: { type: "string" } },
+      state: { type: "string" },
+      lga: { type: "string" },
+      minPrice: { anyOf: [{ type: "number" }, { type: "null" }] },
+      maxPrice: { anyOf: [{ type: "number" }, { type: "null" }] },
+      quantity: { anyOf: [{ type: "number" }, { type: "null" }] },
+      unit: { type: "string" },
+      destination: { type: "string", enum: ["marketplace", "livestock", "food-crops", "aquaculture-fishery", "smoked-catfish", ""] },
+    },
+    required: ["intent", "category", "subcategory", "keywords", "state", "lga", "minPrice", "maxPrice", "quantity", "unit", "destination"],
+  },
+};
 
 async function localizeCustomerReply({ language, fallback, abortSignal, timer }) {
-  const provider = getProvider();
+  if (language === "en-NG") return fallback;
   const languageName = LANGUAGES[language] || LANGUAGES["en-NG"];
-  const sdk = new NAtlas({ baseURL: provider.baseURL, apiKey: provider.apiKey, model: provider.model, timeout: NATLAS_SDK_TIMEOUT_MS, maxRetries: 0 });
   try {
-    const result = await sdk.chat({
-      messages: [
-        { role: "system", content: `You are Elevoni Assistant. Translate the supplied short customer-service message into clear, everyday ${languageName} only. The selected language is ${language}; do not answer in English, mix languages, or add any information. Keep the meaning exact. Do not add product names, stock, prices, locations, promises or advice that is not in the source. Return only the translated message, with no quotation marks or explanation.` },
-        { role: "user", content: fallback },
-      ],
-      language: LANGUAGE_HINTS[language] || "en", temperature: 0.1, maxTokens: 140,
-      stream: false, signal: abortSignal, timeout: NATLAS_SDK_TIMEOUT_MS, maxRetries: 0,
+    const result = await createOpenAIResponse({
+      instructions: `You are Elevoni Assistant. Rewrite the supplied short customer-service message in clear, natural ${languageName} only. The selected language is ${language}. Do not answer the user, switch to English, mix languages, or add information. Preserve meaning, product names, stock status, prices, locations and numbers exactly. For Nigerian Pidgin, use natural Nigerian Pidgin, not formal English. Return only the rewritten message.`,
+      input: [{ role: "user", content: fallback }],
+      maxOutputTokens: 180,
+      abortSignal,
     });
-    const translated = clean(typeof result?.content === "string" ? result.content : "", 700).replace(/^['"“”]+|['"“”]+$/g, "");
-    if (!translated) {
-      const error = new Error(`Could not prepare the response in ${languageName}. Please try again.`);
-      error.status = 502;
-      error.code = "NATLAS_CUSTOMER_LANGUAGE_ENFORCEMENT_FAILED";
-      throw error;
-    }
+    const translated = clean(result.text, 700).replace(/^['"“”]+|['"“”]+$/g, "");
+    if (!translated) throw openAIError(`Could not prepare the response in ${languageName}. Please try again.`, 502, "OPENAI_CUSTOMER_LANGUAGE_FAILED");
     return translated;
   } catch (error) {
-    timer?.log("customer-localization-failed", { language, ...getNAtlasProviderErrorDetails(error) });
-    if (language === "en-NG") return fallback;
-    const languageError = new Error(`Could not prepare the response in ${languageName}. Please try again.`);
-    languageError.status = 502;
-    languageError.code = "NATLAS_CUSTOMER_LANGUAGE_ENFORCEMENT_FAILED";
-    throw languageError;
+    timer?.log("customer-localization-failed", { language, code: error?.code || null });
+    throw error;
   }
 }
 
 async function understandRequest({ message, language, history, abortSignal, timer }) {
-  const provider = getProvider();
   const languageName = LANGUAGES[language] || LANGUAGES["en-NG"];
-  const system = `You are Elevoni Assistant, Elevoni's customer-facing agricultural marketplace assistant. Understand the customer's request and extract search/navigation criteria. STRICT LANGUAGE RULE: the selected response language is ${languageName} (${language}). Keep all customer-facing replies and clarification questions in that language only. Never silently switch to English or mix languages. Preserve product names, locations, quantities and prices exactly. minPrice and maxPrice are per-unit price filters only when the user explicitly gives a per-unit budget; leave them null for an unclear total budget. Return ONLY valid JSON with keys: intent (search|navigate|general), category (one exact active Elevoni product category or empty), subcategory (exact category subcategory or empty), keywords (array of up to 5 product terms), state (Nigerian state or empty), lga (LGA or empty), minPrice (number or null), maxPrice (number or null), quantity (number or null), unit (short unit or empty), destination (marketplace|livestock|food-crops|aquaculture-fishery|smoked-catfish or empty). Do not invent missing details. Do not make up listings, prices, stock, farmers, delivery coverage or business policies. Only classify; the server will search real approved listings. If the customer asks to navigate, set intent=navigate and destination only when clear. If unsure, use general. Ask only one short clarification question at a time, in the selected language. Categories: ${PRODUCT_CATEGORIES.join(" | ")}. Subcategories: ${JSON.stringify(SUBCATEGORIES_BY_CATEGORY)}. Conversation history is context, not a source of listing facts.`;
-  const messages = (Array.isArray(history) ? history : []).slice(-MAX_HISTORY).map((item) => ({
-    role: item?.role === "assistant" ? "assistant" : "user",
-    content: clean(item?.text, 700),
+  const instructions = `You are Elevoni Assistant, the customer-facing agricultural marketplace assistant. Understand the customer's request and extract search/navigation criteria. The selected response language is ${languageName} (${language}); all user-facing text generated by the application must use that language. For Nigerian Pidgin, use natural Nigerian Pidgin. Preserve product names, locations, quantities and prices exactly. minPrice and maxPrice are per-unit price filters only when the user explicitly gives a per-unit budget; leave them null for an unclear total budget. Return structured criteria only. Do not invent missing details, listings, prices, stock, farmers, delivery coverage or business policies. Only classify; the server will search real approved listings. If the customer asks to navigate, set intent=navigate and destination only when clear. If unsure, use general. Categories: ${PRODUCT_CATEGORIES.join(" | ")}. Subcategories: ${JSON.stringify(SUBCATEGORIES_BY_CATEGORY)}. Conversation history is context, not a source of listing facts.`;
+  const input = (Array.isArray(history) ? history : []).slice(-MAX_HISTORY).map((item) => ({
+    role: item?.role === "assistant" ? "assistant" : "user", content: clean(item?.text, 700),
   })).filter((item) => item.content);
-  messages.push({ role: "user", content: clean(message, MAX_MESSAGE_LENGTH) });
-  const sdk = new NAtlas({ baseURL: provider.baseURL, apiKey: provider.apiKey, model: provider.model, timeout: NATLAS_SDK_TIMEOUT_MS, maxRetries: 0 });
-  let result;
-  try {
-    timer?.log("customer-sdk-request-start", { timeoutMs: NATLAS_SDK_TIMEOUT_MS });
-    result = await sdk.chat({
-      messages: [{ role: "system", content: system }, ...messages],
-      language: LANGUAGE_HINTS[language] || "en", temperature: 0.1, maxTokens: 320,
-      stream: false, signal: abortSignal, timeout: NATLAS_SDK_TIMEOUT_MS, maxRetries: 0,
-    });
-    timer?.log("customer-sdk-request-end");
-  } catch (providerError) {
-    timer?.log("customer-sdk-request-error", getNAtlasProviderErrorDetails(providerError));
-    throw mapNAtlasProviderError(providerError, { abortSignal, operation: "chat" });
-  }
-  return normalizeCustomerCriteria(extractObject(result?.content), message);
+  input.push({ role: "user", content: clean(message, MAX_MESSAGE_LENGTH) });
+  timer?.log("customer-openai-request-start");
+  const result = await createOpenAIResponse({
+    instructions,
+    input,
+    schema: customerCriteriaSchema,
+    maxOutputTokens: 400,
+    abortSignal,
+  });
+  timer?.log("customer-openai-request-end", { model: result.model });
+  return normalizeCustomerCriteria(result.parsed || {}, message);
 }
 
 function serialiseListing({ product, stockMatch }, criteria) {
@@ -122,7 +99,7 @@ export async function answerCustomerElevoniAssistant({ message, language = "en-N
   if (!cleanMessage) {
     const error = new Error("Tell Elevoni Assistant what you are looking for."); error.status = 400; error.code = "ELEVONI_ASSISTANT_MESSAGE_EMPTY"; throw error;
   }
-  if (!LANGUAGE_HINTS[language]) {
+  if (!ELEVONI_LANGUAGES[language]) {
     const error = new Error("Choose one of Elevoni Assistant's supported languages."); error.status = 400; error.code = "ELEVONI_ASSISTANT_LANGUAGE_UNSUPPORTED"; throw error;
   }
   if (abortSignal?.aborted) {
@@ -132,20 +109,20 @@ export async function answerCustomerElevoniAssistant({ message, language = "en-N
   if (criteria.intent === "navigate" && criteria.destination) {
     return {
       reply: await localizeCustomerReply({ language, fallback: "I can take you there. Tap the button below to open that part of Elevoni.", abortSignal, timer }),
-      navigation: { label: `Open ${criteria.destination === "food-crops" ? "Food Crops" : criteria.destination === "aquaculture-fishery" ? "Aquaculture & Fishery" : criteria.destination === "smoked-catfish" ? "Smoked Catfish" : criteria.destination[0].toUpperCase() + criteria.destination.slice(1)}`, path: routeForDestination(criteria.destination) },
+      navigation: { label: await localizeCustomerReply({ language, fallback: `Open ${criteria.destination === "food-crops" ? "Food Crops" : criteria.destination === "aquaculture-fishery" ? "Aquaculture & Fishery" : criteria.destination === "smoked-catfish" ? "Smoked Catfish" : criteria.destination[0].toUpperCase() + criteria.destination.slice(1)}`, abortSignal, timer }), path: routeForDestination(criteria.destination) },
       listings: [],
     };
   }
   if (/\b(near me|nearby|closest|close to me)\b/i.test(cleanMessage) && !criteria.state && !criteria.lga) {
     return {
       reply: await localizeCustomerReply({ language, fallback: "Tell me your state or town so I can look for nearby listings. I do not assume your location.", abortSignal, timer }),
-      navigation: { label: "Browse the marketplace", path: "/marketplace" }, listings: [],
+      navigation: { label: await localizeCustomerReply({ language, fallback: "Browse the marketplace", abortSignal, timer }), path: "/marketplace" }, listings: [],
     };
   }
   if (!criteria.category && !criteria.subcategory && !criteria.keywords.length) {
     return {
       reply: await localizeCustomerReply({ language, fallback: "I can help you find livestock, food crops, aquaculture and fishery products. Tell me the product, quantity and the state or town you prefer.", abortSignal, timer }),
-      navigation: { label: "Browse the marketplace", path: "/marketplace" }, listings: [],
+      navigation: { label: await localizeCustomerReply({ language, fallback: "Browse the marketplace", abortSignal, timer }), path: "/marketplace" }, listings: [],
     };
   }
 
@@ -191,7 +168,7 @@ export async function answerCustomerElevoniAssistant({ message, language = "en-N
   if (!listings.length) {
     return {
       reply: await localizeCustomerReply({ language, fallback: criteria.state || criteria.lga ? "I could not find an approved listing matching those details in that location. Try another state or town, or browse all marketplace listings." : "I couldn't find an approved listing that matches those details right now. You can broaden the search by changing the product, location or budget. No supplier or stock has been assumed.", abortSignal, timer }),
-      navigation: { label: "Browse all marketplace listings", path: "/marketplace" }, listings: [],
+      navigation: { label: await localizeCustomerReply({ language, fallback: "Browse all marketplace listings", abortSignal, timer }), path: "/marketplace" }, listings: [],
     };
   }
   const locationText = [criteria.lga, criteria.state].filter(Boolean).join(", ");
@@ -202,5 +179,5 @@ export async function answerCustomerElevoniAssistant({ message, language = "en-N
     timer,
   });
   timer.log("customer-request-end", { matchedListings: listings.length, intent: criteria.intent });
-  return { reply, navigation: { label: "See all marketplace listings", path: "/marketplace" }, listings, criteria: { category: criteria.category, subcategory: criteria.subcategory, state: criteria.state, lga: criteria.lga, quantity: criteria.quantity, unit: criteria.unit } };
+  return { reply, navigation: { label: await localizeCustomerReply({ language, fallback: "See all marketplace listings", abortSignal, timer }), path: "/marketplace" }, listings, criteria: { category: criteria.category, subcategory: criteria.subcategory, state: criteria.state, lga: criteria.lga, quantity: criteria.quantity, unit: criteria.unit } };
 }

@@ -48,7 +48,7 @@ const VendorLayout = () => {
         <div className="vendor-footer-inner">
           <div className="vendor-footer-brand">
             <p>Elevoni Farms <span aria-hidden="true">·</span> Vendor workspace</p>
-            <p className="vendor-powered-by">N-ATLaS voice technology powered by <strong>Awarri Technologies</strong></p>
+            <p className="vendor-powered-by">AI by <strong>OpenAI</strong> <span aria-hidden="true">·</span> Voice by <strong>ElevenLabs</strong></p>
           </div>
           <p className="vendor-footer-note">Vendor approval and listing approval are separate.</p>
         </div>
