@@ -14,8 +14,14 @@ const TTS_LANGUAGE_CONFIG = Object.freeze({
   "en-NG": { languageCode: "en", env: "ELEVENLABS_ENGLISH_VOICE_ID", label: "Nigerian English" },
   "pcm-NG": { languageCode: "en", env: "ELEVENLABS_PIDGIN_VOICE_ID", label: "Nigerian Pidgin" },
   "ha-NG": { languageCode: "ha", env: "ELEVENLABS_HAUSA_VOICE_ID", label: "Hausa" },
-  "yo-NG": { languageCode: "yo", env: "ELEVENLABS_YORUBA_VOICE_ID", label: "Yoruba" },
-  "ig-NG": { languageCode: "ig", env: "ELEVENLABS_IGBO_VOICE_ID", label: "Igbo" },
+  // Eleven v3's API rejects the explicit "yo" language_code even though
+  // Yoruba appears in its published language list. Let the selected voice
+  // and text drive language detection instead of sending the rejected code.
+  "yo-NG": { languageCode: null, env: "ELEVENLABS_YORUBA_VOICE_ID", label: "Yoruba" },
+  // Igbo is not in the published Eleven v3 language list. Do not send an
+  // unsupported "ig" code; synthesis still depends on the voice/model actually
+  // supporting Igbo and must be validated with native speakers.
+  "ig-NG": { languageCode: null, env: "ELEVENLABS_IGBO_VOICE_ID", label: "Igbo" },
 });
 
 function providerError(message, status, code, cause) {
@@ -128,9 +134,12 @@ export async function speakElevenLabs({ text, language = "en-NG", abortSignal, e
   const modelId = String(env.ELEVENLABS_TTS_MODEL || "eleven_v3").trim();
   const url = `${ELEVENLABS_API_BASE}/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`;
   const ttsPayload = { text: spokenText, model_id: modelId };
-  // Eleven Multilingual v2 does not accept language_code. Other configured
-  // models use it to guide text normalization where that language is supported.
-  if (modelId !== "eleven_multilingual_v2") {
+  // Eleven Multilingual v2 does not accept language_code. For Eleven v3,
+  // send a language hint only when the selected language has a code supported
+  // by this API route. Yoruba and Igbo intentionally omit it because explicit
+  // "yo"/"ig" codes are rejected by the configured v3 endpoint. Nigerian
+  // Pidgin uses English normalization but MUST use its own dedicated voice ID.
+  if (modelId !== "eleven_multilingual_v2" && config.languageCode) {
     ttsPayload.language_code = config.languageCode;
   }
   let response;
@@ -169,8 +178,8 @@ export const ELEVENLABS_LANGUAGE_SUPPORT = Object.freeze({
   textToSpeech: [
     "en-NG: dedicated Nigerian English voice ID required",
     "ha-NG: dedicated Hausa voice ID required",
-    "yo-NG: dedicated Yoruba voice ID required; Eleven v3 documents Yoruba support",
-    "ig-NG: dedicated Igbo voice ID required; verify the API model/endpoint supports Igbo (the v3 published list omits it, while ElevenLabs' Igbo TTS product page advertises it)",
-    "pcm-NG: dedicated Pidgin-trained voice ID required; sent with English normalization because Pidgin has no separate ElevenLabs language code",
+    "yo-NG: dedicated Yoruba voice ID required; Eleven v3 request omits the explicit yo language_code because the API rejects it; verify audio quality",
+    "ig-NG: dedicated Igbo voice ID required; request omits the explicit ig language_code; Eleven v3 published language list omits Igbo, so support is not guaranteed",
+    "pcm-NG: dedicated Nigerian Pidgin-trained voice ID required; uses English (en) normalization because Pidgin has no separate ElevenLabs language code",
   ],
 });

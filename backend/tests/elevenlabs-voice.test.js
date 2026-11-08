@@ -10,6 +10,7 @@ const baseEnv = {
   ELEVENLABS_YORUBA_VOICE_ID: "yoruba-voice-id",
   ELEVENLABS_IGBO_VOICE_ID: "igbo-voice-id",
   ELEVENLABS_ENGLISH_VOICE_ID: "english-voice-id",
+  ELEVENLABS_PIDGIN_VOICE_ID: "pidgin-voice-id",
 };
 
 function jsonResponse(body, status = 200) {
@@ -68,7 +69,7 @@ test("ElevenLabs speech uses configured Hausa voice and returns MP3 audio", asyn
   assert.equal(result.audio.toString(), "mp3-audio");
 });
 
-test("Igbo cloud speech uses its dedicated voice ID and Igbo language code", async () => {
+test("Igbo cloud speech uses its dedicated voice ID and omits the unsupported v3 language code", async () => {
   let captured;
   const result = await speakElevenLabs({
     text: "Ndewo, kedu ka ị mere?", language: "ig-NG", env: baseEnv,
@@ -78,10 +79,42 @@ test("Igbo cloud speech uses its dedicated voice ID and Igbo language code", asy
     },
   });
   assert.match(captured.url, /text-to-speech\/igbo-voice-id\?output_format=mp3_44100_128$/);
-  assert.equal(JSON.parse(captured.options.body).language_code, "ig");
+  assert.equal("language_code" in JSON.parse(captured.options.body), false);
   assert.equal(JSON.parse(captured.options.body).model_id, "eleven_v3");
   assert.equal(result.audio.toString(), "igbo-mp3");
   assert.match(result.note, /Igbo/);
+});
+
+test("Yoruba cloud speech uses its dedicated voice ID and omits the rejected v3 language code", async () => {
+  let captured;
+  const result = await speakElevenLabs({
+    text: "Ẹ káàbọ̀ sí Elevoni", language: "yo-NG", env: baseEnv,
+    fetchImpl: async (url, options) => {
+      captured = { url, options };
+      return new Response(Buffer.from("yoruba-mp3"), { status:  200, headers: { "content-type": "audio/mpeg" } });
+    },
+  });
+  assert.match(captured.url, /text-to-speech\/yoruba-voice-id\?output_format=mp3_44100_128$/);
+  const payload = JSON.parse(captured.options.body);
+  assert.equal(payload.model_id, "eleven_v3");
+  assert.equal("language_code" in payload, false);
+  assert.equal(result.audio.toString(), "yoruba-mp3");
+});
+
+test("Nigerian Pidgin uses its dedicated voice ID with English language normalization", async () => {
+  let captured;
+  const result = await speakElevenLabs({
+    text: "How far! I dey here to help you.", language: "pcm-NG", env: baseEnv,
+    fetchImpl: async (url, options) => {
+      captured = { url, options };
+      return new Response(Buffer.from("pidgin-mp3"), { status: 200, headers: { "content-type": "audio/mpeg" } });
+    },
+  });
+  assert.match(captured.url, /text-to-speech\/pidgin-voice-id\?output_format=mp3_44100_128$/);
+  const payload = JSON.parse(captured.options.body);
+  assert.equal(payload.model_id, "eleven_v3");
+  assert.equal(payload.language_code, "en");
+  assert.match(result.note, /Nigerian Pidgin/);
 });
 
 test("Igbo cloud speech requires its dedicated voice ID", async () => {
