@@ -21,10 +21,19 @@ const LANGUAGES = [
   { code: "ig-NG", label: "Igbo", greeting: "Ndewo! Kedu ihe ị na-achọ taa?", placeholder: "Gwa m ihe ị na-achọ…", quickPrompts: ["Achọrọ m ịzụta ọkụkọ", "Chọta ndị na-ere osikapa", "Gosi m ahịa"] },
 ];
 
-function getErrorMessage(error) {
-  if (error?.code === "ERR_CANCELED" || error?.name === "AbortError") return "Request cancelled.";
-  if (error?.code === "ECONNABORTED" || error?.code === "ETIMEDOUT") return "Elevoni Assistant is taking longer than expected. Please try again.";
-  return error?.response?.data?.message || "Elevoni Assistant could not complete that request. Please try again.";
+const LANGUAGE_ERROR_MESSAGES = {
+  "en-NG": "Elevoni Assistant could not complete that request. Please try again.",
+  "pcm-NG": "Elevoni Assistant no fit complete that request. Abeg try again.",
+  "ha-NG": "Mataimakin Elevoni bai iya kammala wannan buƙatar ba. Da fatan za a sake gwadawa.",
+  "ig-NG": "Onye enyemaka Elevoni enweghị ike imecha arịrịọ a. Biko nwaa ọzọ.",
+  "yo-NG": "Olùrànlọ́wọ́ Elevoni kò lè parí ìbéèrè yìí. Jọ̀wọ́ tún gbìyànjú.",
+};
+
+function getErrorMessage(error, language = "en-NG") {
+  if (error?.code === "ERR_CANCELED" || error?.name === "AbortError") return LANGUAGE_ERROR_MESSAGES[language] || LANGUAGE_ERROR_MESSAGES["en-NG"];
+  if (error?.code === "ECONNABORTED" || error?.code === "ETIMEDOUT") return LANGUAGE_ERROR_MESSAGES[language] || LANGUAGE_ERROR_MESSAGES["en-NG"];
+  // Never surface provider/server English text in a non-English conversation.
+  return LANGUAGE_ERROR_MESSAGES[language] || LANGUAGE_ERROR_MESSAGES["en-NG"];
 }
 
 function ListingCard({ listing }) {
@@ -239,7 +248,7 @@ export default function ElevoniAssistant() {
       setMessages((current) => [...current, { id: `a-${Date.now()}`, role: "assistant", text: result.reply, listings: Array.isArray(result.listings) ? result.listings : [], navigation: result.navigation || null }]);
     } catch (error) {
       if (!mountedRef.current || error?.code === "ERR_CANCELED" || error?.name === "AbortError") return;
-      const message = getErrorMessage(error);
+      const message = getErrorMessage(error, language);
       setNotice(message);
       setMessages((current) => [...current, { id: `e-${Date.now()}`, role: "assistant", text: message, error: true, listings: [] }]);
     } finally {

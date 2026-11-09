@@ -6,6 +6,7 @@ import { persistStoredToken } from "../../utils/authSession";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
+import { createPortal } from "react-dom";
 
 const googleRedirectErrorText = {
   ACCOUNT_NOT_FOUND: "No Elevoni account was found for this Google account. Choose Sign Up to create one.",
@@ -100,6 +101,32 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
       setGoogleBusy(false);
     }
   };
+
+  // Render the dialog at document.body level so fixed positioning is not
+  // affected by transformed/overflowing application ancestors. Preserve the
+  // exact page scroll position while the dialog is open.
+  useEffect(() => {
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+    const body = document.body;
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    return () => {
+      Object.assign(body.style, previous);
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
 
   useEffect(() => {
     if (!googleClientId) return undefined;
@@ -204,8 +231,8 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
     }
   };
 
-  return (
-    <div className="login-popup">
+  return createPortal(
+    <div className="login-popup" role="presentation">
       <form
         onSubmit={(event) => {
           if (googleConsentStep) {
@@ -216,9 +243,12 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
           }
         }}
         className={"login-popup-container" + (googleConsentStep ? " login-popup-consent-only" : "")}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="login-popup-heading"
       >
         <div className="login-popup-title">
-          <h2>{googleConsentStep ? "One last step" : currState}</h2>
+          <h2 id="login-popup-heading">{googleConsentStep ? "One last step" : currState}</h2>
           <img
             onClick={() => setShowLogin(false)}
             src={assets.cross_icon}
@@ -307,7 +337,8 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
           </>
         )}
       </form>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

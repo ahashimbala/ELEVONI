@@ -25,12 +25,44 @@ const suggestions = [
   { icon: "⌕", title: "Understand my sales records", detail: "Learn from sales you have recorded" },
 ];
 
-const requestErrorMessage = (error, fallback) => {
+const LANGUAGE_ERROR_MESSAGES = {
+  "en-NG": "Elevoni Assistant could not complete that request. Please try again.",
+  "pcm-NG": "Elevoni Assistant no fit complete that request. Abeg try again.",
+  "ha-NG": "Mataimakin Elevoni bai iya kammala wannan buƙatar ba. Da fatan za a sake gwadawa.",
+  "ig-NG": "Onye enyemaka Elevoni enweghị ike imecha arịrịọ a. Biko nwaa ọzọ.",
+  "yo-NG": "Olùrànlọ́wọ́ Elevoni kò lè parí ìbéèrè yìí. Jọ̀wọ́ tún gbìyànjú.",
+};
+const requestErrorMessage = (error, fallback, language = "en-NG") => {
   if (error?.code === "ERR_CANCELED" || error?.name === "AbortError") return "cancelled";
-  if (["ECONNABORTED", "ETIMEDOUT"].includes(error?.code)) {
-    return "Elevoni Assistant is taking longer than expected. Please try again.";
-  }
-  return error?.response?.data?.message || error?.message || fallback;
+  return LANGUAGE_ERROR_MESSAGES[language] || LANGUAGE_ERROR_MESSAGES["en-NG"] || fallback;
+};
+
+const LANGUAGE_CONFIRMATIONS = {
+  "en-NG": {
+    listing: "Your product listing has been submitted to Elevoni for review. It is not live on the marketplace yet; it will become available to buyers only after approval.",
+    sale: "Your sales record has been saved. It is labelled farmer-reported and unverified; it has not been independently verified by Elevoni.",
+    duplicate: "This sales record had already been submitted. I have closed the draft to avoid recording it twice.",
+  },
+  "pcm-NG": {
+    listing: "You don submit your product listing give Elevoni make dem review am. E never dey live for marketplace; buyers go see am only after approval.",
+    sale: "I don save your sales record. I mark am as farmer-reported and unverified; Elevoni never independently verify am.",
+    duplicate: "You don submit this sales record before. I don close the draft so we no go record am twice.",
+  },
+  "ha-NG": {
+    listing: "An aika bayanin kayanka ga Elevoni domin a duba shi. Har yanzu bai bayyana a kasuwa ba; masu saye za su gan shi ne bayan an amince da shi.",
+    sale: "An adana bayanan cinikinka. An nuna cewa kai ne ka bayar da rahoton, kuma ba a tantance shi da kansa ba tukuna.",
+    duplicate: "An riga an aika da wannan bayanin ciniki. Na rufe wannan daftarin don kada a adana shi sau biyu.",
+  },
+  "ig-NG": {
+    listing: "E zigalaara ngwaahịa gị na Elevoni ka e nyochaa ya. Ọ pụtabeghị n'ahịa; ndị na-azụ ahịa ga-ahụ ya naanị mgbe akwadoro ya.",
+    sale: "Echekwala ndekọ ire ahịa gị. Akara ya dị ka nke onye ọrụ ugbo kọrọ, a nyochabeghịkwa ya n'onwe ya.",
+    duplicate: "E tinyela ndekọ ire ahịa a na mbụ. Emechiela akwụkwọ a ka anyị ghara idekọ ya ugboro abụọ.",
+  },
+  "yo-NG": {
+    listing: "A ti fi àkọsílẹ̀ ọjà rẹ ránṣẹ́ sí Elevoni fún àyẹ̀wò. Kò tíì sí lórí ọjà; àwọn oníbàárà yóò rí i lẹ́yìn tí a bá fọwọ́ sí i.",
+    sale: "A ti fi àkọsílẹ̀ títà rẹ pamọ́. A samisi rẹ̀ gẹ́gẹ́ bí ìròyìn olùgbẹ̀, a kò tíì ṣe àyẹ̀wò rẹ̀ lọ́tọ̀.",
+    duplicate: "A ti fi àkọsílẹ̀ títà yìí ránṣẹ́ tẹ́lẹ̀. Mo ti pa àkọsílẹ̀ àkànṣe náà kí a má bà a kọ ọ́ lẹ́ẹ̀mejì.",
+  },
 };
 
 const createSalesSubmissionReference = () => {
@@ -340,7 +372,7 @@ export default function NAtlas() {
       }
       setMessages((current) => [...current, { role: "assistant", text: result.reply }]);
     } catch (error) {
-      const errorMessage = requestErrorMessage(error, "Elevoni Assistant couldn't respond. Please try again.");
+      const errorMessage = requestErrorMessage(error, "Elevoni Assistant couldn't respond. Please try again.", language);
       if (errorMessage === "cancelled") {
         if (mountedRef.current) setNotice("Request cancelled. You can try again whenever you're ready.");
       } else if (mountedRef.current) {
@@ -382,7 +414,7 @@ export default function NAtlas() {
       const response = await assistantApi.post("/api/products/vendor", payload);
       if (!response.data?.success) throw new Error(response.data?.message || "The listing could not be submitted.");
       setDraft(null);
-      setMessages((current) => [...current, { role: "assistant", text: "Your product listing has been submitted to Elevoni for review. It is not live on the marketplace yet; it will become available to buyers only after approval." }]);
+      setMessages((current) => [...current, { role: "assistant", text: LANGUAGE_CONFIRMATIONS[language]?.listing || LANGUAGE_CONFIRMATIONS["en-NG"].listing }]);
       setNotice("Listing submitted for review.");
     } catch (error) {
       setNotice(error.response?.data?.message || error.message || "Unable to submit this listing. Please review the details and try again.");
@@ -418,12 +450,12 @@ export default function NAtlas() {
       const response = await assistantApi.post("/api/vendor/sales", payload);
       if (!response.data?.success) throw new Error(response.data?.message || "The sales record could not be saved.");
       setSalesDraft(null);
-      setMessages((current) => [...current, { role: "assistant", text: "Your sales record has been saved. It is labelled farmer-reported and unverified; it has not been independently verified by Elevoni." }]);
+      setMessages((current) => [...current, { role: "assistant", text: LANGUAGE_CONFIRMATIONS[language]?.sale || LANGUAGE_CONFIRMATIONS["en-NG"].sale }]);
       setNotice("Sales record saved as farmer-reported and unverified.");
     } catch (error) {
       if (error.response?.status === 409 && error.response?.data?.duplicate) {
         setSalesDraft(null);
-        setMessages((current) => [...current, { role: "assistant", text: "This sales record had already been submitted. I have closed the draft to avoid recording it twice." }]);
+        setMessages((current) => [...current, { role: "assistant", text: LANGUAGE_CONFIRMATIONS[language]?.duplicate || LANGUAGE_CONFIRMATIONS["en-NG"].duplicate }]);
         setNotice("This sales record was already submitted.");
       } else {
         setNotice(error.response?.data?.message || error.message || "Unable to save this sales record. Please review the details and try again.");
