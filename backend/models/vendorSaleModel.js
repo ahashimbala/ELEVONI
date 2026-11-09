@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import Product from "./Product.js";
-
 const PRODUCT_UNITS = Object.freeze([
     ...(Product.schema.path("unitOfMeasure").enumValues || [])
 ]);
