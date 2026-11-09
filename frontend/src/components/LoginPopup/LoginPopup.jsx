@@ -29,6 +29,7 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
 
   const [currState, setCurrState] = useState(redirectOutcome?.intent === "sign_up" ? "Sign Up" : "Login");
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [authBusy, setAuthBusy] = useState(false);
   const submitGoogleCredential = useCallback(async (credential, accepted) => {
     setGoogleBusy(true);
     setGoogleError("");
@@ -200,34 +201,47 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
 
   const onLogin = async (event) => {
     event.preventDefault();
-    let newUrl = url;
-    if (currState === "Login") {
-      newUrl += "/api/user/login";
-    } else {
-      newUrl += "/api/user/register";
-    }
+    if (authBusy) return;
 
+    const isLogin = currState === "Login";
+    const endpoint = isLogin ? "/api/user/login" : "/api/user/register";
+    const payload = isLogin
+      ? { email: data.email.trim(), password: data.password }
+      : { name: data.name.trim(), email: data.email.trim(), password: data.password };
+
+    setAuthBusy(true);
     try {
-      const response = await axios.post(newUrl, data);
+      const response = await axios.post(`${url}${endpoint}`, payload, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 20000,
+      });
 
-      if (response.data.success && response.data.token) {
-        setToken(response.data.token);
-        persistStoredToken(localStorage, response.data.token);
-        setShowLogin(false);
-
-        if (currState === "Login") {
-          toast.success("Welcome back! Logged in successfully.");
-        } else {
-          toast.success("Account created successfully! Welcome aboard.");
-        }
-      } else {
-        toast.error(response.data.message || "Authentication failed.");
+      if (response.data?.success !== true || !response.data?.token) {
+        throw new Error(response.data?.message || "Authentication failed. Please try again.");
       }
+
+      persistStoredToken(localStorage, response.data.token);
+      setToken(response.data.token);
+      setShowLogin(false);
+      toast.success(isLogin ? "Welcome back! Logged in successfully." : "Account created successfully! Welcome aboard.");
     } catch (error) {
-      console.error("Auth error:", error);
-      toast.error(
-        error.response?.data?.message || "Server error. Please try again.",
-      );
+      console.error("Auth request failed:", {
+        endpoint,
+        status: error.response?.status || null,
+        code: error.code || null,
+        message: error.response?.data?.message || error.message || "Unknown authentication error",
+      });
+      const status = error.response?.status;
+      const message = !error.response
+        ? (error.code === "ECONNABORTED"
+            ? "The sign-in request timed out. Please try again."
+            : "Could not reach Elevoni. Check your internet connection and try again.")
+        : status === 401 && isLogin
+          ? "Incorrect email or password. Please check your details and try again."
+          : error.response.data?.message || "We couldn't complete your request. Please try again.";
+      toast.error(message);
+    } finally {
+      setAuthBusy(false);
     }
   };
 
@@ -308,8 +322,8 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
               <button type="button" className="password-visibility-toggle" aria-label={passwordVisible ? "Hide password" : "Show password"} aria-pressed={passwordVisible} onClick={() => setPasswordVisible((value) => !value)}>{passwordVisible ? "Hide password" : "Show password"}</button>
             </div>
           
-            <button type="submit">
-              {currState === "Sign Up" ? "Create account" : "Login"}
+            <button type="submit" disabled={authBusy || googleBusy}>
+              {authBusy ? (currState === "Sign Up" ? "Creating account..." : "Signing in...") : (currState === "Sign Up" ? "Create account" : "Login")}
             </button>
             <div className="login-popup-divider" aria-hidden="true"><span>or</span></div>
             {googleClientId ? (
@@ -319,10 +333,17 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
             )}
             {googleBusy && <p className="google-signin-message" role="status">Completing Google {currState === "Sign Up" ? "sign-up" : "sign-in"}...</p>}
             {googleError && <p className="google-signin-message" role="alert">{googleError}</p>}
-            <div className="login-popup-condition">
-              <input type="checkbox" required checked={consentAccepted} onChange={(event) => setConsentAccepted(event.target.checked)} />
-              <p>{currState === "Sign Up" ? "By creating an account, including with Google, I agree to the Terms of Use & Privacy Policy." : "By continuing, I agree to the Terms of Use & Privacy Policy."}</p>
-            </div>
+            {currState === "Sign Up" && (
+              <div className="login-popup-condition">
+                <input
+                  type="checkbox"
+                  required
+                  checked={consentAccepted}
+                  onChange={(event) => setConsentAccepted(event.target.checked)}
+                />
+                <p>By creating an account, including with Google, I agree to the Terms of Use &amp; Privacy Policy.</p>
+              </div>
+            )}
             {currState === "Login" ? (
               <p>
                 Create a new account?{" "}
