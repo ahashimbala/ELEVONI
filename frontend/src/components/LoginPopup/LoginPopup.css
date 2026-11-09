@@ -16,6 +16,21 @@
 .google-signin-button { display: flex; justify-content: center; width: 100%; min-height: 40px; }
 .google-signin-message { margin: 0; color: var(--elevoni-muted); font-size: 12px; text-align: center; }
 
+/* Keep the authentication overlay viewport-fixed even if a global storefront
+   rule overrides generic div positioning. The portal is mounted under <html>,
+   outside the body scroll-lock container. */
+#elevoni-login-popup.login-popup {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2000 !important;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100dvh;
+}
+@supports (height: 100dvh) {
+  #elevoni-login-popup.login-popup { height: 100dvh; }
+}
+
 .login-popup { overflow-y: auto; overscroll-behavior: contain; }
 .login-popup-container { max-height: calc(100dvh - 36px); overflow-y: auto; overscroll-behavior: contain; }
 .login-popup-consent-only { width: min(100%, 460px); gap: 22px; }

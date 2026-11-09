@@ -103,13 +103,16 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
     }
   };
 
-  // Render the dialog at document.body level so fixed positioning is not
-  // affected by transformed/overflowing application ancestors. Preserve the
-  // exact page scroll position while the dialog is open.
+  // Lock the page body at its current scroll position, but mount the dialog
+  // as a direct child of <html>. This keeps the fixed overlay outside the
+  // fixed-position body, so the body's negative top offset cannot push the
+  // dialog thousands of pixels below the viewport.
   useEffect(() => {
+    const scrollX = window.scrollX || window.pageXOffset || 0;
     const scrollY = window.scrollY || window.pageYOffset || 0;
     const body = document.body;
-    const previous = {
+    const html = document.documentElement;
+    const previousBody = {
       position: body.style.position,
       top: body.style.top,
       left: body.style.left,
@@ -117,15 +120,20 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
       width: body.style.width,
       overflow: body.style.overflow,
     };
+    const previousHtmlOverflow = html.style.overflow;
+
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
-    body.style.left = "0";
+    body.style.left = `-${scrollX}px`;
     body.style.right = "0";
     body.style.width = "100%";
     body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
+
     return () => {
-      Object.assign(body.style, previous);
-      window.scrollTo(0, scrollY);
+      Object.assign(body.style, previousBody);
+      html.style.overflow = previousHtmlOverflow;
+      window.scrollTo(scrollX, scrollY);
     };
   }, []);
 
@@ -246,7 +254,7 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
   };
 
   return createPortal(
-    <div className="login-popup" role="presentation">
+    <div id="elevoni-login-popup" className="login-popup" role="presentation">
       <form
         onSubmit={(event) => {
           if (googleConsentStep) {
@@ -359,7 +367,7 @@ const LoginPopup = ({ setShowLogin, redirectOutcome }) => {
         )}
       </form>
     </div>,
-    document.body,
+    document.documentElement,
   );
 };
 
