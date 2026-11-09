@@ -5,9 +5,11 @@ import axios from "axios";
 import { FaMicrophone, FaStop, FaVolumeUp, FaPaperPlane, FaArrowRight } from "react-icons/fa";
 import { resolveApiBaseUrl } from "../../utils/apiBase";
 import { formatNaira, marketplaceEnquiryUrl } from "../../utils/marketplace";
+import { ELEVONI_SMOKED_CATFISH_WHATSAPP_PHONE } from "../../config/contact.js";
 import { ASSISTANT_CLIENT_TIMEOUT_MS, ASSISTANT_TRANSCRIPTION_TIMEOUT_MS } from "../../../../shared/assistantConfig.mjs";
 import { getAssistantVisitorId } from "../../../../shared/assistantVisitor.mjs";
 import { StoreContext } from "../../context/StoreContext";
+import { requestMicrophoneStream, MICROPHONE_PERMISSION_HELP } from "../../utils/microphone.js";
 import "./ElevoniAssistant.css";
 
 const API = resolveApiBaseUrl();
@@ -30,11 +32,16 @@ function ListingCard({ listing }) {
   const imageSrc = !listing.image ? "" : /^https?:\/\//i.test(listing.image)
     ? listing.image
     : listing.image.startsWith("/") ? `${API}${listing.image}` : `${API}/images/${listing.image}`;
+  const isDirect = listing.source === "direct";
+  const enquiryUrl = isDirect
+    ? `https://wa.me/${ELEVONI_SMOKED_CATFISH_WHATSAPP_PHONE}?text=${encodeURIComponent(`Hello Elevoni Farms, I would like to enquire about ${listing.name}. Please confirm current availability and delivery arrangements.`)}`
+    : marketplaceEnquiryUrl({ name: listing.name, vendorId: { businessName: listing.vendorName } });
   return (
     <article className="elevoni-assistant-listing">
       {imageSrc && !imageFailed ? <img src={imageSrc} alt={listing.name} loading="lazy" onError={() => setImageFailed(true)} /> : <div className="elevoni-assistant-listing-placeholder" aria-hidden="true">E</div>}
       <div className="elevoni-assistant-listing-content">
         <strong>{listing.name}</strong>
+        <span className={`elevoni-assistant-source ${listing.source === "direct" ? "direct" : "marketplace"}`}>{listing.sourceLabel || (listing.source === "direct" ? "Elevoni Direct" : "Marketplace listing")}</span>
         <span className="elevoni-assistant-listing-price">{listing.pricePrefix ? `${listing.pricePrefix} ` : ""}{formatNaira(listing.price)} / {listing.unit || "unit"}</span>
         <span className="elevoni-assistant-listing-vendor">{listing.vendorName || "Approved Elevoni vendor"}</span>
         <span className="elevoni-assistant-listing-location">{[listing.lga, listing.state].filter(Boolean).join(", ") || "Location not provided"}</span>
@@ -43,8 +50,8 @@ function ListingCard({ listing }) {
         {listing.stockMatch === "sufficient" && <small className="elevoni-assistant-stock-note">Recorded stock meets the requested quantity</small>}
         {listing.stockMatch === "not_confirmed" && <small className="elevoni-assistant-stock-note">Confirm current stock with the seller</small>}
         <div className="elevoni-assistant-listing-actions">
-          <Link to={`/product/${listing.id}`}>View listing <FaArrowRight aria-hidden="true" /></Link>
-          <a href={marketplaceEnquiryUrl({ name: listing.name, vendorId: { businessName: listing.vendorName } })} target="_blank" rel="noreferrer">Enquire</a>
+          <Link to={`/product/${listing.id}`}>{isDirect ? "View product" : "View listing"} <FaArrowRight aria-hidden="true" /></Link>
+          <a href={enquiryUrl} target="_blank" rel="noreferrer">{isDirect ? "Enquire with Elevoni" : "Enquire with seller"}</a>
         </div>
       </div>
     </article>
@@ -275,7 +282,7 @@ export default function ElevoniAssistant() {
       return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      const stream = await requestMicrophoneStream({ onPrompt: () => setNotice(MICROPHONE_PERMISSION_HELP) });
       if (!mountedRef.current) { stream.getTracks().forEach((track) => track.stop()); return; }
       streamRef.current = stream;
       const supported = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
@@ -299,7 +306,7 @@ export default function ElevoniAssistant() {
       setNotice("Recording… Speak clearly, then tap the microphone again to finish.");
     } catch (error) {
       if (mountedRef.current) {
-        setNotice(error?.name === "NotAllowedError" ? "Microphone permission was denied. Allow microphone access in your browser settings." : "Could not open your microphone. Check your device settings and try again.");
+        setNotice(error?.name === "NotAllowedError" ? `Microphone permission was denied. ${MICROPHONE_PERMISSION_HELP}` : "Could not open your microphone. Check your device settings and try again.");
       }
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;

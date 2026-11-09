@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { assistantApi } from "../../api";
 import { PRODUCT_CATEGORIES, PRODUCT_UNITS, SUBCATEGORIES_BY_CATEGORY } from "../../constants/categoryExport";
+import { requestMicrophoneStream, MICROPHONE_PERMISSION_HELP } from "../../utils/microphone.js";
 import "./NAtlas.css";
 
 
@@ -31,21 +32,6 @@ const requestErrorMessage = (error, fallback) => {
   }
   return error?.response?.data?.message || error?.message || fallback;
 };
-
-async function getCloudVoiceErrorMessage(error) {
-  const data = error?.response?.data;
-  if (data && typeof data.text === "function") {
-    try {
-      const body = await data.text();
-      const parsed = JSON.parse(body);
-      if (typeof parsed?.message === "string" && parsed.message.trim()) return parsed.message.trim();
-    } catch { /* non-JSON provider response */ }
-  }
-  const message = error?.response?.data?.message || error?.message;
-  return typeof message === "string" && message.trim()
-    ? message.trim().slice(0, 240)
-    : "ElevenLabs could not generate the selected language's cloud voice.";
-}
 
 const createSalesSubmissionReference = () => {
   const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -102,7 +88,7 @@ export default function NAtlas() {
     setNotice("Request cancelled. You can try again whenever you're ready.");
   };
 
-  const speakWithDevice = async (text, messageIndex, signal, cloudFailureMessage = "") => {
+  const speakWithDevice = async (text, messageIndex, signal) => {
     if (!mountedRef.current) return;
     if (!("speechSynthesis" in window) || typeof window.SpeechSynthesisUtterance === "undefined") {
       setNotice("Spoken playback is not supported in this browser. You can still read the response.");
@@ -129,8 +115,7 @@ export default function NAtlas() {
       || voice.lang?.toLowerCase() === requestedCode.toLowerCase());
     if (!matchingVoice) {
       setSpeakingMessage(null);
-      const cloudDetail = cloudFailureMessage ? `Cloud voice: ${cloudFailureMessage} ` : "Cloud voice is unavailable. ";
-      setNotice(`${cloudDetail}No matching ${activeLanguage.label} voice is installed on this device. The response is still available as text.`);
+      setNotice(`No matching ${activeLanguage.label} voice is available on this device, and the cloud voice could not generate audio. The response is still available as text.`);
       return;
     }
     const utterance = new window.SpeechSynthesisUtterance(text);
@@ -144,9 +129,7 @@ export default function NAtlas() {
       }
     };
     setSpeakingMessage(messageIndex);
-    setNotice(cloudFailureMessage
-      ? `Cloud voice unavailable (${cloudFailureMessage}). Playing with your device's ${activeLanguage.label} voice instead.`
-      : `Playing with your device's ${activeLanguage.label} voice.`);
+    setNotice(`Playing with your device's ${activeLanguage.label} voice.`);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -197,12 +180,11 @@ export default function NAtlas() {
       if (speechUrlRef.current) URL.revokeObjectURL(speechUrlRef.current);
       speechUrlRef.current = "";
       speechAudioRef.current = null;
-      const cloudFailureMessage = await getCloudVoiceErrorMessage(error);
       if ("speechSynthesis" in window && typeof window.SpeechSynthesisUtterance !== "undefined") {
-        await speakWithDevice(text, messageIndex, controller.signal, cloudFailureMessage);
+        await speakWithDevice(text, messageIndex, controller.signal);
       } else {
         setSpeakingMessage(null);
-        setNotice(`Cloud voice failed: ${cloudFailureMessage} This browser also does not support spoken playback. The text response is still available.`);
+        setNotice(`Cloud voice could not generate ${activeLanguage.label} audio, and this browser does not support spoken playback. The text response is still available.`);
       }
     } finally {
       if (speechRequestRef.current === controller) speechRequestRef.current = null;
@@ -254,7 +236,7 @@ export default function NAtlas() {
       return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      const stream = await requestMicrophoneStream({ onPrompt: () => setNotice(MICROPHONE_PERMISSION_HELP) });
       if (!mountedRef.current) {
         stream.getTracks().forEach((track) => track.stop());
         return;
@@ -283,7 +265,7 @@ export default function NAtlas() {
     } catch (error) {
       if (mountedRef.current) {
         setListening(false);
-        setNotice(error?.name === "NotAllowedError" ? "Microphone permission was denied. Allow microphone access in your browser settings." : "Unable to access the microphone. Check your browser and device permissions.");
+        setNotice(error?.name === "NotAllowedError" ? `Microphone permission was denied. ${MICROPHONE_PERMISSION_HELP}` : "Unable to access the microphone. Check your browser and device permissions.");
       }
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;

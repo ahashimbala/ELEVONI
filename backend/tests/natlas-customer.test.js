@@ -15,6 +15,13 @@ test("customer criteria only accepts active category and matching subcategory", 
   assert.equal(criteria.minPrice, null);
 });
 
+test("customer criteria preserves a named product for cross-catalogue availability checks", () => {
+  const criteria = normalizeCustomerCriteria({ intent: "search", productName: "Smoked Catfish", keywords: [] }, "Do you have smoked catfish?");
+  assert.equal(criteria.intent, "search");
+  assert.equal(criteria.productName, "Smoked Catfish");
+  assert.ok(criteria.keywords.some((word) => word.toLowerCase() === "smoked catfish"));
+});
+
 test("customer criteria does not invent a category when the request is general", () => {
   const criteria = normalizeCustomerCriteria({ intent: "general", keywords: [] }, "How does Elevoni work?");
   assert.equal(criteria.category, "");

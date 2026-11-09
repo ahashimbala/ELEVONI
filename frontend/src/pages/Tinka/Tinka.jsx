@@ -6,6 +6,7 @@ import { FaMicrophone, FaStop, FaVolumeUp, FaPaperPlane, FaArrowRight } from "re
 import { resolveApiBaseUrl } from "../../utils/apiBase";
 import { formatNaira, marketplaceEnquiryUrl } from "../../utils/marketplace";
 import { NATLAS_CLIENT_TIMEOUT_MS } from "../../../../shared/natlasConfig.mjs";
+import { requestMicrophoneStream, MICROPHONE_PERMISSION_HELP } from "../../utils/microphone.js";
 import "./Tinka.css";
 
 const API = resolveApiBaseUrl();
@@ -285,7 +286,7 @@ export default function Tinka() {
       return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      const stream = await requestMicrophoneStream({ onPrompt: () => setNotice(MICROPHONE_PERMISSION_HELP) });
       if (!mountedRef.current) { stream.getTracks().forEach((track) => track.stop()); return; }
       streamRef.current = stream;
       const supported = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
@@ -309,7 +310,7 @@ export default function Tinka() {
       setNotice("Recording… Speak clearly, then tap the microphone again to finish.");
     } catch (error) {
       if (mountedRef.current) {
-        setNotice(error?.name === "NotAllowedError" ? "Microphone permission was denied. Allow microphone access in your browser settings." : "Could not open your microphone. Check your device settings and try again.");
+        setNotice(error?.name === "NotAllowedError" ? `Microphone permission was denied. ${MICROPHONE_PERMISSION_HELP}` : "Could not open your microphone. Check your device settings and try again.");
       }
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;

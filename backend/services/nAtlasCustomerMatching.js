@@ -34,11 +34,12 @@ export function normalizeCustomerCriteria(raw = {}, originalMessage = "") {
   const minPrice = unit ? safeNumber(raw.minPrice) : null;
   const maxPrice = unit ? safeNumber(raw.maxPrice) : null;
   const message = clean(originalMessage, 1200).toLowerCase();
+  const productName = clean(raw.productName, 120);
   if (raw.intent !== "navigate" && (!category || !subcategory) && (raw.intent === "search" || /\b(find|buy|need|looking for|show me|get me|where can i get|i want)\b/.test(message))) {
     const alias = CATEGORY_ALIASES.find((item) => item.words.some((word) => message.includes(word)));
     if (alias) {
       return {
-        intent: "search", category: alias.category, subcategory: alias.subcategory,
+        intent: "search", productName, category: alias.category, subcategory: alias.subcategory,
         keywords: alias.words.filter((word) => message.includes(word)).slice(0, 4),
         state: clean(raw.state, 80), lga: clean(raw.lga, 80),
         minPrice, maxPrice,
@@ -50,9 +51,10 @@ export function normalizeCustomerCriteria(raw = {}, originalMessage = "") {
   const keywords = Array.isArray(raw.keywords)
     ? raw.keywords.filter((item) => typeof item === "string").map((item) => clean(item, 50)).filter(Boolean).slice(0, 5)
     : [];
+  if (productName && !keywords.some((word) => word.toLowerCase() === productName.toLowerCase())) keywords.unshift(productName);
   const destination = ["marketplace", "livestock", "food-crops", "aquaculture-fishery", "smoked-catfish"].includes(raw.destination) ? raw.destination : "";
   return {
-    intent, category, subcategory, keywords,
+    intent, productName, category, subcategory, keywords,
     state: clean(raw.state, 80), lga: clean(raw.lga, 80),
     minPrice, maxPrice,
     quantity: safeNumber(raw.quantity), unit, destination,

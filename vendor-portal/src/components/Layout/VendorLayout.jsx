@@ -17,7 +17,6 @@ const navigation = [
   { to: "/sales-insights", label: "Sales intelligence", shortLabel: "Insights", icon: SalesIcon },
   { to: "/assistant", label: "Elevoni Assistant", shortLabel: "Assistant", icon: AssistantIcon },
   { to: "/apply", label: "Application", shortLabel: "Apply", icon: ApplyIcon },
-  { to: "/login", label: "Account", shortLabel: "Account", icon: AccountIcon },
 ];
 
 const VendorLayout = () => {
@@ -35,11 +34,15 @@ const VendorLayout = () => {
           <nav className="vendor-nav" aria-label="Vendor portal navigation">
             {navigation.map(({ to, label, end }) => (
               <NavLink key={to} to={to} end={end} className={({ isActive }) => (isActive ? "active" : undefined)}>
-                {to === "/login" && isAuthenticated ? "Account" : to === "/login" ? "Sign in" : label}
+                {label}
               </NavLink>
             ))}
           </nav>
           <div className="vendor-header-actions">
+            <NavLink to="/login" className={({ isActive }) => `vendor-account-link${isActive ? " active" : ""}`} aria-label={isAuthenticated ? "Open account" : "Sign in"}>
+              <AccountIcon aria-hidden="true" />
+              <span>{isAuthenticated ? "Account" : "Sign in"}</span>
+            </NavLink>
             <a className="vendor-storefront-link" href="https://elevonifarms.vercel.app/marketplace" target="_blank" rel="noopener noreferrer">View marketplace <span aria-hidden="true">↗</span></a>
             {isAuthenticated && <button type="button" className="vendor-signout" onClick={signOut}>Sign out</button>}
           </div>
@@ -59,7 +62,7 @@ const VendorLayout = () => {
         {navigation.map(({ to, shortLabel, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => `vendor-mobile-nav-item${isActive ? " active" : ""}`}>
             <Icon className="vendor-mobile-nav-icon" aria-hidden="true" />
-            <span>{to === "/login" && isAuthenticated ? "Account" : shortLabel}</span>
+            <span>{shortLabel}</span>
           </NavLink>
         ))}
       </nav>
