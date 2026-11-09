@@ -36,13 +36,11 @@
   .vendor-main { width:100%; padding:20px 14px calc(92px + env(safe-area-inset-bottom,0px)); gap:20px; }
   .vendor-footer { display:none; }
   .vendor-mobile-nav {
-    position:fixed; z-index:50; right:10px;
-    bottom:max(8px,env(safe-area-inset-bottom,0px)); left:10px;
-    display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
-    min-height:62px; padding:7px 8px;
-    border:1px solid #e5e7df; border-radius:14px;
-    background:rgba(255,255,255,.98);
-    backdrop-filter:blur(16px); box-shadow:0 8px 24px rgba(28,36,22,.10);
+    position:fixed; z-index:50; right:0; bottom:0; left:0;
+    display:grid; grid-template-columns:repeat(7,minmax(0,1fr));
+    min-height:62px; padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px));
+    border-top:1px solid #e5e7df; background:rgba(255,255,255,.97);
+    backdrop-filter:blur(16px); box-shadow:0 -5px 22px rgba(28,36,22,.07);
   }
   .vendor-mobile-nav-item {
     min-width:0; min-height:48px; display:flex; flex-direction:column;

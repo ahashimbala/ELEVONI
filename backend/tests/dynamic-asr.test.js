@@ -31,7 +31,7 @@ test("Dynamic ASR posts multipart audio and returns the existing transcript cont
       return response(200, {
         success: true,
         text: "sannu da zuwa",
-        model: "dynamic-asr-pocket-300m-int8",
+        model: "dynamic-asr-1b-real",
         durationSeconds: 2.4,
       });
     },
@@ -44,7 +44,7 @@ test("Dynamic ASR posts multipart audio and returns the existing transcript cont
   assert.equal(result.text, "sannu da zuwa");
   assert.equal(result.language, "ha-NG");
   assert.equal(result.provider, "dynamic-asr");
-  assert.equal(result.model, "dynamic-asr-pocket-300m-int8");
+  assert.equal(result.model, "dynamic-asr-1b-real");
 });
 
 test("Dynamic ASR maps Modal authentication failure to a configuration error", async () => {

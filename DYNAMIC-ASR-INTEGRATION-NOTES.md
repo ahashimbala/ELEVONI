@@ -1,28 +1,32 @@
-# Elevoni Dynamic ASR Pocket integration
+# Elevoni Dynamic ASR 1B integration
 
-## What changed
+## Current design
 
-- Added `modal-asr/modal_app.py`: Modal-hosted Dynamic ASR Pocket 300M INT8 service. It downloads the model files during image build, decodes browser audio with FFmpeg, resamples to mono 16 kHz, and runs the upstream Pocket inference implementation.
-- Added `backend/services/dynamicAsr.js`: authenticated multipart client for the Modal endpoint.
-- Added `backend/services/assistantTranscription.js`: provider switch between Dynamic ASR and the existing OpenAI transcription path.
-- Updated both customer and approved-vendor transcription controllers to use the provider switch. Existing chat intelligence and ElevenLabs speech generation are unchanged.
-- Added backend environment examples and focused Dynamic ASR client tests.
-
-## Provider selection
-
-Set `ASSISTANT_ASR_PROVIDER=dynamic-asr` in backend production only after Modal is deployed and both Modal URL and shared API key are configured. Set it to `openai` to roll back.
+- Customer and vendor voice recordings are uploaded to the existing Express transcription routes.
+- `ASSISTANT_ASR_PROVIDER=dynamic-asr` selects the Modal provider; `openai` remains available as a rollback.
+- The Node backend sends the recording to the private Modal HTTPS endpoint with a Bearer secret.
+- Modal runs Dynamic ASR 1B `real/` on an A10 GPU and returns transcript text.
+- OpenAI continues to handle assistant reasoning and response generation. ElevenLabs continues to handle speech generation.
+- The selected language is returned as metadata, but Dynamic ASR 1B is language-agnostic and receives no language hint.
 
 ## Modal deployment
 
-See `modal-asr/README.md`. The app name is `elevoni-dynamic-asr-pocket`; create the Modal secret `elevoni-asr-secret` with key `ELEVONI_ASR_API_KEY` before deployment.
+See `modal-asr/README.md`. The deployed app is `elevoni-dynamic-asr-1b`. It reuses the existing Modal secret `elevoni-asr-secret` and environment key `ELEVONI_ASR_API_KEY`.
+
+## Customer cart actions
+
+The customer assistant now supports these cart operations for verified Elevoni Direct catalogue products:
+
+- Set a product quantity (e.g. “I want 5 kilos of smoked catfish”).
+- Add an additional quantity.
+- Reduce a quantity or remove a product.
+- Clear the cart.
+- Open the cart or proceed to checkout.
+
+The backend resolves the requested product against the visible Elevoni Direct catalogue before returning a cart action. The storefront applies the action through the existing StoreContext cart API and provides a “Go to cart” navigation button. It does not submit an order or make a payment automatically.
+
+Independent Marketplace vendor listings remain enquiry-based and are not added to the current Elevoni Direct checkout cart. The assistant explains this boundary rather than presenting a vendor enquiry as a cart purchase.
 
 ## Verification status
 
-- JavaScript syntax checks passed for the new service, provider router and both changed controllers.
-- Python syntax compilation passed for `modal-asr/modal_app.py`.
-- Focused mocked-client tests are included; they still need to be run in the backend environment.
-- Modal deployment, model image build, live endpoint test, Vercel production configuration and real-device speech tests have not been performed from this workspace.
-
-## Model licence and accuracy
-
-Dynamic ASR Pocket's fine-tuned weights are CC BY-SA 4.0; its inference code is Apache-2.0. Preserve attribution and review share-alike obligations for any redistribution/adaptation. The model is experimental and may omit punctuation/casing; verify names, quantities, locations and prices. Its own benchmark warns that spontaneous, noisy, phone and code-switched speech can be harder than its read-speech test data.
+Targeted cart-intent tests and JavaScript/Python syntax checks are included with the patch. A live Modal GPU inference, live OpenAI request, Vercel deployment and end-to-end browser checkout test still need to be run in the user's accounts.

@@ -8,6 +8,8 @@ import Login from "./pages/Login/Login";
 import Apply from "./pages/Apply/Apply";
 import NotFound from "./pages/NotFound/NotFound";
 import NAtlas from "./pages/NAtlas/NAtlas";
+import BuyerMatches from "./pages/BuyerMatches/BuyerMatches";
+import SalesInsights from "./pages/SalesInsights/SalesInsights";
 
 const App = () => {
   return (
@@ -16,6 +18,8 @@ const App = () => {
         <Route element={<VendorLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/sales" element={<SalesLog />} />
+          <Route path="/buyer-matches" element={<BuyerMatches />} />
+          <Route path="/sales-insights" element={<SalesInsights />} />
           <Route path="/assistant" element={<NAtlas />} />
           <Route path="/elevoni-assistant" element={<Navigate to="/assistant" replace />} />
           <Route path="/tinka" element={<Navigate to="/assistant" replace />} />

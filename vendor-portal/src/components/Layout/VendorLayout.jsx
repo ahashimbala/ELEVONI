@@ -13,6 +13,8 @@ const AccountIcon = (props) => <svg viewBox="0 0 24 24" fill="currentColor" {...
 const navigation = [
   { to: "/", label: "Home", shortLabel: "Home", icon: HomeIcon, end: true },
   { to: "/sales", label: "Sales log", shortLabel: "Sales", icon: SalesIcon },
+  { to: "/buyer-matches", label: "Buyer matches", shortLabel: "Matches", icon: SalesIcon },
+  { to: "/sales-insights", label: "Sales intelligence", shortLabel: "Insights", icon: SalesIcon },
   { to: "/assistant", label: "Elevoni Assistant", shortLabel: "Assistant", icon: AssistantIcon },
   { to: "/apply", label: "Application", shortLabel: "Apply", icon: ApplyIcon },
   { to: "/login", label: "Account", shortLabel: "Account", icon: AccountIcon },

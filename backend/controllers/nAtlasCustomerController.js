@@ -48,15 +48,17 @@ export async function postCustomerElevoniAssistantMessage(req, res, next) {
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
     const language = typeof req.body?.language === "string" ? req.body.language : "en-NG";
     const history = Array.isArray(req.body?.history) ? req.body.history : [];
+    const cart = Array.isArray(req.body?.cart) ? req.body.cart : [];
     if (!message || message.length > 1200) return res.status(400).json({ success: false, message: "Enter a message of 1–1,200 characters." });
     if (!ALLOWED_LANGUAGES.has(language)) return res.status(400).json({ success: false, message: "Choose a supported language." });
     if (history.length > 8 || history.some((item) => !item || !["user", "assistant"].includes(item.role) || typeof item.text !== "string" || item.text.length > 700)) {
       return res.status(400).json({ success: false, message: "Conversation history is too long. Start a new chat and try again." });
     }
+    if (cart.length > 30 || cart.some((item) => !item || typeof item.id !== "string" || item.id.length > 32 || typeof item.name !== "string" || item.name.length > 120 || !Number.isSafeInteger(Number(item.quantity)) || Number(item.quantity) < 0 || Number(item.quantity) > 500)) return res.status(400).json({ success: false, message: "Cart context is invalid. Refresh your cart and try again." });
     if (!allowRequest(key, MAX_CHAT)) return res.status(429).json({ success: false, message: "Please wait a little before sending another message." });
     const dailyQuota = await consumeAssistantPrompt(req, "customer");
     if (!dailyQuota.allowed) return sendAssistantDailyLimit(res, dailyQuota);
-    const result = await answerCustomerElevoniAssistant({ message, language, history, abortSignal: abort.signal, requestId: res.getHeader("X-Request-ID") });
+    const result = await answerCustomerElevoniAssistant({ message, language, history, cart, abortSignal: abort.signal, requestId: res.getHeader("X-Request-ID") });
     if (abort.signal.aborted || res.destroyed) return;
     return res.status(200).json({ success: true, data: result });
   } catch (error) {

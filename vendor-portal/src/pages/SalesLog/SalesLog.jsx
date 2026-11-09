@@ -185,6 +185,10 @@ const SalesLog = () => {
     const [successTitle, setSuccessTitle] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
     const [savedSale, setSavedSale] = useState(null);
+    const [assistantLanguage, setAssistantLanguage] = useState(() => {
+        const saved = localStorage.getItem("natlas-language");
+        return ["en-NG", "pcm-NG", "ha-NG", "ig-NG", "yo-NG"].includes(saved) ? saved : "en-NG";
+    });
 
     const today = todayInputValue();
 
@@ -626,6 +630,14 @@ const SalesLog = () => {
                 unverified. They are not platform orders and do not confirm
                 delivery.
             </p>
+            <div className="sales-log-language-shortcut">
+                <label>Assistant language
+                    <select value={assistantLanguage} onChange={(event) => { setAssistantLanguage(event.target.value); localStorage.setItem("natlas-language", event.target.value); }}>
+                        <option value="en-NG">Nigerian English</option><option value="pcm-NG">Nigerian Pidgin</option><option value="ha-NG">Hausa</option><option value="ig-NG">Igbo</option><option value="yo-NG">Yoruba</option>
+                    </select>
+                </label>
+                <Link to="/assistant">Record by text or voice in the selected language →</Link>
+            </div>
         </header>
     );
 

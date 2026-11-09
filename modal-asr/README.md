@@ -1,69 +1,58 @@
-# Elevoni Dynamic ASR Pocket on Modal
+# Elevoni Dynamic ASR 1B on Modal
 
-This service hosts Modular's Dynamic ASR Pocket 300M INT8 ONNX model on Modal. It accepts browser-recorded audio, decodes it with FFmpeg, resamples it to mono 16 kHz, and returns a transcript.
+This service replaces the previous Pocket 300M INT8 deployment with Modular's fine-tuned **Dynamic ASR 1B `real/` checkpoint**.
 
-## 1. Deploy
+## Runtime
 
-From this directory, with the Modal CLI installed and authenticated. On Windows PowerShell:
+- Modal app: `elevoni-dynamic-asr-1b`
+- Model: `Modularcomputing/dynamic-asr`, `real/model.pt`
+- Runtime: PyTorch + fairseq2 + `omnilingual-asr`
+- GPU: NVIDIA A10 (24 GB class)
+- Audio: browser WebM/MP4/OGG/WAV → FFmpeg → mono 16 kHz float32
+- API: authenticated multipart `POST` to the Modal function endpoint
+- Secret: existing Modal secret `elevoni-asr-secret`, key `ELEVONI_ASR_API_KEY`
+
+The 1B model is language-agnostic. The selected language is retained as Elevoni request metadata; it is not sent as a model language hint.
+
+## Deploy
+
+Run from this directory in PowerShell:
 
 ```powershell
-modal setup
-$env:ELEVONI_ASR_API_KEY = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
-modal secret create elevoni-asr-secret ELEVONI_ASR_API_KEY=$env:ELEVONI_ASR_API_KEY
-Write-Output $env:ELEVONI_ASR_API_KEY
-```
-
-Copy the generated value for the Vercel backend environment variable in step 2. Do not send it in chat or commit it to Git.
-
-The Modal app already attaches that secret to its transcription endpoint.
-
-Deploy:
-
-```bash
 modal deploy modal_app.py
 ```
 
-Copy the HTTPS endpoint URL printed by Modal.
+The image pins PyTorch 2.8.0 + CUDA 12.8 and fairseq2 0.6.0 + CUDA 12.8 because fairseq2 native extensions must match the installed PyTorch/CUDA ABI. The image downloads the `real/model.pt` checkpoint and `transcribe.py` at build time. The base fairseq2 model assets may be fetched on the first model load.
 
-## 2. Configure the Elevoni backend
+The existing `elevoni-asr-secret` Modal secret is reused. Do not create a new key if the current secret already contains `ELEVONI_ASR_API_KEY`.
 
-In the backend Vercel project, set these Production environment variables:
+## Backend environment
+
+After deployment, copy the new HTTPS URL printed by Modal into the **backend Vercel project only**:
 
 ```env
 ASSISTANT_ASR_PROVIDER=dynamic-asr
-DYNAMIC_ASR_MODAL_URL=https://YOUR-MODAL-ENDPOINT.modal.run
-DYNAMIC_ASR_MODAL_API_KEY=THE_SAME_LONG_RANDOM_SECRET
-DYNAMIC_ASR_TIMEOUT_MS=90000
+DYNAMIC_ASR_MODAL_URL=https://YOUR-NEW-MODAL-ENDPOINT
+DYNAMIC_ASR_MODAL_API_KEY=the-same-value-as-ELEVONI_ASR_API_KEY
+DYNAMIC_ASR_TIMEOUT_MS=150000
 ```
 
-Redeploy the backend after saving the variables. Do not put the secret in either frontend.
+Redeploy the backend after changing the environment. Keep the OpenAI transcription credentials available as a rollback option; `ASSISTANT_ASR_PROVIDER=openai` switches the transcription route back to OpenAI.
 
-## 3. Smoke test
+## Verify
 
-Send a real audio file as multipart field `file`:
-
-```bash
-curl -X POST "https://YOUR-MODAL-ENDPOINT.modal.run" \
-  -H "Authorization: Bearer THE_SAME_LONG_RANDOM_SECRET" \
-  -F "file=@sample.webm"
-```
-
-Expected response shape:
+Test a short recording in Nigerian English, Pidgin, Hausa, Igbo and Yoruba. Confirm the Modal response has:
 
 ```json
 {
   "success": true,
   "text": "...",
-  "model": "dynamic-asr-pocket-300m-int8",
-  "durationSeconds": 4.2
+  "model": "dynamic-asr-1b-real"
 }
 ```
 
-## 4. Important
+Do not treat a successful Modal deployment as proof that inference works. The first live request must confirm GPU availability, model download/cache and an actual transcript.
 
-- Pocket is language-agnostic: do not send Hausa/Igbo/Yoruba language codes to the model. Elevoni returns its selected language as request metadata.
-- The 300M INT8 model is CPU-based; the Modal function requests 4 CPUs and 4 GiB RAM.
-- The first Modal image build downloads the model files; subsequent starts use the baked image.
-- Keep the previous OpenAI transcription provider available by setting `ASSISTANT_ASR_PROVIDER=openai` if rollback is needed.
-- Model attribution: Dynamic ASR by Modular (Modularcomputing), based on Meta Omnilingual ASR. Pocket fine-tuned weights are CC BY-SA 4.0; the Pocket inference code is Apache-2.0. Commercial use is possible under CC BY-SA 4.0, but attribution and share-alike obligations apply to adaptations/redistributions. Review the [model card](https://huggingface.co/Modularcomputing/dynamic-asr) and its licence before production use.
-- Test Hausa, Igbo, Yoruba, Pidgin and Nigerian English with real phone recordings. The model can omit punctuation/casing and make errors in quantities, names and code-switching.
+## Licence
+
+The Dynamic ASR fine-tuned weights are published under **CC BY-SA 4.0**. The model card provides attribution details for the source corpora and Meta Omnilingual ASR. Review and preserve those attribution/share-alike obligations before distributing model weights or derivatives. The inference code is Apache-2.0. See the model card: https://huggingface.co/Modularcomputing/dynamic-asr

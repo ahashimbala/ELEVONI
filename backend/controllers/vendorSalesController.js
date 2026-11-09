@@ -5,6 +5,7 @@ import {
     parsePagination
 } from "../services/pagination.js";
 import { prepareVendorSale } from "../services/vendorSales.js";
+import { getVendorSalesInsights } from "../services/vendorSalesInsights.js";
 
 const vendorIdFor = (req) => req.vendor?.profileId || null;
 
@@ -88,4 +89,15 @@ export const listVendorSales = async (req, res, next) => {
     } catch (error) {
         return next(error);
     }
+};
+
+
+export const getVendorSalesInsightsController = async (req, res, next) => {
+    try {
+        const vendorId = vendorIdFor(req);
+        if (!vendorId) return res.status(403).json({ success: false, message: "An approved vendor profile is required" });
+        const period = typeof req.query.period === "string" ? req.query.period : "90d";
+        const data = await getVendorSalesInsights({ SalesModel: vendorSaleModel, vendorId, period });
+        return res.status(200).json({ success: true, data });
+    } catch (error) { return next(error); }
 };

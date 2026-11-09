@@ -37,7 +37,7 @@ export async function transcribeDynamicASR({
 
   let response;
   try {
-    const timeout = AbortSignal.timeout(Number(env.DYNAMIC_ASR_TIMEOUT_MS) || 90_000);
+    const timeout = AbortSignal.timeout(Number(env.DYNAMIC_ASR_TIMEOUT_MS) || 150_000);
     const signal = abortSignal ? AbortSignal.any([abortSignal, timeout]) : timeout;
     response = await fetchImpl(endpoint, {
       method: "POST",
@@ -75,7 +75,7 @@ export async function transcribeDynamicASR({
     text,
     language,
     provider: "dynamic-asr",
-    model: payload.model || "dynamic-asr-pocket-300m-int8",
+    model: payload.model || "dynamic-asr-1b-real",
     selectedLanguage: language,
     durationSeconds: Number(payload.durationSeconds) || null,
     notice: "Please review names, locations, quantities and prices before sending. Speech recognition can make mistakes.",

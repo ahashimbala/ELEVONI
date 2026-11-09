@@ -8,6 +8,7 @@ import { PRODUCT_CATEGORIES, SUBCATEGORIES_BY_CATEGORY } from "../../../../share
 import { fetchPublicProducts } from "../../utils/marketplace.js";
 import "./Marketplace.css";
 import marketplace from "../../assets/Farm-to-Market Animal Delivery.png"
+import BuyerRequirementForm from "../../components/BuyerRequirementForm/BuyerRequirementForm"
 
 const ALL_TYPES = "All types";
 const CATEGORIES = ["All sectors", ...PRODUCT_CATEGORIES];
@@ -143,6 +144,8 @@ const Marketplace = () => {
          <img src={marketplace} alt="" />
         </div>
       </section>
+
+      <BuyerRequirementForm url={url} />
 
       <section className="marketplace-catalogue" aria-labelledby="marketplace-listings-title">
         <div className="marketplace-section-heading">

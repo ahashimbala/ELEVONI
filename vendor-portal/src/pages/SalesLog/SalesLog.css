@@ -624,3 +624,4 @@
         min-height: 44px;
     }
 }
+.sales-log-language-shortcut{display:flex;align-items:end;gap:14px;flex-wrap:wrap;margin-top:14px;padding:14px 16px;border:1px solid #e4e9df;border-radius:10px;background:#f8faf6}.sales-log-language-shortcut label{display:grid;gap:5px;color:#52604d;font-size:12px;font-weight:650}.sales-log-language-shortcut select{min-height:40px;min-width:170px;padding:7px 10px;border:1px solid #d9e0d4;border-radius:7px;background:#fff;color:#29392b}.sales-log-language-shortcut a{color:#45603e;font-size:13px;font-weight:700;text-decoration:none;padding:10px 0}
