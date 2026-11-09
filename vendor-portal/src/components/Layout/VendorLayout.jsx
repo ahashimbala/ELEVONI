@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "../../context/auth-context";
 import logo from "../../assets/elevoni-logo.png";
 import "./VendorLayout.css";
@@ -8,7 +8,6 @@ const HomeIcon = (props) => <svg viewBox="0 0 24 24" fill="currentColor" {...pro
 const SalesIcon = (props) => <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm2 4v2h10V7H7zm0 4v2h10v-2H7zm0 4v2h7v-2H7z" /></svg>;
 const AssistantIcon = (props) => <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4zm-7 9a1 1 0 0 1 1 1 6 6 0 0 0 12 0 1 1 0 1 1 2 0 8 8 0 0 1-7 7.94V22h-2v-2.06A8 8 0 0 1 4 12a1 1 0 0 1 1-1z" /></svg>;
 const ApplyIcon = (props) => <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M11 3h2v8h8v2h-8v8h-2v-8H3v-2h8z" /></svg>;
-const AccountIcon = (props) => <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4a3.2 3.2 0 1 1 0 6.4A3.2 3.2 0 0 1 12 6zm0 13.8a7.8 7.8 0 0 1-6.1-2.9c.6-2.2 2.6-3.7 6.1-3.7s5.5 1.5 6.1 3.7a7.8 7.8 0 0 1-6.1 2.9z" /></svg>;
 
 const navigation = [
   { to: "/", label: "Home", shortLabel: "Home", icon: HomeIcon, end: true },
@@ -20,7 +19,9 @@ const navigation = [
 ];
 
 const VendorLayout = () => {
-  const { isAuthenticated, signOut } = useContext(AuthContext);
+  const { isAuthenticated, signOut, user } = useContext(AuthContext);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountInitial = String(user?.name || user?.email || "?").trim().charAt(0).toUpperCase() || "?";
 
   return (
     <div className="vendor-app">
@@ -39,12 +40,29 @@ const VendorLayout = () => {
             ))}
           </nav>
           <div className="vendor-header-actions">
-            <NavLink to="/login" className={({ isActive }) => `vendor-account-link${isActive ? " active" : ""}`} aria-label={isAuthenticated ? "Open account" : "Sign in"}>
-              <AccountIcon aria-hidden="true" />
-              <span>{isAuthenticated ? "Account" : "Sign in"}</span>
-            </NavLink>
+            {isAuthenticated ? (
+              <div className="vendor-account-menu-wrap">
+                <button
+                  type="button"
+                  className={`vendor-account-avatar${accountMenuOpen ? " active" : ""}`}
+                  onClick={() => setAccountMenuOpen((open) => !open)}
+                  aria-label="Open account menu"
+                  aria-haspopup="true"
+                  aria-expanded={accountMenuOpen}
+                >
+                  {accountInitial}
+                </button>
+                {accountMenuOpen && (
+                  <div className="vendor-account-dropdown" role="menu">
+                    <Link to="/login" role="menuitem" onClick={() => setAccountMenuOpen(false)}>Account</Link>
+                    <button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); signOut(); }}>Sign out</button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <NavLink to="/login" className={({ isActive }) => `vendor-account-signin${isActive ? " active" : ""}`}>Sign in</NavLink>
+            )}
             <a className="vendor-storefront-link" href="https://elevonifarms.vercel.app/marketplace" target="_blank" rel="noopener noreferrer">View marketplace <span aria-hidden="true">↗</span></a>
-            {isAuthenticated && <button type="button" className="vendor-signout" onClick={signOut}>Sign out</button>}
           </div>
         </div>
       </header>
