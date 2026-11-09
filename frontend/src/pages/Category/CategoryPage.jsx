@@ -373,6 +373,7 @@ const CategoryPage = () => {
       <Helmet>
         <title>{`${entry.name} | Elevoni Farms`}</title>
         <meta name="description" content={entry.summary || view.summary} />
+        <link rel="canonical" href={`https://elevonifarms.vercel.app${categoryPath(entry.slug)}`} />
       </Helmet>
 
       <nav className="category-breadcrumb" aria-label="Breadcrumb">

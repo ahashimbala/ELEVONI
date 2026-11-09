@@ -1,7 +1,7 @@
 import { PRODUCT_CATEGORIES, PRODUCT_UNITS, SUBCATEGORIES_BY_CATEGORY } from "../../shared/categoryConstants.mjs";
 import { normalizeLgaName, normalizeStateName } from "./nAtlasCustomerMatching.js";
 
-const text = (value, max = 160) => typeof value === "string" ? value.trim().slice(0, max) : "";
+const text = (value, max = 160) => typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : "";
 const number = (value) => value === "" || value === null || value === undefined ? null : Number(value);
 const round = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
 
@@ -30,6 +30,8 @@ export function prepareBuyerRequirement(body = {}, { userId = null, now = new Da
   const contactConsent = body.contactConsent === true;
 
   if (!buyerName || !buyerContact || !productName || !state) return { error: "Buyer name, contact, product and delivery state are required", status: 400 };
+  const contactDigits = buyerContact.replace(/\D/g, "");
+  if (contactDigits.length < 7 || contactDigits.length > 15) return { error: "Enter a valid phone or WhatsApp number", status: 400 };
   if (!PRODUCT_CATEGORIES.includes(category)) return { error: "Choose a valid product category", status: 400 };
   if (subcategory && !(SUBCATEGORIES_BY_CATEGORY[category] || []).includes(subcategory)) return { error: "Choose a valid product type for the selected category", status: 400 };
   if (!PRODUCT_UNITS.includes(unit)) return { error: "Choose a valid unit of measure", status: 400 };

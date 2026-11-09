@@ -116,13 +116,14 @@ const ItemDetails = () => {
     image: schemaImage,
     description: item.description,
     category: item.category,
-    offers: {
-      "@type": "Offer",
-      url: window.location.href,
-      priceCurrency: "NGN",
-      price: currentPrice,
-      itemCondition: "https://schema.org/NewCondition",
-    },
+    ...(isMarketplaceProduct ? {} : {
+      offers: {
+        "@type": "Offer",
+        url: `https://elevonifarms.vercel.app/product/${item._id}`,
+        priceCurrency: "NGN",
+        price: currentPrice,
+      },
+    }),
   };
 
   return (

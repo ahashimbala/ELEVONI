@@ -18,11 +18,23 @@ import adminRoutes from "./routes/adminRoutes.js";
 import nAtlasRouter from "./routes/nAtlasRoute.js";
 import nAtlasCustomerRouter from "./routes/nAtlasCustomerRoute.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import privacyRequestsRouter from "./routes/privacyRequestsRoute.js";
+import securityHeaders from "./middleware/securityHeaders.js";
+import { createRateLimiter } from "./middleware/rateLimit.js";
 
 const app = express();
+app.disable("x-powered-by");
+// Vercel terminates TLS and forwards one trusted proxy hop to the function.
+app.set("trust proxy", 1);
+app.use(securityHeaders);
 app.use(apiCorsGate);
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
+const apiMutationLimiter = createRateLimiter({ windowMs: 5 * 60_000, max: 120, keyPrefix: "api-mutation", message: "Too many requests. Please slow down and try again." });
+app.use("/api", (req, res, next) => {
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) return apiMutationLimiter(req, res, next);
+    return next();
+});
+app.use(express.json({ limit: "2mb", strict: true }));
+app.use(express.urlencoded({ extended: false, limit: "64kb", parameterLimit: 100 }));
 
 app.get("/api/health", (req, res) => res.status(200).json({
     status: "ok",
@@ -30,7 +42,7 @@ app.get("/api/health", (req, res) => res.status(200).json({
     timestamp: new Date().toISOString()
 }));
 app.get("/", (req, res) => res.send("API Working"));
-app.use("/images", express.static("uploads"));
+app.use("/images", express.static("uploads", { dotfiles: "deny", index: false, fallthrough: false, maxAge: "1d" }));
 
 // Existing storefront APIs: keep these paths stable for the current React app.
 app.use("/api/fish", fishRouter);
@@ -43,6 +55,7 @@ app.use("/api/payment", paymentRouter);
 // Marketplace and vendor application APIs use vendorProfileModel as the canonical profile.
 app.use("/api/vendor/sales", vendorSalesRouter);
 app.use("/api/buyer-requirements", buyerRequirementsRouter);
+app.use("/api/privacy-requests", privacyRequestsRouter);
 app.use("/api/vendor", vendorRouter);
 app.use("/api/vendors", vendorDirectoryRoutes);
 app.use("/api/products", productRoutes);

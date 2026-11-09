@@ -29,11 +29,14 @@ const validateAccountFields = ({ name, email, password }) => {
         !email || typeof email !== "string") {
         return "Name, email, and password are required";
     }
-    if (!validator.isEmail(normaliseEmail(email))) {
+    if (name.trim().length < 2 || name.trim().length > 120) {
+        return "Name must contain between 2 and 120 characters";
+    }
+    if (normaliseEmail(email).length > 254 || !validator.isEmail(normaliseEmail(email))) {
         return "Please enter a valid email";
     }
-    if (password.length < 8) {
-        return "Please enter a strong password";
+    if (password.length < 8 || password.length > 128) {
+        return "Password must contain between 8 and 128 characters";
     }
     return null;
 };
@@ -49,7 +52,7 @@ const registerCustomerAccount = async ({ name, email, password } = {}) => {
         throw new AccountRegistrationError("User already exists", 409);
     }
 
-    const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
+    const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(12));
     try {
         return await new userModel({
             name: name.trim(),

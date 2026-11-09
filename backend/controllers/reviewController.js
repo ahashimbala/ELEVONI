@@ -1,6 +1,7 @@
 import reviewModel from "../models/reviewModel.js";
 import userModel from "../models/userModel.js";
 import { buildPaginationMeta, countMatching, parsePagination } from "../services/pagination.js";
+import { logSafeError } from "../utils/safeLog.js";
 
 // add review
 
@@ -32,7 +33,7 @@ const addReview = async(req, res) => {
         return res.json({ success: true, message: "Review submitted for approval!" });
 
     } catch (error) {
-        console.error("Error in addReview backend:", error);
+        logSafeError("Add-review failed", error);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -55,7 +56,7 @@ const listReviews = async(req, res) => {
             pagination: buildPaginationMeta({ page, limit, total: total ?? returned }),
         });
     } catch (error) {
-        console.log("listReviews error:", error);
+        logSafeError("listReviews failed", error);
         return res.status(500).json({
             success: false,
             message: "Error retrieving reviews",
@@ -77,7 +78,7 @@ const listAllReviews = async(req, res) => {
             pagination: buildPaginationMeta({ page, limit, total: total ?? returned }),
         });
     } catch (error) {
-        console.log("listAllReviews error:", error);
+        logSafeError("listAllReviews failed", error);
         return res.status(500).json({
             success: false,
             message: "Error retrieving reviews",
@@ -104,7 +105,7 @@ const approveReview = async(req, res) => {
             message: "Review Approved",
         });
     } catch (error) {
-        console.log("approveReview error:", error);
+        logSafeError("approveReview failed", error);
         if (error?.name === "CastError") {
             return res.status(400).json({ success: false, message: "Invalid review id" });
         }
@@ -132,7 +133,7 @@ const deleteReview = async(req, res) => {
             message: "Review Deleted",
         });
     } catch (error) {
-        console.log("deleteReview error:", error);
+        logSafeError("deleteReview failed", error);
         if (error?.name === "CastError") {
             return res.status(400).json({ success: false, message: "Invalid review id" });
         }

@@ -1,4 +1,5 @@
 import userModel from "../models/userModel.js"
+import { logSafeError } from "../utils/safeLog.js";
 
 const readItemId = (body) => {
     const itemId = body?.itemId;
@@ -27,7 +28,7 @@ const addToCart = async(req, res) => {
         await userModel.findByIdAndUpdate(req.auth.userId, { cartData });
         return res.json({ success: true, message: "Added To Cart" });
     } catch (error) {
-        console.log("addToCart error:", error);
+        logSafeError("Add-to-cart failed", error);
         return res.status(500).json({ success: false, message: "Unable to add item to cart" })
     }
 }
@@ -50,7 +51,7 @@ const removeFromCart = async(req, res) => {
         await userModel.findByIdAndUpdate(req.auth.userId, { cartData });
         return res.json({ success: true, message: "Removed From Cart" })
     } catch (error) {
-        console.log("removeFromCart error:", error);
+        logSafeError("Remove-from-cart failed", error);
         return res.status(500).json({ success: false, message: "Unable to remove item from cart" })
     }
 }
@@ -65,7 +66,7 @@ const getCart = async(req, res) => {
         let cartData = await userData.cartData;
         return res.json({ success: true, cartData })
     } catch (error) {
-        console.log("getCart error:", error);
+        logSafeError("Get-cart failed", error);
         return res.status(500).json({ success: false, message: "Unable to load cart" })
     }
 }
@@ -88,7 +89,7 @@ const setCartQuantity = async(req, res) => {
         await userModel.findByIdAndUpdate(req.auth.userId, { cartData });
         return res.json({ success: true, message: "Cart quantity updated", cartData });
     } catch (error) {
-        console.log("setCartQuantity error:", error);
+        logSafeError("Set-cart-quantity failed", error);
         return res.status(500).json({ success: false, message: "Unable to update cart quantity" });
     }
 };

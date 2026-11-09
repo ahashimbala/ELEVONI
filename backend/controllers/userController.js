@@ -9,6 +9,7 @@ import {
     normaliseEmail,
     registerCustomerAccount
 } from "../services/accountRegistration.js";
+import { logSafeError } from "../utils/safeLog.js";
 import { createSessionToken, publicUser } from "../services/session.js";
 import { buildCheckoutProfile } from "../services/checkoutProfile.js";
 
@@ -54,7 +55,10 @@ const findByVerifiedEmail = async(email) => {
 };
 
 const loginUser = async(req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+    if (typeof password !== "string" || password.length < 1 || password.length > 128) {
+        return res.status(400).json({ success: false, message: "Enter a valid email and password." });
+    }
 
     try {
         const normalisedEmail = normaliseEmail(email);
@@ -84,7 +88,7 @@ const loginUser = async(req, res) => {
             user: safeUser(user)
         });
     } catch (error) {
-        console.error("Login error:", error);
+        logSafeError("Login failed", error);
 
         return res.status(500).json({
             success: false,
@@ -94,7 +98,7 @@ const loginUser = async(req, res) => {
 };
 
 const registerUser = async(req, res) => {
-    const { name, password, email } = req.body;
+    const { name, password, email } = req.body || {};
 
     try {
         const user = await registerCustomerAccount({
@@ -116,7 +120,7 @@ const registerUser = async(req, res) => {
             });
         }
 
-        console.error("Registration error:", error);
+        logSafeError("Registration failed", error);
 
         const duplicate = error && error.code === 11000;
 
@@ -679,7 +683,7 @@ const completeGoogleSignup = async(req, res) => {
             });
         }
 
-        console.error("Google signup continuation failed:", error);
+        logSafeError("Google signup continuation failed", error);
 
         return res.status(500).json({
             success: false,
@@ -722,7 +726,7 @@ const updateCheckoutProfile = async(req, res) => {
             user
         });
     } catch (error) {
-        console.error("Checkout profile update failed:", error.message);
+        logSafeError("Checkout profile update failed", error);
         return res.status(500).json({
             success: false,
             message: "Unable to save checkout information"
@@ -745,7 +749,7 @@ const currentUser = async(req, res) => {
 
         return res.json({ success: true, user });
     } catch (error) {
-        console.error("Current-user lookup failed:", error);
+        logSafeError("Current-user lookup failed", error);
 
         return res.status(500).json({
             success: false,

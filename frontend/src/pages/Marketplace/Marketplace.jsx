@@ -131,6 +131,7 @@ const Marketplace = () => {
       <Helmet>
         <title>Farm Marketplace | Elevoni Farms</title>
         <meta name="description" content="Explore marketplace listings from approved farms. Confirm availability, price and delivery before ordering." />
+        <link rel="canonical" href="https://elevonifarms.vercel.app/marketplace" />
       </Helmet>
 
       <section className="marketplace-hero">

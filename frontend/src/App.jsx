@@ -23,11 +23,9 @@ import ElevoniAssistant from "./pages/ElevoniAssistant/ElevoniAssistant";
 import Success from "./components/SuccessPage/Success";
 import ReactGA from "./analytics";
 import MobileBottomNav from "./components/MobileBottomNav";
-
-ReactGA.send({
-  hitType: "pageview",
-  page: window.location.pathname,
-});
+import CookieConsent from "./components/CookieConsent/CookieConsent";
+import Terms from "./pages/InfoPages/Terms";
+import CookiePolicy from "./pages/InfoPages/CookiePolicy";
 
 const readGoogleRedirectOutcome = () => {
   const params = new URLSearchParams(window.location.search);
@@ -56,6 +54,9 @@ const App = () => {
   const [googleRedirectOutcome, setGoogleRedirectOutcome] = useState(readGoogleRedirectOutcome);
   const [showLogin, setShowLogin] = useState(() => Boolean(readGoogleRedirectOutcome()));
   const location = useLocation();
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: location.pathname });
+  }, [location.pathname]);
   const isElevoniAssistantPage = ["/assistant", "/elevoni-assistant", "/tinka", "/konekta"].includes(location.pathname);
 
   useEffect(() => {
@@ -107,10 +108,13 @@ const App = () => {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/delivery" element={<Delivery />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/cookies" element={<CookiePolicy />} />
         </Routes>
       </div>
       {!isInstalledApp() && <Footer />}
       <MobileBottomNav setShowLogin={handleSetShowLogin} />
+      <CookieConsent />
     </HelmetProvider>
   );
 };

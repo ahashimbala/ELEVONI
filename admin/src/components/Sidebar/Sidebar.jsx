@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: "/reviews", label: "Reviews", icon: "☆" },
   { to: "/marketplace-products", label: "Marketplace listings", icon: "◈" },
   { to: "/vendors", label: "Vendor applications", icon: "♙" },
+  { to: "/privacy-requests", label: "Privacy requests", icon: "⚿" },
 ];
 
 const Sidebar = () => (

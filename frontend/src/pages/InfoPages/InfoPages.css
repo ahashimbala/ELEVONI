@@ -14,3 +14,16 @@
 .info-page-container a { color:var(--elevoni-sage-dark); font-weight:600; text-decoration:underline; text-underline-offset:3px; }
 .info-page-container ol { margin:0 0 22px; padding-left:22px; }
 .info-page-container ol li { margin-bottom:9px; padding-left:3px; color:var(--elevoni-text); font-size:14px; line-height:1.8; }
+\n.info-cookie-settings-button{border:0;border-radius:9px;padding:12px 17px;background:var(--elevoni-sage,#7c8760);color:#fff;font-weight:700;cursor:pointer}\n
+.privacy-request-panel{margin:36px 0;padding:22px 0;border-top:1px solid var(--elevoni-line);border-bottom:1px solid var(--elevoni-line)}
+.privacy-request-panel h2{margin-top:12px}
+.privacy-request-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.privacy-request-form label{display:grid;gap:6px;color:var(--elevoni-text);font-size:13px;font-weight:600}
+.privacy-request-form input,.privacy-request-form select,.privacy-request-form textarea{width:100%;min-height:42px;padding:10px 12px;border:1px solid var(--elevoni-line);border-radius:8px;background:#fff;color:var(--elevoni-ink);font:inherit}
+.privacy-request-form textarea{resize:vertical}
+.privacy-request-wide,.privacy-request-error,.privacy-request-success{grid-column:1/-1}
+.privacy-request-form button{justify-self:start;border:0;border-radius:8px;padding:12px 17px;background:var(--elevoni-sage,#7c8760);color:#fff;font-weight:700;cursor:pointer}
+.privacy-request-form button:disabled{opacity:.6;cursor:wait}
+.privacy-request-error{color:#a12f2f!important}
+.privacy-request-success{padding:10px 12px;background:#edf7ef;color:#245334!important;border-radius:8px}
+@media(max-width:560px){.privacy-request-form{grid-template-columns:1fr}.privacy-request-wide,.privacy-request-error,.privacy-request-success{grid-column:auto}.privacy-request-form button{width:100%}}

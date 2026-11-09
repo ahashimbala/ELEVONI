@@ -43,9 +43,10 @@ const Footer = () => {
             <li>
               <Link to="/delivery">Delivery</Link>
             </li>
-            <li>
-              <Link to="/privacy">Privacy policy</Link>
-            </li>
+            <li><Link to="/privacy">Privacy policy</Link></li>
+            <li><Link to="/terms">Terms &amp; conditions</Link></li>
+            <li><Link to="/cookies">Cookie policy</Link></li>
+            <li><button type="button" className="footer-cookie-settings" onClick={() => window.dispatchEvent(new Event("elevoni-cookie-settings"))}>Cookie preferences</button></li>
             <li>
               <Link to="/sell-with-elevoni">Sell with Elevoni</Link>
             </li>

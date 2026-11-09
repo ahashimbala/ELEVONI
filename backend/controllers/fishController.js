@@ -3,6 +3,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { CATALOGUE_QUERY, parseVisibilityFlag } from "../services/catalogue.js";
 import { parsePricingTiers, validateProductPricing } from "../services/productPricing.js";
 import { buildPaginationMeta, countMatching, parsePagination } from "../services/pagination.js";
+import { logSafeError } from "../utils/safeLog.js";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -43,7 +44,7 @@ const addFish = async(req, res) => {
         await fish.save();
         return res.status(201).json({ success: true, message: "Product created", id: fish._id });
     } catch (error) {
-        console.log("addFish error:", error);
+        logSafeError("addFish failed", error);
         if (isClientInputError(error)) {
             return res.status(400).json({ success: false, message: error.message || "Invalid product details" });
         }
@@ -75,7 +76,7 @@ const updateFish = async(req, res) => {
         await fish.save();
         return res.json({ success: true, message: "Product updated", data: fish });
     } catch (error) {
-        console.log("updateFish error:", error);
+        logSafeError("updateFish failed", error);
         if (isClientInputError(error)) {
             return res.status(400).json({ success: false, message: error.message || "Invalid product details" });
         }
@@ -98,7 +99,7 @@ const createListFish = ({ Model = fishModel } = {}) => {
                 pagination: buildPaginationMeta({ page, limit, total: total ?? returned })
             });
         } catch (error) {
-            console.log("listFish error:", error);
+            logSafeError("listFish failed", error);
             return res.status(500).json({ success: false, message: "Error fetching products" });
         }
     };
@@ -119,7 +120,7 @@ const listAllFish = async(req, res) => {
             pagination: buildPaginationMeta({ page, limit, total: total ?? returned })
         });
     } catch (error) {
-        console.log("listAllFish error:", error);
+        logSafeError("listAllFish failed", error);
         return res.status(500).json({ success: false, message: "Error fetching products" });
     }
 };
@@ -152,7 +153,7 @@ const removeFish = async(req, res) => {
         if (!fish) return res.status(404).json({ success: false, message: "Product not found" });
         if (fish.image) {
             const imagePublicId = fish.image.split("/").pop().split(".")[0];
-            await cloudinary.uploader.destroy("fish_store/" + imagePublicId).catch(err => console.log("Cloudinary image delete error:", err));
+            await cloudinary.uploader.destroy("fish_store/" + imagePublicId).catch(err => logSafeError("Cloudinary image deletion failed", err));
         }
         if (fish.media && fish.media.length > 0) {
             const deletePromises = fish.media.map(url => {
@@ -160,12 +161,12 @@ const removeFish = async(req, res) => {
                 const isVideo = url.match(/\.(mp4|webm|ogg)$/i);
                 return cloudinary.uploader.destroy("fish_store/" + mediaPublicId, isVideo ? { resource_type: "video" } : {});
             });
-            await Promise.all(deletePromises).catch(err => console.log("Cloudinary media delete error:", err));
+            await Promise.all(deletePromises).catch(err => logSafeError("Cloudinary media deletion failed", err));
         }
         await fishModel.findByIdAndDelete(req.body.id);
         return res.json({ success: true, message: "Product deleted" });
     } catch (error) {
-        console.log("removeFish error:", error);
+        logSafeError("removeFish failed", error);
         return res.status(500).json({ success: false, message: "Error deleting product" });
     }
 };
@@ -189,7 +190,7 @@ const addFishMedia = async(req, res) => {
         await fishModel.findByIdAndUpdate(id, { $push: { media: { $each: mediaUrls } } });
         return res.json({ success: true, message: "Media uploaded successfully" });
     } catch (error) {
-        console.log("addFishMedia error:", error);
+        logSafeError("addFishMedia failed", error);
         if (isClientInputError(error)) return res.status(400).json({ success: false, message: "Invalid product id" });
         return res.status(500).json({ success: false, message: "Error uploading media" });
     }

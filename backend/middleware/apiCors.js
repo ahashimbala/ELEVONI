@@ -60,8 +60,7 @@ const apiCorsGate = (req, res, next) => {
         if (err) {
             return res.status(403).json({
                 success: false,
-                message: "Origin not allowed by CORS",
-                origin: req.headers.origin || null
+                message: "Origin not allowed by CORS"
             });
         }
 

@@ -1,8 +1,11 @@
 User-agent: *
 Allow: /
-Allow: /sitemap.xml
 Disallow: /cart
 Disallow: /order
 Disallow: /myorders
+Disallow: /success
+Disallow: /assistant
+Disallow: /admin
+Disallow: /vendor
 
-Sitemap: https://elevoni-backend.vercel.app/sitemap.xml
+Sitemap: https://elevonifarms.vercel.app/sitemap.xml

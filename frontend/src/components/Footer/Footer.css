@@ -19,3 +19,4 @@
 .footer-attribution-label { color:var(--elevoni-muted); font-size:11px; }
 .footer-attribution strong { color:var(--elevoni-sage-dark); font-weight:650; }
 @media(max-width:750px) { .footer-attribution { align-items:flex-start; flex-direction:column; gap:2px; } }
+\n.footer-cookie-settings{padding:0;border:0;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}.footer-cookie-settings:hover{text-decoration:underline;color:var(--elevoni-sage-dark)}\n
