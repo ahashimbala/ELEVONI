@@ -1,3 +1,4 @@
+import Product from "../models/Product.js";
 import { createOpenAIResponse } from "./openaiApi.js";
 
 const MAX_CATALOGUE_SCAN = 500;
@@ -97,11 +98,11 @@ function toPublicMatch(product, aiMatch, request) {
   };
 }
 
-export async function retrieveBuyerProductMatches(request, { env = process.env, fetchImpl = fetch, ProductModel = Product } = {}) {
+export async function retrieveBuyerProductMatches(request, { env = process.env, fetchImpl = fetch, ProductModel } = {}) {
   const productName = clean(request?.productName, 160);
   if (!productName) return { matches: [], matchingMethod: "none", scannedCount: 0 };
   const filter = { status: "approved", isAvailable: true, availability: { $ne: "Out of stock" } };
-  const Model = ProductModel || (await import("../models/Product.js")).default;
+  const Model = ProductModel || Product;
   const projection = "name description price category subcategory unitOfMeasure species condition productionMethod weightRange sector availability stockQuantity vendorId originLocation images updatedAt";
   const searchTerms = expandedTerms(productName).slice(0, 12);
   const searchFilter = searchTerms.length ? { ...filter, $or: searchTerms.flatMap(term => {
