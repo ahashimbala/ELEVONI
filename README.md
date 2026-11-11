@@ -1,31 +1,28 @@
-# Elevoni Customer-Facing Intelligent Matching — Patch
+# Elevoni customer-facing intelligent matching patch — corrected
 
-This patch covers BOTH requested changes:
+This patch covers the buyer-to-product matching change and the follow-up requirement that Elevoni Farms' own house products are identified separately from independent marketplace vendors.
 
-1. **Customer-facing buyer-to-product matching:** when a buyer submits a requirement, Elevoni finds suitable approved and available listings by product/category, delivery location, requested quantity and unit (and optional maximum price where supplied). Matching products are displayed on the main Marketplace page, with an AI-generated explanation of why each match fits. A factual fallback explanation is used if AI explanation is unavailable.
-2. **Keep the farmer-side workflow:** buyer requirements continue to be saved and made available through the existing farmer-dashboard matching flow. This patch does not remove that behaviour.
-3. **Include Elevoni Farms direct products:** products with `vendorId: null` are eligible under the same approval, availability, stock, product and location checks. The customer-facing result identifies these as **Elevoni Farms** (`sellerType: "elevoni_direct"`); vendor listings remain identified as marketplace suppliers.
-
-## Files to replace
-Copy these files into the matching paths in the project:
+## Files included
 
 - `backend/controllers/buyerRequirementsController.js`
+- `backend/services/buyerRequirements.js` **(required matching export; this file was missing from the earlier patch)**
 - `backend/services/buyerRequirementIntelligence.js`
 - `backend/tests/buyer-requirements.test.js`
 - `frontend/src/components/BuyerRequirementForm/BuyerRequirementForm.jsx`
 - `frontend/src/components/BuyerRequirementForm/BuyerRequirementForm.css`
 
-The existing `backend/services/buyerRequirements.js` matching logic is unchanged from the supplied project, so it is not included in this patch.
+## Installation
 
-## Important behaviour and limits
+From the root of the Elevoni repository, replace the files at the exact matching paths shown above. Keep the folder structure in this ZIP. Commit all six files together and redeploy the backend and frontend.
 
-- Only approved, available listings with sufficient recorded stock are returned.
-- Requested quantity and listing unit must be compatible; product/category and delivery state must match.
-- Location is taken from the approved vendor profile or the product's `originLocation` (including Elevoni direct products).
-- Elevoni direct products are not treated as vendor listings; `vendorId: null` is the existing house-product convention.
-- The existing farmer-dashboard requirement flow is retained.
-- This is a code patch, not a claim that the complete application has been integration-tested or deployed.
+## Behaviour
 
-## Apply and test
+- Buyer requirements continue to be stored and matched against eligible vendor listings for the vendor dashboard.
+- The customer-facing response also ranks approved, available products by product, category/type, delivery state, unit and recorded stock sufficiency; an optional maximum price is respected.
+- Matches are returned to the customer-facing form for display with an AI explanation (with a factual fallback if AI explanation is unavailable).
+- Products with `vendorId: null` are treated as Elevoni Farms house products and use `originLocation` for location matching. The customer-facing response labels these as `Elevoni Farms` / `elevoni_direct`.
+- Marketplace vendor listings retain their vendor business name and `marketplace_vendor` label.
 
-Replace the files at the paths above, then run the project's backend tests and frontend build in the project environment. The patch was syntax-checked, but a full integration test and frontend build have not been completed here.
+## Important
+
+This is a source patch, not a full project. Run the focused buyer-requirement tests and your normal backend/frontend builds before production deployment. A match is a potential match, not an order or a guarantee of stock; confirm stock, price and fulfilment with the seller.

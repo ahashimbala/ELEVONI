@@ -1,7 +1,7 @@
 import { PRODUCT_CATEGORIES, PRODUCT_UNITS, SUBCATEGORIES_BY_CATEGORY } from "../../shared/categoryConstants.mjs";
 import { normalizeLgaName, normalizeStateName } from "./nAtlasCustomerMatching.js";
 
-const text = (value, max = 160) => typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : "";
+const text = (value, max = 160) => typeof value === "string" ? value.trim().slice(0, max) : "";
 const number = (value) => value === "" || value === null || value === undefined ? null : Number(value);
 const round = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
 
@@ -30,8 +30,6 @@ export function prepareBuyerRequirement(body = {}, { userId = null, now = new Da
   const contactConsent = body.contactConsent === true;
 
   if (!buyerName || !buyerContact || !productName || !state) return { error: "Buyer name, contact, product and delivery state are required", status: 400 };
-  const contactDigits = buyerContact.replace(/\D/g, "");
-  if (contactDigits.length < 7 || contactDigits.length > 15) return { error: "Enter a valid phone or WhatsApp number", status: 400 };
   if (!PRODUCT_CATEGORIES.includes(category)) return { error: "Choose a valid product category", status: 400 };
   if (subcategory && !(SUBCATEGORIES_BY_CATEGORY[category] || []).includes(subcategory)) return { error: "Choose a valid product type for the selected category", status: 400 };
   if (!PRODUCT_UNITS.includes(unit)) return { error: "Choose a valid unit of measure", status: 400 };
@@ -92,4 +90,39 @@ export function rankRequirementsForVendor(requirements, products, vendor = {}) {
     if (productMatches.length) matches.push({ requirement, bestProduct: productMatches[0].product, score: productMatches[0].score, reasons: productMatches[0].reasons, stockStatus: productMatches[0].stockStatus });
   }
   return matches.sort((a, b) => b.score - a.score || new Date(b.requirement.createdAt) - new Date(a.requirement.createdAt));
+}
+
+/**
+ * Rank approved marketplace and Elevoni house listings for a buyer requirement.
+ * The caller is responsible for querying only approved, available products.
+ * House products have vendorId === null and use originLocation for geography.
+ */
+export function rankProductsForBuyer(requirement, products = []) {
+  return products
+    .map((product) => {
+      const vendor = product.vendorId && typeof product.vendorId === "object"
+        ? product.vendorId
+        : {};
+      const match = scoreBuyerRequirement(requirement, product, vendor);
+      const state = vendor.state || vendor.farmAddress?.state || product.originLocation?.state || "";
+      const lga = vendor.lga || vendor.farmAddress?.lga || product.originLocation?.lga || "";
+      return {
+        product,
+        vendor,
+        location: { state, lga },
+        ...match,
+      };
+    })
+    .filter((item) =>
+      item.product.status === "approved" &&
+      item.product.isAvailable === true &&
+      item.product.availability !== "Out of stock" &&
+      item.productNameMatch &&
+      item.sameCategory &&
+      item.sameSubcategory &&
+      item.stateMatch &&
+      item.withinBudget &&
+      item.stockStatus === "recorded_sufficient"
+    )
+    .sort((a, b) => b.score - a.score || new Date(b.product.updatedAt || 0) - new Date(a.product.updatedAt || 0));
 }
