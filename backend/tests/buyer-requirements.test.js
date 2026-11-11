@@ -59,27 +59,35 @@ test("buyer matching does not suggest a different product merely because it shar
   assert.equal(matches.length, 0);
 });
 
-test("customer-facing product matching only returns approved, available listings with matching product, location and sufficient stock", async () => {
+test("customer matching returns a real product when location, category or requested quantity is not an exact fit", async () => {
   const { rankProductsForBuyer } = await import("../services/buyerRequirements.js");
-  const requirement = { productName: "Maize", category: "Food Crops", subcategory: "Grains & Cereals", quantity: 100, unit: "kg", state: "FCT", lga: "AMAC", maxUnitPrice: null };
-  const baseProduct = { name: "Maize", category: "Food Crops", subcategory: "Grains & Cereals", unitOfMeasure: "kg", stockQuantity: 150, price: 450, status: "approved", isAvailable: true, availability: "Available", vendorId: { state: "FCT", lga: "AMAC" } };
-  const matches = rankProductsForBuyer(requirement, [
-    { ...baseProduct, _id: "good" },
-    { ...baseProduct, _id: "wrong-location", vendorId: { state: "Lagos", lga: "Ikeja" } },
-    { ...baseProduct, _id: "not-approved", status: "pending" },
-    { ...baseProduct, _id: "low-stock", stockQuantity: 20 },
-    { ...baseProduct, _id: "wrong-product", name: "Brown Beans" },
-  ]);
-  assert.deepEqual(matches.map((item) => String(item.product._id)), ["good"]);
+  const requirement = { productName: "Maize", category: "Food Crops", subcategory: "Grains & Cereals", quantity: 100, unit: "kg", state: "FCT", lga: "AMAC", maxUnitPrice: 400 };
+  const listing = { _id: "p1", name: "Yellow Corn", category: "Food Crops", subcategory: "Grains & Cereals", unitOfMeasure: "kg", stockQuantity: 35, price: 500, availability: "Available", originLocation: { state: "Kaduna", lga: "Zaria" }, vendorId: null };
+  const results = rankProductsForBuyer(requirement, [listing]);
+  assert.equal(results.length, 1);
+  assert.equal(results[0].product._id, "p1");
+  assert.equal(results[0].sellerName, "Elevoni Farms");
+  assert.equal(results[0].stockStatus, "recorded_partial");
+  assert.ok(results[0].reasons.some((reason) => reason.includes("below your requested")));
+  assert.ok(results[0].reasons.some((reason) => reason.includes("above your stated budget")));
 });
 
-
-test("customer-facing matching includes Elevoni-owned house products using their origin location", async () => {
+test("customer matching does not return unrelated products from the same broad category", async () => {
   const { rankProductsForBuyer } = await import("../services/buyerRequirements.js");
-  const requirement = { productName: "Maize", category: "Food Crops", subcategory: "Grains & Cereals", quantity: 50, unit: "kg", state: "FCT", lga: "AMAC", maxUnitPrice: null };
-  const houseProduct = { _id: "elevoni-house", name: "Maize", category: "Food Crops", subcategory: "Grains & Cereals", unitOfMeasure: "kg", stockQuantity: 80, price: 450, status: "approved", isAvailable: true, availability: "Available", vendorId: null, originLocation: { state: "FCT", lga: "AMAC" } };
-  const matches = rankProductsForBuyer(requirement, [houseProduct]);
-  assert.equal(matches.length, 1);
-  assert.equal(String(matches[0].product._id), "elevoni-house");
-  assert.equal(matches[0].vendor && Object.keys(matches[0].vendor).length, 0);
+  const requirement = { productName: "Maize", category: "Food Crops", quantity: 10, unit: "kg", state: "FCT" };
+  const unrelated = { _id: "p2", name: "Tomatoes", category: "Food Crops", subcategory: "Vegetables & Fruits", unitOfMeasure: "kg", stockQuantity: 100, price: 200, availability: "Available", vendorId: null };
+  assert.equal(rankProductsForBuyer(requirement, [unrelated]).length, 0);
+});
+
+test("customer matching distinguishes Elevoni direct products from marketplace vendors", async () => {
+  const { rankProductsForBuyer } = await import("../services/buyerRequirements.js");
+  const requirement = { productName: "Smoked Catfish", category: "Catfish & Aquaculture", quantity: 5, unit: "kg", state: "FCT" };
+  const products = [
+    { _id: "direct", name: "Smoked Catfish", category: "Catfish & Aquaculture", unitOfMeasure: "kg", stockQuantity: 10, price: 25000, availability: "Available", vendorId: null, originLocation: { state: "FCT Abuja" } },
+    { _id: "vendor", name: "Smoked Catfish", category: "Catfish & Aquaculture", unitOfMeasure: "kg", stockQuantity: 10, price: 24000, availability: "Available", vendorId: { _id: "v1", businessName: "Fish Farm Ltd", state: "Kano" } },
+  ];
+  const results = rankProductsForBuyer(requirement, products);
+  assert.equal(results.length, 2);
+  assert.equal(results.find((item) => item.product._id === "direct").sellerName, "Elevoni Farms");
+  assert.equal(results.find((item) => item.product._id === "vendor").sellerName, "Fish Farm Ltd");
 });

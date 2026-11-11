@@ -27,7 +27,7 @@ export default function BuyerRequirementForm({ url }) {
   const [requestText, setRequestText] = useState("");
   const [feedback, setFeedback] = useState("");
   const [matches, setMatches] = useState([]);
-  const [submittedRequirementId, setSubmittedRequirementId] = useState("");
+  const [matchMessage, setMatchMessage] = useState("");
   const subcategories = useMemo(() => SUBCATEGORIES_BY_CATEGORY[form.category] || [], [form.category]);
   const update = (key, value) => setForm((old) => ({ ...old, [key]: value }));
   const field = (key, label, type = "text") => (
@@ -51,12 +51,15 @@ export default function BuyerRequirementForm({ url }) {
   };
   const submit = async (event) => {
     event.preventDefault(); if (saving) return;
-    setSaving(true); setFeedback(""); setMatches([]); setSubmittedRequirementId("");
+    setSaving(true); setFeedback(""); setMatches([]); setMatchMessage("");
     try {
       const response = await fetch(`${url}/api/buyer-requirements`, { method: "POST", headers: { "Content-Type": "application/json", ...(localStorage.getItem("token") ? { token: localStorage.getItem("token") } : {}) }, body: JSON.stringify({ ...form, quantity: Number(form.quantity), maxUnitPrice: form.maxUnitPrice === "" ? null : Number(form.maxUnitPrice), preferredLanguage: language, sourceText: form.sourceText || requestText }) });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || t.error);
-      setFeedback(t.success); setMatches(result.data?.matches || []); setSubmittedRequirementId(result.data?.id || ""); setForm(emptyForm()); setRequestText("");
+      setFeedback(result.message || t.success);
+      setMatches(Array.isArray(result.data?.matches) ? result.data.matches : []);
+      setMatchMessage(result.data?.matchCount ? `${result.data.matchCount} relevant listing(s) found in the current approved catalogue.` : "No relevant in-stock approved listing was found at the moment. Try a nearby product name or check again later.");
+      setForm(emptyForm()); setRequestText("");
     } catch (error) { setFeedback(error.message || t.error); }
     finally { setSaving(false); }
   };
@@ -79,30 +82,17 @@ export default function BuyerRequirementForm({ url }) {
         {feedback && <p className="buyer-demand-feedback buyer-demand-wide" role="status">{feedback}</p>}
         <button className="buyer-demand-submit" disabled={saving}>{saving ? t.submitting : t.submit}</button>
       </form>
-      {submittedRequirementId && (
-        <div className="buyer-demand-matches" aria-live="polite">
-          <h3>{matches.length ? "Products that may meet your request" : "Your request has been shared with suitable farmers"}</h3>
-          <p className="buyer-demand-matches-intro">{matches.length ? `We found ${matches.length} approved ${matches.length === 1 ? "listing" : "listings"} based on the product, location and quantity you requested.` : "We could not find a listing that meets all the details right now. Your request is still available to matching farmers, and more products may be listed later."}</p>
-          {matches.length > 0 && <div className="buyer-demand-match-grid">
-            {matches.map((match) => {
-              const product = match.product || {};
-              const imageUrl = product.images?.[0] || product.media?.find((item) => item.type === "image")?.url;
-              return <article className="buyer-demand-match-card" key={product.id}>
-                {imageUrl && <img src={imageUrl} alt={product.name || "Agricultural product"} loading="lazy" />}
-                <div className="buyer-demand-match-body">
-                  <h4>{product.name}</h4>
-                  <p className="buyer-demand-match-meta">₦{Number(product.price || 0).toLocaleString()} / {product.unit} · {product.stockQuantity} {product.unit} recorded</p>
-                  <p className="buyer-demand-match-meta">{product.location?.lga ? `${product.location.lga}, ` : ""}{product.location?.state || "Location not stated"}</p>
-                  <p className="buyer-demand-match-meta">Supplier: {product.vendorName}</p>
-                  <p className="buyer-demand-match-explanation">{match.explanation}</p>
-                  {match.strengths?.length > 0 && <div className="buyer-demand-match-strengths">{match.strengths.map((item, index) => <span key={`${product.id}-strength-${index}`}>{item}</span>)}</div>}
-                </div>
-              </article>;
-            })}
-          </div>}
-          <p className="buyer-demand-match-note">These are potential matches, not confirmed orders. Stock can change. Contact the supplier to confirm current quantity, final price and delivery arrangements.</p>
-        </div>
-      )}
+      {matchMessage && <div className="buyer-demand-results" aria-live="polite">
+        <div className="buyer-demand-results-heading"><h3>Products that may fit your request</h3><p>{matchMessage} A match is a recommendation, not a confirmed order or stock reservation.</p></div>
+        {matches.length > 0 && <div className="buyer-demand-match-list">{matches.map((item) => <article className="buyer-demand-match" key={item.id}>
+          {item.images?.[0] && <img src={item.images[0]} alt={item.name} loading="lazy" />}
+          <h4>{item.name}</h4>
+          <p className="buyer-demand-match-fit">{item.fit} · {item.score}% fit</p>
+          <div className="buyer-demand-match-meta"><span>{item.sellerName}</span><span>{item.price != null ? `₦${Number(item.price).toLocaleString()} / ${item.unit || "unit"}` : "Price needs confirmation"}</span><span>{item.stockQuantity} {item.unit || "units"} recorded</span><span>{[item.lga, item.state].filter(Boolean).join(", ") || "Location needs confirmation"}</span></div>
+          {item.availability === "Pre-order" && <p>Pre-order listing — confirm expected availability.</p>}
+          <ul>{(item.reasons || []).map((reason, index) => <li key={`${item.id}-reason-${index}`}>{reason}</li>)}</ul>
+        </article>)}</div>}
+      </div>}
     </section>
   );
 }

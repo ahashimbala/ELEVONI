@@ -1,28 +1,39 @@
-# Elevoni customer-facing intelligent matching patch — corrected
+# Elevoni Intelligent Matching Reliability Patch
 
-This patch covers the buyer-to-product matching change and the follow-up requirement that Elevoni Farms' own house products are identified separately from independent marketplace vendors.
+This patch replaces the customer-facing buyer-to-product matching implementation and fixes the missing `rankProductsForBuyer` export from the earlier patch.
 
-## Files included
+## Files to replace
 
+- `backend/services/buyerRequirements.js`
 - `backend/controllers/buyerRequirementsController.js`
-- `backend/services/buyerRequirements.js` **(required matching export; this file was missing from the earlier patch)**
-- `backend/services/buyerRequirementIntelligence.js`
 - `backend/tests/buyer-requirements.test.js`
 - `frontend/src/components/BuyerRequirementForm/BuyerRequirementForm.jsx`
 - `frontend/src/components/BuyerRequirementForm/BuyerRequirementForm.css`
 
-## Installation
+Keep the folder paths exactly as shown.
 
-From the root of the Elevoni repository, replace the files at the exact matching paths shown above. Keep the folder structure in this ZIP. Commit all six files together and redeploy the backend and frontend.
+## Matching behaviour
 
-## Behaviour
+- Reads the current catalogue from MongoDB, limited to approved, enabled listings that are not marked out of stock and have positive recorded stock or are explicitly marked Pre-order.
+- Product identity is the relevance gate. Category, subcategory, location, quantity, unit, condition and price contribute to ranking and explanation; they are not strict exclusion filters.
+- Uses product-name aliases such as maize/corn, chicken/poultry, cattle/cow, sheep/ram and common singular/plural forms.
+- Returns up to 12 relevant listings ranked by fit.
+- Shows partial quantity matches and mismatches clearly rather than silently hiding them.
+- Identifies `vendorId: null` listings as Elevoni Farms direct products and populated vendor listings by the vendor business name.
+- Displays the match cards and data-based explanations after the buyer submits the requirement.
+- Keeps the vendor dashboard matching function (`rankRequirementsForVendor`) in the same service.
 
-- Buyer requirements continue to be stored and matched against eligible vendor listings for the vendor dashboard.
-- The customer-facing response also ranks approved, available products by product, category/type, delivery state, unit and recorded stock sufficiency; an optional maximum price is respected.
-- Matches are returned to the customer-facing form for display with an AI explanation (with a factual fallback if AI explanation is unavailable).
-- Products with `vendorId: null` are treated as Elevoni Farms house products and use `originLocation` for location matching. The customer-facing response labels these as `Elevoni Farms` / `elevoni_direct`.
-- Marketplace vendor listings retain their vendor business name and `marketplace_vendor` label.
+## Important accuracy rules
 
-## Important
+A listing shown here is a catalogue match, not a stock reservation, confirmed delivery, confirmed final price or completed order. Recorded inventory may be stale and must be confirmed with the seller before a buyer commits. Pre-order listings are labelled for confirmation.
 
-This is a source patch, not a full project. Run the focused buyer-requirement tests and your normal backend/frontend builds before production deployment. A match is a potential match, not an order or a guarantee of stock; confirm stock, price and fulfilment with the seller.
+The explanation is generated from the listing's recorded fields and matching rules. It does not claim that an AI model independently verified inventory.
+
+## Validation performed
+
+- `node --test backend/tests/buyer-requirements.test.js`: 9 tests passed.
+- `node --check` passed for the modified backend service and controller.
+- TypeScript JSX transpilation syntax check passed for `BuyerRequirementForm.jsx`.
+- Full frontend production build and live MongoDB/API integration test were not run in this environment (frontend dependencies are not installed).
+
+After replacing the files, run the backend tests and frontend build in the project environment before deploying.
