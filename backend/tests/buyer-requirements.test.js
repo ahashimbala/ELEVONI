@@ -59,35 +59,19 @@ test("buyer matching does not suggest a different product merely because it shar
   assert.equal(matches.length, 0);
 });
 
-test("customer matching returns a real product when location, category or requested quantity is not an exact fit", async () => {
-  const { rankProductsForBuyer } = await import("../services/buyerRequirements.js");
-  const requirement = { productName: "Maize", category: "Food Crops", subcategory: "Grains & Cereals", quantity: 100, unit: "kg", state: "FCT", lga: "AMAC", maxUnitPrice: 400 };
-  const listing = { _id: "p1", name: "Yellow Corn", category: "Food Crops", subcategory: "Grains & Cereals", unitOfMeasure: "kg", stockQuantity: 35, price: 500, availability: "Available", originLocation: { state: "Kaduna", lga: "Zaria" }, vendorId: null };
-  const results = rankProductsForBuyer(requirement, [listing]);
-  assert.equal(results.length, 1);
-  assert.equal(results[0].product._id, "p1");
-  assert.equal(results[0].sellerName, "Elevoni Farms");
-  assert.equal(results[0].stockStatus, "recorded_partial");
-  assert.ok(results[0].reasons.some((reason) => reason.includes("below your requested")));
-  assert.ok(results[0].reasons.some((reason) => reason.includes("above your stated budget")));
+test("simplified buyer requirement does not need category, product type, quantity, unit or location", () => {
+  const result = prepareBuyerRequirement({ buyerName: "Ada", buyerContact: "08000000000", productName: "Maize" });
+  assert.equal(result.error, undefined);
+  assert.equal(result.requirement.productName, "Maize");
+  assert.equal(result.requirement.category, "");
+  assert.equal(result.requirement.quantity, null);
+  assert.equal(result.requirement.unit, "");
+  assert.equal(result.requirement.state, "");
 });
 
-test("customer matching does not return unrelated products from the same broad category", async () => {
-  const { rankProductsForBuyer } = await import("../services/buyerRequirements.js");
-  const requirement = { productName: "Maize", category: "Food Crops", quantity: 10, unit: "kg", state: "FCT" };
-  const unrelated = { _id: "p2", name: "Tomatoes", category: "Food Crops", subcategory: "Vegetables & Fruits", unitOfMeasure: "kg", stockQuantity: 100, price: 200, availability: "Available", vendorId: null };
-  assert.equal(rankProductsForBuyer(requirement, [unrelated]).length, 0);
-});
-
-test("customer matching distinguishes Elevoni direct products from marketplace vendors", async () => {
-  const { rankProductsForBuyer } = await import("../services/buyerRequirements.js");
-  const requirement = { productName: "Smoked Catfish", category: "Catfish & Aquaculture", quantity: 5, unit: "kg", state: "FCT" };
-  const products = [
-    { _id: "direct", name: "Smoked Catfish", category: "Catfish & Aquaculture", unitOfMeasure: "kg", stockQuantity: 10, price: 25000, availability: "Available", vendorId: null, originLocation: { state: "FCT Abuja" } },
-    { _id: "vendor", name: "Smoked Catfish", category: "Catfish & Aquaculture", unitOfMeasure: "kg", stockQuantity: 10, price: 24000, availability: "Available", vendorId: { _id: "v1", businessName: "Fish Farm Ltd", state: "Kano" } },
-  ];
-  const results = rankProductsForBuyer(requirement, products);
-  assert.equal(results.length, 2);
-  assert.equal(results.find((item) => item.product._id === "direct").sellerName, "Elevoni Farms");
-  assert.equal(results.find((item) => item.product._id === "vendor").sellerName, "Fish Farm Ltd");
+test("new simplified requests can still appear on a relevant vendor dashboard without location or category", () => {
+  const requirement = { productName: "Maize", category: "", subcategory: "", quantity: null, unit: "", state: "", lga: "", maxUnitPrice: null, _id: "r2" };
+  const product = { name: "Yellow maize grain", category: "Food Crops", subcategory: "Grains & Cereals", unitOfMeasure: "kg", stockQuantity: 0, price: 500 };
+  const matches = rankRequirementsForVendor([requirement], [product], {});
+  assert.equal(matches.length, 1);
 });

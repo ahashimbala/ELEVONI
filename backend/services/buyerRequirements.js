@@ -29,11 +29,11 @@ export function prepareBuyerRequirement(body = {}, { userId = null, now = new Da
   const preferredLanguage = text(body.preferredLanguage, 10) || "en-NG";
   const contactConsent = body.contactConsent === true;
 
-  if (!buyerName || !buyerContact || !productName || !state) return { error: "Buyer name, contact, product and delivery state are required", status: 400 };
-  if (!PRODUCT_CATEGORIES.includes(category)) return { error: "Choose a valid product category", status: 400 };
-  if (subcategory && !(SUBCATEGORIES_BY_CATEGORY[category] || []).includes(subcategory)) return { error: "Choose a valid product type for the selected category", status: 400 };
-  if (!PRODUCT_UNITS.includes(unit)) return { error: "Choose a valid unit of measure", status: 400 };
-  if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 1_000_000) return { error: "Quantity must be a positive number", status: 400 };
+  if (!buyerName || !buyerContact || !productName) return { error: "Buyer name, contact and product are required", status: 400 };
+  if (category && !PRODUCT_CATEGORIES.includes(category)) return { error: "Choose a valid product category", status: 400 };
+  if (subcategory && category && !(SUBCATEGORIES_BY_CATEGORY[category] || []).includes(subcategory)) return { error: "Choose a valid product type for the selected category", status: 400 };
+  if (unit && !PRODUCT_UNITS.includes(unit)) return { error: "Choose a valid unit of measure", status: 400 };
+  if (quantity !== null && (!Number.isFinite(quantity) || quantity <= 0 || quantity > 1_000_000)) return { error: "Quantity must be a positive number", status: 400 };
   if (maxUnitPrice !== null && (!Number.isFinite(maxUnitPrice) || maxUnitPrice < 0)) return { error: "Maximum unit price must be a valid non-negative amount", status: 400 };
   if (!["en-NG", "pcm-NG", "ha-NG", "ig-NG", "yo-NG"].includes(preferredLanguage)) return { error: "Choose one of the supported languages", status: 400 };
 
@@ -55,17 +55,17 @@ export function prepareBuyerRequirement(body = {}, { userId = null, now = new Da
 }
 
 export function scoreBuyerRequirement(requirement, product, vendor = {}) {
-  const sameCategory = requirement.category === product.category;
+  const sameCategory = !requirement.category || requirement.category === product.category;
   const productNameMatch = productNameFits(requirement.productName, product.name);
   const sameSubcategory = !requirement.subcategory || requirement.subcategory === product.subcategory;
-  const sameUnit = requirement.unit === product.unitOfMeasure;
+  const sameUnit = !requirement.unit || requirement.unit === product.unitOfMeasure;
   const stock = Number(product.stockQuantity);
   const stockKnown = Number.isFinite(stock) && stock > 0;
-  const stockSufficient = stockKnown && sameUnit && stock >= requirement.quantity;
+  const stockSufficient = requirement.quantity !== null && requirement.quantity !== undefined && stockKnown && sameUnit && stock >= requirement.quantity;
   const state = vendor.state || vendor.farmAddress?.state || product.originLocation?.state || "";
   const lga = vendor.lga || vendor.farmAddress?.lga || product.originLocation?.lga || "";
-  const stateMatch = normalizeStateName(state) === normalizeStateName(requirement.state);
-  const lgaMatch = Boolean(requirement.lga && normalizeLgaName(lga) === normalizeLgaName(requirement.lga));
+  const stateMatch = !requirement.state || normalizeStateName(state) === normalizeStateName(requirement.state);
+  const lgaMatch = Boolean(!requirement.lga || normalizeLgaName(lga) === normalizeLgaName(requirement.lga));
   const withinBudget = requirement.maxUnitPrice === null || Number(product.price) <= requirement.maxUnitPrice;
   const reasons = [];
   if (productNameMatch) reasons.push("Product name matches");
@@ -85,93 +85,9 @@ export function rankRequirementsForVendor(requirements, products, vendor = {}) {
   const matches = [];
   for (const requirement of requirements) {
     const productMatches = products.map((product) => ({ product, ...scoreBuyerRequirement(requirement, product, vendor) }))
-      .filter((item) => item.productNameMatch && item.sameCategory && item.sameSubcategory && item.stateMatch && item.withinBudget && !["recorded_insufficient", "unit_mismatch"].includes(item.stockStatus))
+      .filter((item) => item.productNameMatch && item.withinBudget)
       .sort((a, b) => b.score - a.score);
     if (productMatches.length) matches.push({ requirement, bestProduct: productMatches[0].product, score: productMatches[0].score, reasons: productMatches[0].reasons, stockStatus: productMatches[0].stockStatus });
   }
   return matches.sort((a, b) => b.score - a.score || new Date(b.requirement.createdAt) - new Date(a.requirement.createdAt));
-}
-
-
-// Customer-facing matching is deliberately more flexible than vendor-side
-// requirement matching. A real, relevant listing should not disappear just
-// because its location, quantity, unit, price or taxonomy differs slightly.
-const MATCH_ALIASES = Object.freeze({
-  maize: ["maize", "corn"], corn: ["maize", "corn"],
-  rice: ["rice"], paddy: ["rice", "paddy"],
-  chicken: ["chicken", "poultry", "broiler"], broiler: ["chicken", "broiler", "poultry"], poultry: ["poultry", "chicken"],
-  cow: ["cow", "cattle"], cattle: ["cow", "cattle"], bull: ["bull", "cattle"],
-  ram: ["ram", "sheep"], sheep: ["ram", "sheep"], goat: ["goat", "goats"], goats: ["goat", "goats"],
-  tomato: ["tomato", "tomatoes"], tomatoes: ["tomato", "tomatoes"], yam: ["yam", "yams"], yams: ["yam", "yams"],
-  bean: ["bean", "beans"], beans: ["bean", "beans"], catfish: ["catfish"], tilapia: ["tilapia"],
-  egg: ["egg", "eggs"], eggs: ["egg", "eggs"],
-});
-const cleanWords = (value) => text(value, 500).toLowerCase().normalize("NFKD")
-  .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
-  .filter((word) => word.length > 1 && !["the", "and", "for", "need", "want", "some", "buy", "looking", "available"].includes(word));
-const expandWords = (value) => [...new Set(cleanWords(value).flatMap((word) => MATCH_ALIASES[word] || [word]))];
-const normal = (value) => text(value, 160).toLowerCase().replace(/[^a-z0-9]/g, "");
-
-export function scoreProductForBuyer(requirement, product, vendor = {}) {
-  const requestedWords = expandWords(requirement.productName || "");
-  const productText = [product.name, product.species, product.subcategory, product.description].filter(Boolean).join(" ");
-  const listedWords = new Set(expandWords(productText));
-  const overlap = requestedWords.filter((word) => listedWords.has(word));
-  const exactText = normal(product.name).includes(normal(requirement.productName)) || normal(requirement.productName).includes(normal(product.name));
-  const nameRatio = requestedWords.length ? overlap.length / requestedWords.length : 0;
-  const productRelevance = exactText ? 1 : nameRatio;
-  const nameMatch = exactText || overlap.length > 0;
-  const categoryMatch = Boolean(requirement.category && requirement.category === product.category);
-  const subcategoryMatch = Boolean(requirement.subcategory && requirement.subcategory === product.subcategory);
-  const unitMatch = !requirement.unit || requirement.unit === product.unitOfMeasure;
-  const state = vendor.state || vendor.farmAddress?.state || product.originLocation?.state || "";
-  const lga = vendor.lga || vendor.farmAddress?.lga || product.originLocation?.lga || "";
-  const stateMatch = Boolean(requirement.state && normalizeStateName(state) === normalizeStateName(requirement.state));
-  const lgaMatch = Boolean(requirement.lga && normalizeLgaName(lga) === normalizeLgaName(requirement.lga));
-  const stock = Number(product.stockQuantity);
-  const stockKnown = Number.isFinite(stock) && stock > 0;
-  const stockSufficient = stockKnown && unitMatch && stock >= Number(requirement.quantity || 0);
-  const stockPartial = stockKnown && unitMatch && stock < Number(requirement.quantity || 0);
-  const priceKnown = Number.isFinite(Number(product.price));
-  const withinBudget = requirement.maxUnitPrice == null || !priceKnown || Number(product.price) <= Number(requirement.maxUnitPrice);
-  const conditionMatch = !requirement.condition || !product.condition || normal(requirement.condition) === normal(product.condition);
-  // Product identity is the gate; all other fields are ranking signals, not hard filters.
-  if (!nameMatch) return null;
-  let score = 40 + Math.round(productRelevance * 15);
-  if (categoryMatch) score += 10;
-  if (subcategoryMatch) score += 10;
-  if (stateMatch) score += 8;
-  if (lgaMatch) score += 5;
-  if (stockSufficient) score += 7;
-  else if (stockPartial) score += 3;
-  if (unitMatch) score += 3;
-  if (withinBudget) score += 2;
-  if (conditionMatch) score += 2;
-  const reasons = [];
-  reasons.push(exactText ? "The product name is a direct match." : `The listing shares ${overlap.length} relevant product term(s) with your request.`);
-  if (categoryMatch) reasons.push("The category matches."); else reasons.push("The category differs or is not an exact match.");
-  if (subcategoryMatch) reasons.push("The product type matches.");
-  if (stateMatch) reasons.push("The supplier is in your requested state."); else reasons.push("The supplier's location needs checking for delivery to your state.");
-  if (lgaMatch) reasons.push("The supplier is in your requested LGA.");
-  if (stockSufficient) reasons.push(`Recorded stock (${stock} ${product.unitOfMeasure || "units"}) covers your requested quantity.`);
-  else if (stockPartial) reasons.push(`Only ${stock} ${product.unitOfMeasure || "units"} are recorded, below your requested ${requirement.quantity} ${requirement.unit}. Ask whether more can be supplied.`);
-  else reasons.push("The listing is marked available, but its recorded quantity needs confirmation.");
-  if (!unitMatch) reasons.push(`The listing uses ${product.unitOfMeasure || "a different unit"}, while you requested ${requirement.unit}; confirm the conversion before ordering.`);
-  if (requirement.maxUnitPrice != null && priceKnown) reasons.push(withinBudget ? "The listed price is within your stated budget." : "The listed price is above your stated budget.");
-  if (requirement.condition && product.condition) reasons.push(conditionMatch ? "The product condition matches." : `The listed condition is ${product.condition}, not ${requirement.condition}.`);
-  const fit = score >= 85 ? "Strong match" : score >= 70 ? "Good match" : score >= 55 ? "Possible match" : "Partial match";
-  score = Math.min(100, score);
-  return { score, fit, reasons, stockStatus: stockSufficient ? "recorded_sufficient" : stockPartial ? "recorded_partial" : "needs_confirmation", stateMatch, lgaMatch, categoryMatch, subcategoryMatch, unitMatch, withinBudget, productRelevance };
-}
-
-export function rankProductsForBuyer(requirement, products, vendorById = new Map()) {
-  return products.map((product) => {
-    const vendorId = product.vendorId?._id || product.vendorId;
-    const vendor = vendorId ? (vendorById.get(String(vendorId)) || product.vendorId || {}) : {};
-    const match = scoreProductForBuyer(requirement, product, vendor);
-    if (!match) return null;
-    const direct = !vendorId;
-    const sellerName = direct ? "Elevoni Farms" : (vendor.businessName || "Approved marketplace supplier");
-    return { product, ...match, sellerType: direct ? "elevoni_direct" : "marketplace_vendor", vendorName: sellerName, sellerName, vendor };
-  }).filter(Boolean).sort((a, b) => b.score - a.score || Number(b.product.stockQuantity || 0) - Number(a.product.stockQuantity || 0)).slice(0, 12);
 }

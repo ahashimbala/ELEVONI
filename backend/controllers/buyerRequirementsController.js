@@ -3,7 +3,7 @@ import Product from "../models/Product.js";
 import vendorProfileModel from "../models/vendorProfileModel.js";
 import { prepareBuyerRequirement, rankRequirementsForVendor } from "../services/buyerRequirements.js";
 import { interpretBuyerRequirement } from "../services/buyerRequirementIntelligence.js";
-import { matchBuyerToProductsAI } from "../services/aiBuyerProductMatching.js";
+import { retrieveBuyerProductMatches } from "../services/buyerProductRetrieval.js";
 
 const buckets = new Map();
 function allowSubmission(key, now = Date.now()) {
@@ -37,42 +37,24 @@ export async function createBuyerRequirement(req, res, next) {
     const prepared = prepareBuyerRequirement(req.body, { userId: req.auth?.role === "customer" ? req.auth.id : null });
     if (prepared.error) return res.status(prepared.status || 400).json({ success: false, message: prepared.error });
     const requirement = await BuyerRequirement.create(prepared.requirement);
-
-    // Retrieve real catalogue records broadly. Do not hard-filter by category,
-    // subcategory, state, unit or requested quantity: AI evaluates partial fits.
-    const catalogue = await Product.find({
-      status: "approved",
-      isAvailable: true,
-      availability: { $ne: "Out of stock" },
-      $or: [
-        { stockQuantity: { $gt: 0 } },
-        { availability: "Pre-order" },
-        { availability: "Seasonal" }
-      ]
-    }).select("name description category subcategory species condition productionMethod price unitOfMeasure stockQuantity availability originLocation vendorId images updatedAt")
-      .populate({ path: "vendorId", select: "businessName state lga farmAddress" })
-      .sort({ updatedAt: -1 }).limit(500).lean();
-
-    const candidates = catalogue.map((product) => ({
-      ...product,
-      sellerState: product.vendorId?.state || product.vendorId?.farmAddress?.state || product.originLocation?.state || "",
-      sellerLga: product.vendorId?.lga || product.vendorId?.farmAddress?.lga || product.originLocation?.lga || ""
-    }));
-    const aiResult = await matchBuyerToProductsAI({ requirement: prepared.requirement, candidates });
-    const matches = aiResult.matches.map(({ product, fitScore, explanation, matches: matchedDetails, differences, availabilityNote }) => ({
-      product: {
-        id: String(product._id), name: product.name, description: product.description || "",
-        category: product.category, subcategory: product.subcategory || "", species: product.species || "",
-        condition: product.condition || "", price: product.price, unit: product.unitOfMeasure,
-        stockQuantity: product.stockQuantity, availability: product.availability || "",
-        state: product.sellerState, lga: product.sellerLga,
-        sellerName: product.vendorId?.businessName || "Elevoni Farms",
-        sellerType: product.vendorId ? "marketplace_vendor" : "elevoni_direct",
-        image: Array.isArray(product.images) ? product.images[0] || "" : ""
-      }, fitScore, explanation, matches: matchedDetails, differences, availabilityNote
-    }));
-    await BuyerRequirement.updateOne({ _id: requirement._id }, { $set: { matchCount: matches.length } });
-    return res.status(201).json({ success: true, message: "Your requirement has been submitted and compared with current catalogue listings.", data: { id: String(requirement._id), status: requirement.status, matchingModel: aiResult.model, matchCount: matches.length, matches } });
+    let retrieval;
+    let matchingWarning = "";
+    try {
+      retrieval = await retrieveBuyerProductMatches(prepared.requirement);
+      if (retrieval.matchingMethod !== "ai_catalogue_rank") {
+        matchingWarning = "AI ranking is temporarily unavailable. These results use basic catalogue text matching, so review them carefully and confirm details with the supplier.";
+      }
+    } catch (matchingError) {
+      retrieval = { matches: [], matchingMethod: "retrieval_unavailable", scannedCount: 0 };
+      matchingWarning = "Your request was saved, but product matching could not complete just now. Please try searching again shortly.";
+      console.error("[buyer-requirements] product retrieval failed", { code: matchingError?.code || "MATCHING_ERROR", message: matchingError?.message });
+    }
+    await BuyerRequirement.updateOne({ _id: requirement._id }, { $set: { matchCount: retrieval.matches.length } });
+    return res.status(201).json({
+      success: true,
+      message: "Your buying requirement has been submitted.",
+      data: { id: String(requirement._id), status: requirement.status, matches: retrieval.matches, matchingMethod: retrieval.matchingMethod, scannedCount: retrieval.scannedCount, matchingWarning }
+    });
   } catch (error) { return next(error); }
 }
 
