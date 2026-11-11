@@ -1,8 +1,9 @@
 import BuyerRequirement from "../models/buyerRequirementModel.js";
 import Product from "../models/Product.js";
 import vendorProfileModel from "../models/vendorProfileModel.js";
-import { prepareBuyerRequirement, rankRequirementsForVendor, rankProductsForBuyer } from "../services/buyerRequirements.js";
+import { prepareBuyerRequirement, rankRequirementsForVendor } from "../services/buyerRequirements.js";
 import { interpretBuyerRequirement } from "../services/buyerRequirementIntelligence.js";
+import { matchBuyerToProductsAI } from "../services/aiBuyerProductMatching.js";
 
 const buckets = new Map();
 function allowSubmission(key, now = Date.now()) {
@@ -36,31 +37,42 @@ export async function createBuyerRequirement(req, res, next) {
     const prepared = prepareBuyerRequirement(req.body, { userId: req.auth?.role === "customer" ? req.auth.id : null });
     if (prepared.error) return res.status(prepared.status || 400).json({ success: false, message: prepared.error });
     const requirement = await BuyerRequirement.create(prepared.requirement);
-    // Read the live approved catalogue. Do not hard-filter by category, location,
-    // price or requested quantity: those details affect ranking and explanation,
-    // not whether a relevant product can be shown at all.
-    const products = await Product.find({
+
+    // Retrieve real catalogue records broadly. Do not hard-filter by category,
+    // subcategory, state, unit or requested quantity: AI evaluates partial fits.
+    const catalogue = await Product.find({
       status: "approved",
       isAvailable: true,
       availability: { $ne: "Out of stock" },
-      $or: [{ stockQuantity: { $gt: 0 } }, { availability: "Pre-order" }],
-    }).populate("vendorId", "businessName state lga farmAddress").lean();
-    const ranked = rankProductsForBuyer(requirement.toObject(), products);
-    const matches = ranked.map(({ product, score, fit, reasons, stockStatus, sellerType, vendorName }) => ({
-      id: String(product._id), name: product.name, description: product.description || "",
-      category: product.category, subcategory: product.subcategory || "", species: product.species || "",
-      price: product.price, unit: product.unitOfMeasure, stockQuantity: Number(product.stockQuantity || 0),
-      availability: product.availability || "Available", condition: product.condition || "",
-      images: Array.isArray(product.images) ? product.images.slice(0, 3) : [],
-      state: product.vendorId?.state || product.vendorId?.farmAddress?.state || product.originLocation?.state || "",
-      lga: product.vendorId?.lga || product.vendorId?.farmAddress?.lga || product.originLocation?.lga || "",
-      sellerType, sellerName: vendorName, score, fit, stockStatus, reasons,
+      $or: [
+        { stockQuantity: { $gt: 0 } },
+        { availability: "Pre-order" },
+        { availability: "Seasonal" }
+      ]
+    }).select("name description category subcategory species condition productionMethod price unitOfMeasure stockQuantity availability originLocation vendorId images updatedAt")
+      .populate({ path: "vendorId", select: "businessName state lga farmAddress" })
+      .sort({ updatedAt: -1 }).limit(500).lean();
+
+    const candidates = catalogue.map((product) => ({
+      ...product,
+      sellerState: product.vendorId?.state || product.vendorId?.farmAddress?.state || product.originLocation?.state || "",
+      sellerLga: product.vendorId?.lga || product.vendorId?.farmAddress?.lga || product.originLocation?.lga || ""
     }));
-    return res.status(201).json({
-      success: true,
-      message: matches.length ? "Your request has been submitted. Here are relevant products currently listed on Elevoni." : "Your request has been submitted, but no relevant in-stock approved listing was found right now.",
-      data: { id: String(requirement._id), status: requirement.status, matches, matchCount: matches.length },
-    });
+    const aiResult = await matchBuyerToProductsAI({ requirement: prepared.requirement, candidates });
+    const matches = aiResult.matches.map(({ product, fitScore, explanation, matches: matchedDetails, differences, availabilityNote }) => ({
+      product: {
+        id: String(product._id), name: product.name, description: product.description || "",
+        category: product.category, subcategory: product.subcategory || "", species: product.species || "",
+        condition: product.condition || "", price: product.price, unit: product.unitOfMeasure,
+        stockQuantity: product.stockQuantity, availability: product.availability || "",
+        state: product.sellerState, lga: product.sellerLga,
+        sellerName: product.vendorId?.businessName || "Elevoni Farms",
+        sellerType: product.vendorId ? "marketplace_vendor" : "elevoni_direct",
+        image: Array.isArray(product.images) ? product.images[0] || "" : ""
+      }, fitScore, explanation, matches: matchedDetails, differences, availabilityNote
+    }));
+    await BuyerRequirement.updateOne({ _id: requirement._id }, { $set: { matchCount: matches.length } });
+    return res.status(201).json({ success: true, message: "Your requirement has been submitted and compared with current catalogue listings.", data: { id: String(requirement._id), status: requirement.status, matchingModel: aiResult.model, matchCount: matches.length, matches } });
   } catch (error) { return next(error); }
 }
 

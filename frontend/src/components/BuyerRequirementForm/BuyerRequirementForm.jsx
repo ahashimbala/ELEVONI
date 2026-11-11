@@ -27,7 +27,7 @@ export default function BuyerRequirementForm({ url }) {
   const [requestText, setRequestText] = useState("");
   const [feedback, setFeedback] = useState("");
   const [matches, setMatches] = useState([]);
-  const [matchMessage, setMatchMessage] = useState("");
+  const [matchModel, setMatchModel] = useState("");
   const subcategories = useMemo(() => SUBCATEGORIES_BY_CATEGORY[form.category] || [], [form.category]);
   const update = (key, value) => setForm((old) => ({ ...old, [key]: value }));
   const field = (key, label, type = "text") => (
@@ -51,15 +51,14 @@ export default function BuyerRequirementForm({ url }) {
   };
   const submit = async (event) => {
     event.preventDefault(); if (saving) return;
-    setSaving(true); setFeedback(""); setMatches([]); setMatchMessage("");
+    setSaving(true); setFeedback(""); setMatches([]); setMatchModel("");
     try {
       const response = await fetch(`${url}/api/buyer-requirements`, { method: "POST", headers: { "Content-Type": "application/json", ...(localStorage.getItem("token") ? { token: localStorage.getItem("token") } : {}) }, body: JSON.stringify({ ...form, quantity: Number(form.quantity), maxUnitPrice: form.maxUnitPrice === "" ? null : Number(form.maxUnitPrice), preferredLanguage: language, sourceText: form.sourceText || requestText }) });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || t.error);
-      setFeedback(result.message || t.success);
       setMatches(Array.isArray(result.data?.matches) ? result.data.matches : []);
-      setMatchMessage(result.data?.matchCount ? `${result.data.matchCount} relevant listing(s) found in the current approved catalogue.` : "No relevant in-stock approved listing was found at the moment. Try a nearby product name or check again later.");
-      setForm(emptyForm()); setRequestText("");
+      setMatchModel(result.data?.matchingModel || "AI matching");
+      setFeedback(result.data?.matchCount ? `Your request was compared with the current catalogue. ${result.data.matchCount} relevant listing(s) found.` : "Your request was submitted, but no relevant available listing was identified in the current catalogue. You can still expect Elevoni to follow up.");
     } catch (error) { setFeedback(error.message || t.error); }
     finally { setSaving(false); }
   };
@@ -82,17 +81,23 @@ export default function BuyerRequirementForm({ url }) {
         {feedback && <p className="buyer-demand-feedback buyer-demand-wide" role="status">{feedback}</p>}
         <button className="buyer-demand-submit" disabled={saving}>{saving ? t.submitting : t.submit}</button>
       </form>
-      {matchMessage && <div className="buyer-demand-results" aria-live="polite">
-        <div className="buyer-demand-results-heading"><h3>Products that may fit your request</h3><p>{matchMessage} A match is a recommendation, not a confirmed order or stock reservation.</p></div>
-        {matches.length > 0 && <div className="buyer-demand-match-list">{matches.map((item) => <article className="buyer-demand-match" key={item.id}>
-          {item.images?.[0] && <img src={item.images[0]} alt={item.name} loading="lazy" />}
-          <h4>{item.name}</h4>
-          <p className="buyer-demand-match-fit">{item.fit} · {item.score}% fit</p>
-          <div className="buyer-demand-match-meta"><span>{item.sellerName}</span><span>{item.price != null ? `₦${Number(item.price).toLocaleString()} / ${item.unit || "unit"}` : "Price needs confirmation"}</span><span>{item.stockQuantity} {item.unit || "units"} recorded</span><span>{[item.lga, item.state].filter(Boolean).join(", ") || "Location needs confirmation"}</span></div>
-          {item.availability === "Pre-order" && <p>Pre-order listing — confirm expected availability.</p>}
-          <ul>{(item.reasons || []).map((reason, index) => <li key={`${item.id}-reason-${index}`}>{reason}</li>)}</ul>
-        </article>)}</div>}
-      </div>}
+      {matches.length > 0 && <section className="buyer-ai-matches" aria-live="polite">
+        <div className="buyer-ai-matches-heading"><div><p className="marketplace-eyebrow">AI-assisted catalogue matching</p><h3>Products that may fit your request</h3></div><small>{matchModel}</small></div>
+        <p className="buyer-ai-disclaimer">These are ranked suggestions from approved listings, not confirmed orders. Please confirm current stock, final price and delivery with the seller.</p>
+        <div className="buyer-ai-match-grid">{matches.map((item) => <article className="buyer-ai-match-card" key={item.product.id}>
+          {item.product.image && <img src={item.product.image} alt={item.product.name} loading="lazy" />}
+          <div className="buyer-ai-match-card-body">
+            <div className="buyer-ai-match-top"><h4>{item.product.name}</h4><span>{item.fitScore}% fit</span></div>
+            <p className="buyer-ai-match-seller">{item.product.sellerType === "elevoni_direct" ? "Elevoni Farms · Direct" : item.product.sellerName}</p>
+            <p className="buyer-ai-match-price">₦{Number(item.product.price || 0).toLocaleString("en-NG")} / {item.product.unit}</p>
+            <p>{item.explanation}</p>
+            <p><strong>Availability:</strong> {item.availabilityNote} {item.product.stockQuantity > 0 ? `Recorded stock: ${item.product.stockQuantity} ${item.product.unit}.` : "Stock quantity not recorded."}</p>
+            {item.matches?.length > 0 && <div><strong>What matches</strong><ul>{item.matches.map((v, i) => <li key={`m-${i}`}>{v}</li>)}</ul></div>}
+            {item.differences?.length > 0 && <div><strong>What differs / needs checking</strong><ul>{item.differences.map((v, i) => <li key={`d-${i}`}>{v}</li>)}</ul></div>}
+            <p><strong>Location:</strong> {[item.product.lga, item.product.state].filter(Boolean).join(", ") || "Not recorded"}</p>
+          </div>
+        </article>)}</div>
+      </section>}
     </section>
   );
 }

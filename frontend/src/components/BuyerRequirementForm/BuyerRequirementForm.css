@@ -2,14 +2,4 @@
 .buyer-demand-interpret{justify-self:start;border:1px solid #b9c8b7;border-radius:8px;padding:10px 15px;background:#fff;color:#34543a;font-weight:700;cursor:pointer}.buyer-demand-interpret:disabled{opacity:.6;cursor:wait}
 .buyer-demand-interpret{justify-self:start;border:1px solid #b9c8b7;border-radius:8px;padding:10px 15px;background:#fff;color:#34543a;font-weight:700;cursor:pointer}.buyer-demand-interpret:disabled{opacity:.6;cursor:wait}
 
-.buyer-demand-results { margin-top: 1.25rem; display: grid; gap: 1rem; }
-.buyer-demand-results-heading h3 { margin: 0 0 .35rem; }
-.buyer-demand-results-heading p { margin: 0; color: #647067; }
-.buyer-demand-match-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
-.buyer-demand-match { border: 1px solid #dce5dc; border-radius: 12px; padding: 1rem; background: #fff; min-width: 0; }
-.buyer-demand-match img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: .75rem; }
-.buyer-demand-match h4 { margin: 0 0 .35rem; }
-.buyer-demand-match-meta { display: flex; flex-wrap: wrap; gap: .4rem .8rem; color: #56645a; font-size: .9rem; margin: .45rem 0; }
-.buyer-demand-match-fit { font-weight: 700; color: #245b36; }
-.buyer-demand-match ul { padding-left: 1.1rem; margin: .6rem 0 0; color: #465349; font-size: .9rem; }
-.buyer-demand-match li + li { margin-top: .3rem; }
+.buyer-ai-matches{margin-top:28px}.buyer-ai-matches-heading{display:flex;justify-content:space-between;align-items:end;gap:16px}.buyer-ai-matches-heading h3{margin:4px 0 0}.buyer-ai-matches-heading small{color:#647067}.buyer-ai-disclaimer{font-size:.9rem;color:#647067;margin:12px 0 18px}.buyer-ai-match-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}.buyer-ai-match-card{border:1px solid #dce5dc;border-radius:14px;overflow:hidden;background:#fff}.buyer-ai-match-card>img{width:100%;height:180px;object-fit:cover}.buyer-ai-match-card-body{padding:16px}.buyer-ai-match-top{display:flex;justify-content:space-between;align-items:start;gap:10px}.buyer-ai-match-top h4{margin:0}.buyer-ai-match-top span{white-space:nowrap;font-weight:700;color:#315d3d}.buyer-ai-match-seller{font-size:.88rem;color:#536456;margin:7px 0}.buyer-ai-match-price{font-weight:700}.buyer-ai-match-card-body ul{padding-left:20px;margin:6px 0 12px}.buyer-ai-match-card-body li,.buyer-ai-match-card-body p{line-height:1.5}.buyer-ai-match-card-body p{margin:8px 0}
