@@ -12,7 +12,7 @@ const buyerRequirementSchema = new mongoose.Schema({
   subcategory: { type: String, enum: ["", ...ALL_SUBCATEGORIES], default: "" },
   quantity: { type: Number, min: 0.001, default: null },
   unit: { type: String, enum: ["", ...PRODUCT_UNITS], default: "" },
-  state: { type: String, trim: true, default: "", maxlength: 100 },
+  state: { type: String, trim: true, required: true, maxlength: 100 },
   lga: { type: String, trim: true, maxlength: 100, default: "" },
   deliveryArea: { type: String, trim: true, maxlength: 120, default: "" },
   neededBy: { type: Date, default: null },

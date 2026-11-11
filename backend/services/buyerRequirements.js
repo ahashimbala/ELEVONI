@@ -1,93 +1,110 @@
-import { PRODUCT_CATEGORIES, PRODUCT_UNITS, SUBCATEGORIES_BY_CATEGORY } from "../../shared/categoryConstants.mjs";
+import { PRODUCT_UNITS } from "../../shared/categoryConstants.mjs";
 import { normalizeLgaName, normalizeStateName } from "./nAtlasCustomerMatching.js";
+import Product from "../models/Product.js";
+import fishModel from "../models/fishModel.js";
+import vendorProfileModel from "../models/vendorProfileModel.js";
+import { matchProductsAcrossLanguages } from "./nAtlasCustomer.js";
 
 const text = (value, max = 160) => typeof value === "string" ? value.trim().slice(0, max) : "";
-const number = (value) => value === "" || value === null || value === undefined ? null : Number(value);
-const round = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
-
-const PRODUCT_WORD_ALIASES = Object.freeze({ maize: ["maize", "corn"], corn: ["maize", "corn"], chicken: ["chicken", "broiler", "poultry"], broiler: ["chicken", "broiler"], cow: ["cow", "cattle"], cattle: ["cow", "cattle"], ram: ["ram", "sheep"], sheep: ["ram", "sheep"], goat: ["goat", "goats"], tomato: ["tomato", "tomatoes"], tomatoes: ["tomato", "tomatoes"], yam: ["yam", "yams"], yams: ["yam", "yams"], beans: ["bean", "beans"], bean: ["bean", "beans"], catfish: ["catfish"], tilapia: ["tilapia"] });
-const productTokens = value => text(value, 160).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(word => word.length > 2 && !["fresh", "dried", "frozen", "smoked", "live", "processed", "farm", "raised", "the", "and"].includes(word)).map(word => PRODUCT_WORD_ALIASES[word] || [word]).flat();
-function productNameFits(requested, listed) {
-  const wanted = [...new Set(productTokens(requested))];
-  const available = new Set(productTokens(listed));
-  if (!wanted.length || !available.size) return false;
-  const overlap = wanted.filter(word => available.has(word)).length;
-  return overlap > 0 && overlap / wanted.length >= 0.5;
-}
+const number = value => value === "" || value === null || value === undefined ? null : Number(value);
+const normaliseUnit = value => {
+  const raw=text(value,24).toLowerCase().trim();
+  const aliases={kilogram:"kg",kilograms:"kg",kilo:"kg",kilos:"kg",grams:"gram",pieces:"piece",crates:"crate",tons:"ton",bags:"bag",cartons:"carton",litres:"litre",liters:"litre",hours:"hour"};
+  return aliases[raw] || raw;
+};
+const normUnit = normaliseUnit;
 
 export function prepareBuyerRequirement(body = {}, { userId = null, now = new Date() } = {}) {
-  const buyerName = text(body.buyerName, 120);
-  const buyerContact = text(body.buyerContact, 120);
-  const productName = text(body.productName, 160);
-  const category = text(body.category, 100);
-  const subcategory = text(body.subcategory, 100);
-  const unit = text(body.unit, 24);
-  const state = text(body.state, 100);
-  const lga = text(body.lga, 100);
-  const quantity = number(body.quantity);
+  const buyerName = text(body.buyerName, 120), buyerContact = text(body.buyerContact, 120);
+  const productName = text(body.productName, 160), state = text(body.state, 100);
+  const quantity = number(body.quantity), unit = normaliseUnit(body.unit), lga = text(body.lga, 100);
   const maxUnitPrice = number(body.maxUnitPrice);
   const preferredLanguage = text(body.preferredLanguage, 10) || "en-NG";
-  const contactConsent = body.contactConsent === true;
-
-  if (!buyerName || !buyerContact || !productName) return { error: "Buyer name, contact and product are required", status: 400 };
-  if (category && !PRODUCT_CATEGORIES.includes(category)) return { error: "Choose a valid product category", status: 400 };
-  if (subcategory && category && !(SUBCATEGORIES_BY_CATEGORY[category] || []).includes(subcategory)) return { error: "Choose a valid product type for the selected category", status: 400 };
-  if (unit && !PRODUCT_UNITS.includes(unit)) return { error: "Choose a valid unit of measure", status: 400 };
+  if (!buyerName || !buyerContact || !productName || !state) return { error: "Buyer name, contact, product and delivery state are required", status: 400 };
   if (quantity !== null && (!Number.isFinite(quantity) || quantity <= 0 || quantity > 1_000_000)) return { error: "Quantity must be a positive number", status: 400 };
+  if (unit && !PRODUCT_UNITS.includes(unit)) return { error: "Choose a valid unit of measure", status: 400 };
+  if (quantity !== null && !unit) return { error: "Choose a unit when you provide a quantity", status: 400 };
   if (maxUnitPrice !== null && (!Number.isFinite(maxUnitPrice) || maxUnitPrice < 0)) return { error: "Maximum unit price must be a valid non-negative amount", status: 400 };
   if (!["en-NG", "pcm-NG", "ha-NG", "ig-NG", "yo-NG"].includes(preferredLanguage)) return { error: "Choose one of the supported languages", status: 400 };
-
   let neededBy = null;
-  if (body.neededBy) {
-    neededBy = new Date(body.neededBy);
-    if (Number.isNaN(neededBy.getTime()) || neededBy < new Date(now.getTime() - 86_400_000)) return { error: "Required date must be valid and cannot be in the past", status: 400 };
-  }
-
-  return { requirement: {
-    buyerUserId: userId || null, buyerName, buyerContact,
-    buyerBusinessName: text(body.buyerBusinessName, 120), productName, category, subcategory,
-    quantity, unit, state, lga, deliveryArea: text(body.deliveryArea, 120), neededBy,
-    maxUnitPrice: maxUnitPrice === null ? null : round(maxUnitPrice),
-    condition: text(body.condition, 80), specifications: text(body.specifications, 1000),
-    preferredLanguage, sourceText: text(body.sourceText, 1500), contactConsent,
-    status: "open", matchCount: 0,
-  } };
+  if (body.neededBy) { neededBy = new Date(body.neededBy); if (Number.isNaN(neededBy.getTime()) || neededBy < new Date(now.getTime()-86400000)) return { error: "Required date must be valid and cannot be in the past", status: 400 }; }
+  return { requirement: { buyerUserId:userId||null, buyerName, buyerContact, buyerBusinessName:text(body.buyerBusinessName,120), productName,
+    category:"", subcategory:"", quantity, unit, state, lga, deliveryArea:text(body.deliveryArea,120), neededBy,
+    maxUnitPrice:maxUnitPrice===null?null:maxUnitPrice, condition:text(body.condition,80), specifications:text(body.specifications,1000),
+    preferredLanguage, sourceText:text(body.sourceText,1500), contactConsent:body.contactConsent===true, status:"open", matchCount:0 } };
 }
 
 export function scoreBuyerRequirement(requirement, product, vendor = {}) {
-  const sameCategory = !requirement.category || requirement.category === product.category;
-  const productNameMatch = productNameFits(requirement.productName, product.name);
-  const sameSubcategory = !requirement.subcategory || requirement.subcategory === product.subcategory;
-  const sameUnit = !requirement.unit || requirement.unit === product.unitOfMeasure;
-  const stock = Number(product.stockQuantity);
-  const stockKnown = Number.isFinite(stock) && stock > 0;
-  const stockSufficient = requirement.quantity !== null && requirement.quantity !== undefined && stockKnown && sameUnit && stock >= requirement.quantity;
   const state = vendor.state || vendor.farmAddress?.state || product.originLocation?.state || "";
   const lga = vendor.lga || vendor.farmAddress?.lga || product.originLocation?.lga || "";
-  const stateMatch = !requirement.state || normalizeStateName(state) === normalizeStateName(requirement.state);
-  const lgaMatch = Boolean(!requirement.lga || normalizeLgaName(lga) === normalizeLgaName(requirement.lga));
-  const withinBudget = requirement.maxUnitPrice === null || Number(product.price) <= requirement.maxUnitPrice;
-  const reasons = [];
-  if (productNameMatch) reasons.push("Product name matches");
-  if (sameCategory) reasons.push("Category matches");
-  if (sameSubcategory && requirement.subcategory) reasons.push("Product type matches");
-  if (stateMatch) reasons.push("Same state");
-  if (lgaMatch) reasons.push("Same LGA");
-  if (stockSufficient) reasons.push("Recorded stock covers requested quantity");
-  if (withinBudget && requirement.maxUnitPrice !== null) reasons.push("Within stated budget");
-  if (!stockKnown) reasons.push("Stock quantity needs confirmation");
-  if (!sameUnit) reasons.push("Unit differs; confirm before proceeding");
-  const score = (productNameMatch ? 25 : 0) + (sameCategory ? 20 : 0) + (sameSubcategory ? 15 : 0) + (stateMatch ? 15 : 0) + (lgaMatch ? 10 : 0) + (stockSufficient ? 10 : 0) + (withinBudget ? 5 : -15);
-  return { score, reasons, stockStatus: !stockKnown ? "unknown" : !sameUnit ? "unit_mismatch" : stockSufficient ? "recorded_sufficient" : "recorded_insufficient", stateMatch, lgaMatch, withinBudget, sameCategory, sameSubcategory, productNameMatch };
+  const stateMatch = normalizeStateName(state) === normalizeStateName(requirement.state);
+  const lgaMatch = Boolean(requirement.lga && normalizeLgaName(lga) === normalizeLgaName(requirement.lga));
+  const stock = Number(product.stockQuantity), stockKnown = Number.isFinite(stock) && stock > 0;
+  const sameUnit = Boolean(requirement.unit && normUnit(requirement.unit) === normUnit(product.unitOfMeasure || product.unit));
+  const stockStatus = requirement.quantity === null || requirement.quantity === undefined ? (stockKnown?"recorded":"unknown") : !stockKnown?"unknown":!sameUnit?"unit_mismatch":stock>=requirement.quantity?"recorded_sufficient":"recorded_insufficient";
+  const price = Number(product.price), withinBudget = requirement.maxUnitPrice === null || !Number.isFinite(price) || price <= requirement.maxUnitPrice;
+  const reasons=[]; if(stateMatch) reasons.push("Seller is in the requested delivery state"); else reasons.push(`Seller location is ${state || "not recorded"}; delivery to ${requirement.state} needs confirmation`);
+  if(lgaMatch) reasons.push("Seller is in the requested LGA");
+  if(stockStatus==="recorded_sufficient") reasons.push("Recorded stock covers the requested quantity");
+  else if(stockStatus==="recorded_insufficient") reasons.push(`Recorded stock is ${stock} ${product.unitOfMeasure || product.unit || "units"}, below the requested ${requirement.quantity} ${requirement.unit}`);
+  else if(stockStatus==="unknown") reasons.push("Current stock quantity needs confirmation");
+  if(stockStatus==="unit_mismatch") reasons.push("The listing unit differs from the requested unit");
+  if(requirement.maxUnitPrice!==null && withinBudget) reasons.push("Listed price is within the stated unit budget");
+  else if(requirement.maxUnitPrice!==null) reasons.push("Listed price is above the stated unit budget");
+  const score=(stateMatch?15:0)+(lgaMatch?8:0)+(stockStatus==="recorded_sufficient"?10:0)+(withinBudget?5:0);
+  return {score,reasons,stockStatus,stateMatch,lgaMatch,withinBudget};
 }
 
 export function rankRequirementsForVendor(requirements, products, vendor = {}) {
-  const matches = [];
-  for (const requirement of requirements) {
-    const productMatches = products.map((product) => ({ product, ...scoreBuyerRequirement(requirement, product, vendor) }))
-      .filter((item) => item.productNameMatch && item.withinBudget)
-      .sort((a, b) => b.score - a.score);
-    if (productMatches.length) matches.push({ requirement, bestProduct: productMatches[0].product, score: productMatches[0].score, reasons: productMatches[0].reasons, stockStatus: productMatches[0].stockStatus });
+  const matches=[];
+  for(const requirement of requirements){
+    const productMatches=products.map(product=>({product,...scoreBuyerRequirement(requirement,product,vendor)}))
+      .filter(item=>String(item.product.name||"").toLowerCase().includes(String(requirement.productName||"").toLowerCase()) || String(item.product.description||"").toLowerCase().includes(String(requirement.productName||"").toLowerCase()))
+      .filter(item=>item.stockStatus!=="recorded_insufficient")
+      .sort((a,b)=>b.score-a.score);
+    if(productMatches.length) matches.push({requirement,bestProduct:productMatches[0].product,score:productMatches[0].score,reasons:productMatches[0].reasons,stockStatus:productMatches[0].stockStatus});
   }
-  return matches.sort((a, b) => b.score - a.score || new Date(b.requirement.createdAt) - new Date(a.requirement.createdAt));
+  return matches.sort((a,b)=>b.score-a.score||new Date(b.requirement.createdAt)-new Date(a.requirement.createdAt));
+}
+
+const locationOf = (p) => ({ state:p.vendorId?.state||p.vendorId?.farmAddress?.state||p.originLocation?.state||"", lga:p.vendorId?.lga||p.vendorId?.farmAddress?.lga||p.originLocation?.lga||"" });
+const serialize = (p, source, requirement) => {
+  const vendor=p.vendorId && typeof p.vendorId==="object"?p.vendorId:{};
+  const location=source==="direct"?{state:p.originLocation?.state||"",lga:p.originLocation?.lga||""}:locationOf(p);
+  const vendorName=source==="direct"||!p.vendorId?"Elevoni Farms":vendor.businessName||"Approved Marketplace supplier";
+  const score=scoreBuyerRequirement(requirement,{...p,unitOfMeasure:p.unitOfMeasure||p.unit,price:p.price},source==="direct"?{}:vendor);
+  return { id:String(p._id), name:p.name, description:p.description||"", category:p.category||"", subcategory:p.subcategory||"", price:Number(p.price)||0,
+    unit:p.unitOfMeasure||p.unit||"", stockQuantity:p.stockQuantity===null||p.stockQuantity===undefined?null:Number(p.stockQuantity), state:location.state,lga:location.lga,
+    sellerName:vendorName,sellerType:source==="direct"||!p.vendorId?"elevoni_direct":"marketplace_vendor", source,
+    image:Array.isArray(p.images)?p.images[0]||"":p.image||"", matchScore:score.score, stockStatus:score.stockStatus,
+    reasons:score.reasons, availability:p.availability||"Listed as available" };
+};
+
+/** Uses the same AI cross-language identity matcher as Elevoni Assistant. Candidate retrieval is broad; location and stock are ranked after identity matching. */
+export async function retrieveBuyerRequirementMatches(requirement,{language=requirement.preferredLanguage||"en-NG",timer,abortSignal}={}) {
+  const profiles=await vendorProfileModel.find({status:"approved"}).select("_id").lean();
+  const approvedIds=profiles.map(p=>p._id);
+  const baseMarketplaceFilter={status:"approved",isAvailable:true,availability:{$ne:"Out of stock"},vendorId:{$in:approvedIds}};
+  const query=[requirement.productName,requirement.specifications,requirement.condition].filter(Boolean).join(" ");
+  const terms=[...new Set(text(requirement.productName,160).toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>2))].slice(0,6);
+  const lexicalFilter=terms.length?{$or:terms.flatMap(term=>{const rx=new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i");return [{name:rx},{description:rx},{species:rx},{subcategory:rx}]})}:null;
+  const [marketplace,lexicalMarketplace,direct]=await Promise.all([
+    approvedIds.length?Product.find(baseMarketplaceFilter)
+      .select("name description category subcategory species condition price unitOfMeasure images vendorId originLocation stockQuantity availability isAvailable updatedAt")
+      .populate("vendorId","businessName state lga farmAddress status").sort({updatedAt:-1}).limit(250).lean():[],
+    approvedIds.length&&lexicalFilter?Product.find({...baseMarketplaceFilter,...lexicalFilter})
+      .select("name description category subcategory species condition price unitOfMeasure images vendorId originLocation stockQuantity availability isAvailable updatedAt")
+      .populate("vendorId","businessName state lga farmAddress status").sort({updatedAt:-1}).limit(100).lean():[],
+    fishModel.find({visible:{$ne:false},vendorId:null}).select("name description price image category pricingMode pricingTiers").limit(100).lean()
+  ]);
+  const [marketMatches,directMatches]=await Promise.all([
+    matchProductsAcrossLanguages({query,candidates:marketplace,language,abortSignal,timer,purpose:"buyer requirement matching against approved Marketplace listings"}),
+    matchProductsAcrossLanguages({query,candidates:direct,language,abortSignal,timer,purpose:"buyer requirement matching against Elevoni Direct catalogue"})
+  ]);
+  const mergeById=(items)=>[...new Map(items.filter(Boolean).map(item=>[String(item._id),item])).values()];
+  const marketplaceResults=mergeById([...lexicalMarketplace,...marketMatches]);
+  const directLexical=direct.filter(item=>terms.some(term=>`${item.name||""} ${item.description||""} ${item.category||""}`.toLowerCase().includes(term)));
+  const directResults=mergeById([...directLexical,...directMatches]);
+  const rows=[...marketplaceResults.map(p=>serialize(p,"marketplace",requirement)),...directResults.map(p=>serialize({...p,unitOfMeasure:"kg",stockQuantity:null,originLocation:{state:"",lga:""}},"direct",requirement))];
+  return rows.sort((a,b)=>b.matchScore-a.matchScore).slice(0,12);
 }
