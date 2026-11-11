@@ -28,3 +28,32 @@ export async function interpretBuyerRequirement({ message, language = "en-NG", a
   if (draft.unit && !PRODUCT_UNITS.includes(draft.unit)) draft.unit = "";
   return { ...draft, sourceText: text, preferredLanguage: language };
 }
+
+
+const explanationSchema = { name: "elevoni_product_match_explanations", schema: {
+  type: "object", additionalProperties: false,
+  properties: { explanations: { type: "array", items: { type: "object", additionalProperties: false, properties: { productId: { type: "string" }, explanation: { type: "string" }, strengths: { type: "array", items: { type: "string" } } }, required: ["productId", "explanation", "strengths"] } } },
+  required: ["explanations"]
+} };
+
+export async function explainBuyerProductMatches({ requirement, matches, env = process.env, fetchImpl = fetch }) {
+  if (!matches?.length) return [];
+  const fallback = matches.map((match) => ({
+    productId: String(match.product._id),
+    explanation: `This listing matches the product you requested, is located in ${match.location.state}${match.location.lga ? `, ${match.location.lga}` : ""}, and its recorded stock covers your requested ${requirement.quantity} ${requirement.unit}. Please confirm that the stock is still available with the supplier.`,
+    strengths: ["Requested product matches", "Location matches", "Recorded stock covers requested quantity"]
+  }));
+  if (!String(env.OPENAI_API_KEY || "").trim()) return fallback;
+  try {
+    const safeMatches = matches.slice(0, 8).map(({ product, location, score, reasons }) => ({ productId: String(product._id), product: product.name, category: product.category, type: product.subcategory || "", seller: product.vendorId ? "marketplace supplier" : "Elevoni Farms direct", location, price: product.price, unit: product.unitOfMeasure, recordedStock: product.stockQuantity, matchFactors: reasons, score }));
+    const result = await createOpenAIResponse({
+      instructions: `You explain why real Elevoni product listings match a buyer request. Use plain, concise Nigerian English. Only use the supplied buyer request and product facts. Do not invent availability, delivery, quality, seller reliability or guarantees. Explain product, location and quantity fit. If seller is Elevoni Farms direct, make clear that the product is offered directly by Elevoni; otherwise identify it as a marketplace supplier listing. Mention limitations and tell the buyer to confirm current stock, final price and delivery with the seller. Return one explanation for each supplied productId and do not add IDs.`,
+      input: [{ role: "user", content: JSON.stringify({ buyerRequest: { product: requirement.productName, category: requirement.category, type: requirement.subcategory, quantity: requirement.quantity, unit: requirement.unit, state: requirement.state, lga: requirement.lga, maxUnitPrice: requirement.maxUnitPrice }, matches: safeMatches }) }],
+      schema: explanationSchema, maxOutputTokens: 900, env, fetchImpl
+    });
+    const byId = new Map((result.parsed?.explanations || []).map((item) => [item.productId, item]));
+    return fallback.map((item) => ({ ...item, ...(byId.get(item.productId) || {}) }));
+  } catch {
+    return fallback;
+  }
+}
